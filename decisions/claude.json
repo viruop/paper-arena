@@ -1,0 +1,16 @@
+[
+  {
+    "date": "2026-10-23",
+    "position": 0.5,
+    "summary": "Half in near the October low: the trend is still down, but much of the fall has already happened.",
+    "reasons": [
+      "Nifty is below its 200-day average and the 50-day average is below the 200-day, so the trend is down.",
+      "Nifty is about 14% below its January high and close to its 8 Oct low of 22,232.",
+      "A half position gets part of any rebound without betting everything."
+    ],
+    "go_to_cash_if": "Nifty closes below 22,000",
+    "go_fully_in_if": "Nifty closes above its 50-day average (about 23,440)",
+    "model": "Claude (in chat)",
+    "made_at": "2026-10-23"
+  }
+]
