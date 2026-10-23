@@ -35,7 +35,7 @@ MANUAL_AGENTS = {
     "Me": {
         # "2026-10-23": 1.0,
     },
-    # "Claude": {"2026-10-23": 0.5},   # ask Claude for a call each evening and record it here
+    "Claude": {"2026-10-23": 0.5},   # ask Claude for a call each evening and record it here
 }
 SAVE_CHART = "paper_arena.png"
 SAVE_LOG = "paper_arena_log.csv"
