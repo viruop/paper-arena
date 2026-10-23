@@ -35,13 +35,17 @@ MANUAL_AGENTS = {
     "Me": {
         # "2026-10-23": 1.0,
     },
-    "Claude": {"2026-10-23": 0.5},   # ask Claude for a call each evening and record it here
 }
+# Claude's decisions live in decisions/claude.json. claude_agent.py adds one each evening
+# when the ANTHROPIC_API_KEY secret is set; without it, Claude keeps its last position.
+CLAUDE_FILE = "decisions/claude.json"
 SAVE_CHART = "paper_arena.png"
 SAVE_LOG = "paper_arena_log.csv"
 # ==========================================================================
 
 import io
+import json
+import os
 import urllib.request
 
 import matplotlib
@@ -240,7 +244,7 @@ def reasons(closes, latest, manual):
     for name, decisions in manual.items():
         if decisions:
             day = max(decisions)
-            why[name] = f"Your latest call ({day}): {float(decisions[day]):.0%} in Nifty 50."
+            why[name] = f"Latest call ({day}): {float(decisions[day]):.0%} in Nifty 50."
     return why
 
 
@@ -254,6 +258,14 @@ def action_text(before, after, past=False):
     return ("Switched to " if past else "Switch to ") + a
 
 
+def load_claude_log():
+    """Claude's saved decisions, oldest first (empty if the file doesn't exist yet)."""
+    if not os.path.exists(CLAUDE_FILE):
+        return []
+    with open(CLAUDE_FILE, encoding="utf-8") as f:
+        return sorted(json.load(f), key=lambda d: d["date"])
+
+
 def build_agents(closes):
     nifty, idx = closes["NIFTY 50"], closes.index
     agents = {
@@ -264,7 +276,10 @@ def build_agents(closes):
         "RSI(2) dip-buy": sig_rsi2(nifty).to_frame("NIFTY 50"),
         "Momentum rotation": weights_rotation(closes),
     }
-    manual = {k: v for k, v in MANUAL_AGENTS.items() if v}
+    manual = {k: dict(v) for k, v in MANUAL_AGENTS.items() if v}
+    claude = {d["date"]: d["position"] for d in load_claude_log()}
+    if claude:
+        manual.setdefault("Claude", {}).update(claude)
     for name, decisions in manual.items():
         agents[name] = sig_manual(decisions, idx).to_frame("NIFTY 50")
     return agents, manual
@@ -286,7 +301,16 @@ def compute(closes=None):
                    "sma200": sma(nifty, 200).iloc[-1], "sma50": sma(nifty, 50).iloc[-1],
                    "sma5": sma(nifty, 5).iloc[-1], "rsi2": rsi(nifty, 2).iloc[-1]},
         "started": False,
+        "claude_log": list(reversed(load_claude_log())),   # newest first
     }
+    if res["claude_log"]:
+        d = res["claude_log"][0]
+        text = f"Latest decision ({d['date']}): {d['position']:.0%} in Nifty 50. {d.get('summary', '')}".strip()
+        if d.get("go_to_cash_if"):
+            text += f" Goes to cash if {d['go_to_cash_if'].rstrip('.')}."
+        if d.get("go_fully_in_if"):
+            text += f" Goes fully in if {d['go_fully_in_if'].rstrip('.')}."
+        res["why"]["Claude"] = text
     started = idx[idx >= pd.Timestamp(START)]
     if len(started) == 0:  # paper trading has not begun yet
         res["plan"] = {name: label(W.iloc[-1]) for name, W in agents.items()}

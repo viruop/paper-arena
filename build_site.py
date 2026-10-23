@@ -190,6 +190,10 @@ figure{margin:1rem 0 0}
 img{max-width:100%;height:auto;display:block;border-radius:.5rem;background:var(--surface)}
 figcaption{color:var(--muted);font-size:.9rem;margin-top:.5rem}
 .panel{background:var(--surface);border-radius:.5rem;padding:.25rem .75rem}
+.decision{background:var(--surface);border-left:3px solid var(--board);border-radius:.25rem;padding:.9rem 1rem;margin-top:1rem}
+.decision h3{font:600 1.15rem/1.2 "Barlow Condensed","Arial Narrow",system-ui,sans-serif;margin:0 0 .4rem}
+.decision ul{margin:.25rem 0 .5rem;padding-left:1.2rem}
+.decision p{margin:0 0 .35rem}
 .how{background:var(--surface);border-left:3px solid var(--score);padding:.9rem 1rem;border-radius:.25rem;margin-top:1rem}
 code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.9em;background:var(--rule);
 padding:.05rem .3rem;border-radius:.25rem}
@@ -281,19 +285,43 @@ def trades_html(res):
             f"</tr></thead><tbody>{rows}</tbody></table></div></section>")
 
 
+def claude_html(res):
+    log = res.get("claude_log") or []
+    intro = ("<p class='meta'>Claude reads the rule agents' signals and the day's market news after each close, "
+             "then picks 0, half or all in Nifty 50. Each decision is filled at the next close.</p>")
+    if not log:
+        return (f"<section aria-labelledby='cl-h'><h2 id='cl-h'>Claude's decisions</h2>{intro}"
+                f"<p class='meta'>No decisions yet.</p></section>")
+    items = []
+    for d in log[:15]:
+        reasons = "".join(f"<li>{esc(r)}</li>" for r in d.get("reasons", []))
+        conds = ""
+        if d.get("go_to_cash_if"):
+            conds += f"<p class='meta'>Goes to cash if {esc(d['go_to_cash_if'].rstrip('.'))}.</p>"
+        if d.get("go_fully_in_if"):
+            conds += f"<p class='meta'>Goes fully in if {esc(d['go_fully_in_if'].rstrip('.'))}.</p>"
+        items.append(
+            f"<article class='decision'><h3>{day(pd.Timestamp(d['date']))}: {float(d['position']):.0%} in Nifty 50</h3>"
+            f"<p>{esc(d.get('summary', ''))}</p>{'<ul>' + reasons + '</ul>' if reasons else ''}{conds}</article>")
+    return (f"<section aria-labelledby='cl-h'><h2 id='cl-h'>Claude's decisions</h2>{intro}{''.join(items)}"
+            f"<p class='meta'>If no new decision appears after a close, the API key isn't set up or the call "
+            f"failed, and Claude keeps its last position.</p></section>")
+
+
 def calls_html(res):
     how = ("<div class='how'><p><strong>Add your call:</strong> open <code>paper_arena.py</code> on GitHub, click "
            "the pencil icon, and add a line under <code>\"Me\"</code> such as <code>\"2026-10-23\": 1.0,</code> "
            "using that evening's date. 0 means all cash, 0.5 half in Nifty, 1 fully in Nifty. Commit the change "
            "and this page rebuilds in a few minutes.</p><p>Never add a call with a past date; that would use "
            "hindsight.</p></div>")
-    if not res["manual"]:
+    calls = {k: v for k, v in res["manual"].items() if not (k == "Claude" and res.get("claude_log"))}
+    if not calls:
         return (f"<section aria-labelledby='calls-h'><h2 id='calls-h'>Your calls</h2><p class='meta'>You haven't "
-                f"joined the arena yet. Add your own calls, and Claude's if you like, to see whether judgment "
-                f"beats the rules.</p>{how}</section>")
+                f"joined the arena yet. Add your own calls to see whether your judgment beats the rules and "
+                f"Claude.</p>{how}</section>")
     rows = "".join(
         f"<tr><td class='agent'>{esc(agent)}</td><td>{day(pd.Timestamp(d))}</td><td class='r'>{float(v):.0%}</td></tr>"
-        for agent, calls in res["manual"].items() for d, v in sorted(calls.items(), reverse=True))
+        for agent, entries in calls.items() for d, v in sorted(entries.items(), reverse=True))
     return (f"<section aria-labelledby='calls-h'><h2 id='calls-h'>Your calls</h2><div class='panel scroll'><table>"
             f"<thead><tr><th>Agent</th><th>Decided on</th><th class='r'>Share in Nifty 50</th></tr></thead>"
             f"<tbody>{rows}</tbody></table></div>{how}</section>")
@@ -340,7 +368,7 @@ def page(res, bt_parts):
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Paper arena</title>
-<meta name="description" content="Rule-following agents trade Nifty with virtual money. For learning only.">
+<meta name="description" content="Rule-following agents and Claude trade Nifty with virtual money. For learning only.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;600&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
@@ -350,7 +378,7 @@ def page(res, bt_parts):
 <div class="wrap">
 <header>
 <h1>Paper arena</h1>
-<p class="lede">Six agents follow simple Nifty rules, each with {inr(pa.CAPITAL)} of virtual money. Nothing here is real money.</p>
+<p class="lede">Six rule-following agents and Claude trade Nifty, each with {inr(pa.CAPITAL)} of virtual money. Nothing here is real money.</p>
 <p class="meta">{status}</p>
 </header>
 <main>
@@ -359,6 +387,7 @@ def page(res, bt_parts):
 {why_html(res)}
 {arena_chart_html(res)}
 {trades_html(res)}
+{claude_html(res)}
 {calls_html(res)}
 {backtest_html(*bt_parts)}
 </main>

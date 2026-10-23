@@ -1,6 +1,6 @@
 # Paper arena
 
-Six agents follow simple Nifty rules, each with ₹1 lakh of virtual money, and a web page shows how they're doing. GitHub runs everything for free every weekday evening.
+Six agents follow simple Nifty rules and Claude makes its own decisions, each with ₹1 lakh of virtual money, and a web page shows how they're doing. GitHub runs everything every weekday evening.
 
 For learning only. Not investment advice. No real orders are placed.
 
@@ -9,6 +9,8 @@ For learning only. Not investment advice. No real orders are placed.
 | File | What it does |
 |---|---|
 | `paper_arena.py` | The arena: the agents, plus your own calls in `MANUAL_AGENTS` |
+| `claude_agent.py` | Asks Claude for its decision after each close (needs an API key, see below) |
+| `decisions/claude.json` | Claude's saved decisions, with its reasons |
 | `nifty_backtest.py` | The backtest of the same rules from 2010 to today |
 | `build_site.py` | Builds the web page into a `site` folder |
 | `requirements.txt` | The Python packages GitHub installs |
@@ -31,20 +33,32 @@ The first run starts by itself when you upload the files in step 3. It fails bec
 
 Nothing. The page updates on weekdays at about 8:30 pm IST, with a backup run at 11 pm, after the free price data updates. GitHub sometimes starts scheduled runs a little late.
 
-## Add your own call (and Claude's)
+## Make Claude decide automatically (optional, paid)
+
+After each weekday close, `claude_agent.py` shows Claude the latest prices and indicators, every rule agent's signal, its own past decisions and, through web search, the day's market news. Claude then picks 0, half or all in Nifty 50, with its reasons and the levels that would make it change its mind. The decision is saved in `decisions/claude.json` and filled at the next close.
+
+1. Create an account with your personal email at console.anthropic.com, add a payment method, and create an API key.
+2. In the Console's privacy settings, turn on web search so Claude can read the news. If you'd rather skip news, set `MAX_SEARCHES = 0` in `claude_agent.py`.
+3. In your GitHub repository, go to **Settings → Secrets and variables → Actions → New repository secret**. Name it `ANTHROPIC_API_KEY`, paste the key, and click **Add secret**.
+
+That's all. The next evening run makes the first automatic decision.
+
+- **Cost:** one Claude call and up to 3 web searches per evening. At current prices (Claude Sonnet 5.5 at $2 per million input tokens and $10 per million output tokens, and web search at $10 per 1,000 searches) that's roughly $2–3 a month. You can see your usage in the Console.
+- **Guardrails:** Claude only decides between a close and the next market open, can only choose 0, 0.5 or 1, and never touches real money. If the call fails, Claude keeps its last position.
+- **To stop:** delete the secret.
+
+## Add your own call
 
 1. Open `paper_arena.py` on GitHub and click the pencil icon.
 2. Under `"Me"` in `MANUAL_AGENTS`, add a line such as `"2026-10-26": 1.0,` using that evening's date. 0 means all cash, 0.5 means half in Nifty, 1 means fully in Nifty.
 3. Click **Commit changes**. The page rebuilds within a few minutes.
-
-To add Claude as a player, ask Claude in chat each evening for a call and record it under a `"Claude"` entry the same way.
 
 Never add a call with a past date, and never change an agent's rule after the start. Both would use hindsight. To test an improved rule, add it as a new agent instead.
 
 ## Good to know
 
 - **The page is public.** On GitHub's free plan, Pages sites are public, so anyone with the link can see it. Keep only virtual trades here, nothing personal or work-related.
-- **Keep it active.** If the repository has no activity for 60 days, GitHub pauses the daily run. Adding a call counts as activity, and you can turn the run back on from the **Actions** tab.
+- **Keep it active.** If the repository has no activity for 60 days, GitHub pauses the daily run. Claude's saved decisions and your own calls count as activity, and you can turn the run back on from the **Actions** tab.
 - **Keep `START` fixed** once paper trading begins.
 - **Running it yourself:** `pip install -r requirements.txt`, then `python build_site.py`, and open `site/index.html`. You can also run `paper_arena.py` or `nifty_backtest.py` on their own, or paste them into Google Colab.
 - **Data:** free daily index data from [indian-market-historical-data](https://github.com/aswinv90/indian-market-historical-data), licensed for personal, non-commercial use.
