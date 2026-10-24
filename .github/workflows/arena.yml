@@ -9,7 +9,7 @@ on:
   workflow_dispatch:          # adds a "Run workflow" button on the Actions tab
 
 permissions:
-  contents: write             # lets the run save Claude's decision in decisions/claude.json
+  contents: write             # lets the run save decisions and logs in the repository
   pages: write
   id-token: write
 
@@ -22,26 +22,34 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+
+      - name: Start from the newest commit on main
+        run: |
+          git fetch origin main
+          git reset --hard origin/main
+
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
           cache: pip
       - run: pip install -r requirements.txt
 
-      - name: Claude agent decides (needs the ANTHROPIC_API_KEY secret)
+      - name: Claude agent decides (only with the ANTHROPIC_API_KEY secret)
         if: github.event_name != 'push'
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: python claude_agent.py
 
-      - name: Save Claude's decision
-        if: github.event_name != 'push'
+      - name: Add the newest days to the permanent logs
+        run: python logbook.py
+
+      - name: Save decisions and logs
         run: |
-          if [ -n "$(git status --porcelain decisions)" ]; then
+          if [ -n "$(git status --porcelain decisions logs)" ]; then
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add decisions
-            git commit -m "Claude agent decision"
+            git add decisions logs
+            git commit -m "Arena logs and decisions, $(date -u +%Y-%m-%d)"
             git pull --rebase origin main
             git push origin HEAD:main
           fi
