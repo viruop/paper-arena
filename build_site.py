@@ -19,6 +19,8 @@ import matplotlib.dates  # noqa: E402
 import matplotlib.ticker  # noqa: E402
 import pandas as pd  # noqa: E402
 
+import logbook  # noqa: E402
+import market_context as mc  # noqa: E402
 import nifty_backtest as bt  # noqa: E402
 import paper_arena as pa  # noqa: E402
 
@@ -115,6 +117,35 @@ def draw(series, filename, log=False, split=None, money_axis="plain"):
         plt.close(fig)
 
 
+def draw_breadth(series, filename):
+    labels = {"above_200": "Above 200-day average", "above_50": "Above 50-day average"}
+    colors = {"light": {"above_200": "#0F4D3A", "above_50": "#C98A00"},
+              "dark": {"above_200": "#6FD39C", "above_50": "#E5B23A"}}
+    for theme, c in THEMES.items():
+        fig, ax = plt.subplots(figsize=(9, 3.6))
+        fig.patch.set_facecolor(c["bg"])
+        ax.set_facecolor(c["bg"])
+        for col in ("above_200", "above_50"):
+            ax.plot(series.index, series[col] * 100, label=labels[col], color=colors[theme][col],
+                    lw=1.8 if col == "above_200" else 1.2)
+        ax.axhline(50, color=c["muted"], ls=":", lw=1)
+        ax.set_ylim(0, 100)
+        ax.yaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda v, _: f"{v:.0f}%"))
+        locator = matplotlib.dates.AutoDateLocator()
+        ax.xaxis.set_major_locator(locator)
+        ax.xaxis.set_major_formatter(matplotlib.dates.ConciseDateFormatter(locator))
+        ax.grid(color=c["grid"], lw=0.8)
+        ax.tick_params(colors=c["muted"], labelsize=9)
+        for spine in ax.spines.values():
+            spine.set_visible(False)
+        leg = ax.legend(fontsize=8.5, frameon=False, loc="upper center", bbox_to_anchor=(0.5, -0.12), ncol=2)
+        for text in leg.get_texts():
+            text.set_color(c["fg"])
+        fig.savefig(os.path.join(SITE, f"{filename}-{theme}.png"), dpi=150, facecolor=c["bg"],
+                    bbox_inches="tight", pad_inches=0.15)
+        plt.close(fig)
+
+
 def picture(filename, alt):
     return (f'<picture><source srcset="{filename}-dark.png" media="(prefers-color-scheme: dark)">'
             f'<img src="{filename}-light.png" alt="{esc(alt)}" loading="lazy"></picture>')
@@ -176,9 +207,11 @@ td{border-bottom:1px solid var(--rule)}
 .num-big{font-size:1.25rem;font-weight:600}
 .up{color:var(--up)}.down{color:var(--down)}
 .board .up{color:var(--board-up)}.board .down{color:var(--board-down)}
-.chip{display:inline-block;background:var(--score);color:#1E2B25;border-radius:999px;padding:.1rem .6rem;
+.chip{display:inline-block;white-space:nowrap;background:var(--score);color:#1E2B25;border-radius:999px;padding:.1rem .6rem;
 font-weight:600;font-size:.9rem}
 .quiet{color:var(--board-muted)}
+.sub-h{font:600 1.2rem/1.2 "Barlow Condensed","Arial Narrow",system-ui,sans-serif;margin:1.75rem 0 .6rem}
+.stats + .meta{margin-top:.9rem}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(8rem,1fr));gap:1rem 1.5rem;margin:0}
 .stats div{border-left:3px solid var(--rule);padding-left:.75rem}
 .stats dt{color:var(--muted);font-size:.9rem}
@@ -194,6 +227,9 @@ figcaption{color:var(--muted);font-size:.9rem;margin-top:.5rem}
 .decision h3{font:600 1.15rem/1.2 "Barlow Condensed","Arial Narrow",system-ui,sans-serif;margin:0 0 .4rem}
 .decision ul{margin:.25rem 0 .5rem;padding-left:1.2rem}
 .decision p{margin:0 0 .35rem}
+.warn{background:var(--surface);border-left:3px solid var(--down);border-radius:.25rem;padding:.9rem 1rem;margin-top:1.5rem}
+.links{margin:.5rem 0 0;padding-left:1.2rem}
+.links li{margin:.3rem 0}
 .how{background:var(--surface);border-left:3px solid var(--score);padding:.9rem 1rem;border-radius:.25rem;margin-top:1rem}
 code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.9em;background:var(--rule);
 padding:.05rem .3rem;border-radius:.25rem}
@@ -247,14 +283,46 @@ def board_html(res):
             f"</thead><tbody>{''.join(rows)}</tbody></table></div></section>")
 
 
-def market_html(res):
+def market_html(res, ctx):
     m = res["market"]
     items = [("Close", f"{m['close']:,.2f}", ""), ("On the day", pct(m["change"], True, 2), tone(m["change"])),
              ("200-day average", f"{m['sma200']:,.0f}", ""), ("50-day average", f"{m['sma50']:,.0f}", ""),
              ("5-day average", f"{m['sma5']:,.0f}", ""), ("RSI(2)", f"{m['rsi2']:.0f}", "")]
     cells = "".join(f"<div><dt>{esc(k)}</dt><dd class='{c}'>{v}</dd></div>" for k, v, c in items)
     return (f"<section aria-labelledby='mkt-h'><h2 id='mkt-h'>Nifty 50 at the latest close</h2>"
-            f"<p class='meta'>{day(res['latest'])}</p><dl class='stats'>{cells}</dl></section>")
+            f"<p class='meta'>{day(res['latest'])}</p><dl class='stats'>{cells}</dl>{context_html(ctx)}</section>")
+
+
+def crore(v):
+    sign = "+" if v > 0 else "\u2212" if v < 0 else ""
+    return f"{sign}\u20b9{abs(v):,.0f} cr"
+
+
+def context_html(ctx):
+    b, f = ctx.get("breadth"), ctx.get("flows")
+    if not b and (f is None or not len(f)):
+        return ""
+    items, notes = [], []
+    if b:
+        items += [("Stocks above 200-day avg", f"{b['above_200']:.0%}", ""),
+                  ("Stocks above 50-day avg", f"{b['above_50']:.0%}", "")]
+        notes.append(f"Breadth is the share of the Nifty 50's stocks trading above their own averages, as of "
+                     f"{day(b['date'])}. As a rough guide, below about 30% means most stocks are falling and above "
+                     f"about 70% means most are rising.")
+    if f is not None and len(f):
+        last = f.iloc[-1]
+        items += [("FII net", crore(last["FII_Net_Cr"]), tone(last["FII_Net_Cr"])),
+                  ("DII net", crore(last["DII_Net_Cr"]), tone(last["DII_Net_Cr"])),
+                  ("FII, last 5 sessions", crore(f["FII_Net_Cr"].tail(5).sum()), tone(f["FII_Net_Cr"].tail(5).sum()))]
+        notes.append(f"FII and DII figures are net cash-market buying or selling on {day(f.index[-1])}.")
+    cells = "".join(f"<div><dt>{esc(k)}</dt><dd class='{c}'>{v}</dd></div>" for k, v, c in items)
+    chart = ""
+    if b and len(b["series"]) > 20:
+        draw_breadth(b["series"], "breadth")
+        chart = ("<figure>" + picture("breadth", "Line chart of the share of Nifty 50 stocks above their "
+                                      "200-day and 50-day averages over the past year") + "</figure>")
+    return (f"<h3 class='sub-h'>Breadth and institutional flows</h3><dl class='stats'>{cells}</dl>"
+            + "".join(f"<p class='meta'>{esc(n)}</p>" for n in notes) + chart)
 
 
 def why_html(res):
@@ -327,6 +395,40 @@ def calls_html(res):
             f"<tbody>{rows}</tbody></table></div>{how}</section>")
 
 
+def drift_html(res):
+    found = logbook.drift(res)
+    if not found:
+        return ""
+    return (f"<div class='warn' role='status'><strong>The saved log and tonight's replay disagree</strong> on "
+            f"{found['rows']} {'row' if found['rows'] == 1 else 'rows'} (largest difference {inr(found['largest'])}, "
+            f"for {esc(found['agent'])} on "
+            f"{day(found['date'])}). This usually means the data source corrected an old price. The saved log "
+            f"stays the official record.</div>")
+
+
+def logs_html():
+    info = logbook.summary()
+    repo = os.environ.get("GITHUB_REPOSITORY", "")
+
+    def link(path, text, folder=False):
+        if not repo:
+            return f"<code>{esc(path)}</code>"
+        return f"<a href='https://github.com/{repo}/{'tree' if folder else 'blob'}/main/{path}'>{esc(text)}</a>"
+
+    if info:
+        intro = (f"<p>The saved log covers {day(info['first'])} to {day(info['last'])}: {info['days']} trading "
+                 f"days and {info['trades']} trades. Each night adds new rows; old rows are never rewritten.</p>")
+    else:
+        intro = "<p class='meta'>The saved log starts with the first nightly run after paper trading begins.</p>"
+    items = [("logs/daily.csv", "Daily log", False, "every agent's holding and value each day"),
+             ("logs/trades.csv", "Trade log", False, "every trade, with Nifty 50's close"),
+             ("decisions/snapshots", "Claude's snapshots", True, "the data behind each Claude decision"),
+             ("logs/journal.md", "Your journal", False, "your evening notes, which you edit on GitHub")]
+    links = "".join(f"<li>{link(p, t, f)}: {esc(d)}</li>" for p, t, f, d in items)
+    return (f"<section aria-labelledby='log-h'><h2 id='log-h'>Permanent record</h2>{intro}"
+            f"<ul class='links'>{links}</ul></section>")
+
+
 def backtest_html(rows, curves, first, last):
     draw(curves, "backtest", log=True, split=bt.SPLIT, money_axis="lakh")
     split_head = ""
@@ -354,7 +456,7 @@ def backtest_html(rows, curves, first, last):
             f"<p class='meta'>Past results don't predict future ones.</p></section>")
 
 
-def page(res, bt_parts):
+def page(res, bt_parts, ctx):
     built = dt.datetime.now(IST)
     if res["started"]:
         status = (f"Prices up to the close on {day(res['latest'])}. Day {res['days']} of paper trading, "
@@ -382,13 +484,15 @@ def page(res, bt_parts):
 <p class="meta">{status}</p>
 </header>
 <main>
+{drift_html(res)}
 {board_html(res)}
-{market_html(res)}
+{market_html(res, ctx)}
 {why_html(res)}
 {arena_chart_html(res)}
 {trades_html(res)}
 {claude_html(res)}
 {calls_html(res)}
+{logs_html()}
 {backtest_html(*bt_parts)}
 </main>
 <footer>
@@ -405,9 +509,10 @@ def page(res, bt_parts):
 def main():
     os.makedirs(SITE, exist_ok=True)
     res = pa.compute()
+    ctx = mc.context()
     bt_parts = backtest_summary()
     with open(os.path.join(SITE, "index.html"), "w", encoding="utf-8") as f:
-        f.write(page(res, bt_parts))
+        f.write(page(res, bt_parts, ctx))
     if res["started"]:
         log = res["values"].round(2)
         log.index.name = "Date"

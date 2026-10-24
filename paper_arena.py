@@ -209,7 +209,7 @@ def label(row):
         return "Cash"
     if len(row) == 1 and row.iloc[0] > 1 - 1e-9:
         return row.index[0]
-    return " + ".join(f"{v:.0%} {k}" for k, v in row.items()) + " + cash"
+    return " + ".join(f"{v:.0%} {k}" for k, v in row.items())
 
 
 def rupees(x):
@@ -317,7 +317,7 @@ def compute(closes=None):
         return res
 
     s0 = started[0]
-    rows, values, trades = {}, {}, []
+    rows, values, trades, positions = {}, {}, [], {}
     for name, W in agents.items():
         eq = equity_since(W, R, s0)
         values[name] = eq
@@ -325,6 +325,7 @@ def compute(closes=None):
         prev = P.shift(1)
         prev.iloc[0] = 0.0                                  # all cash before the start
         changed = (P - prev).abs().sum(axis=1) > 1e-9
+        positions[name] = P
         for day in P.index[changed.values]:
             trades.append({"date": day, "agent": name, "what": action_text(prev.loc[day], P.loc[day], past=True),
                            "nifty": float(nifty.loc[day])})
@@ -343,6 +344,7 @@ def compute(closes=None):
     res.update(started=True, s0=s0, days=len(idx[idx >= s0]),
                board=board.sort_values("value", ascending=False),
                values=pd.DataFrame(values),
+               positions=positions,
                trades=sorted(trades, key=lambda t: (t["date"], t["agent"]), reverse=True))
     return res
 

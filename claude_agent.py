@@ -6,8 +6,13 @@ indicators, every rule agent's signal and Claude's past decisions, asks Claude t
 Claude API for one decision - 0, 0.5 or 1 of the money in Nifty 50 - and saves it in
 decisions/claude.json. The arena fills it at the next trading day's close.
 
-Needs an API key from the Claude Console, saved as the GitHub secret ANTHROPIC_API_KEY.
-Without a key it does nothing, and the Claude agent keeps its last position.
+Two ways to use it:
+  * Claude API (paid per use): GitHub Actions runs `python claude_agent.py` each evening with the
+    ANTHROPIC_API_KEY secret. Without a key it does nothing.
+  * Claude Code routine or session (uses a Claude plan instead of an API key): Claude follows
+    .claude/skills/claude-agent-decision/SKILL.md, which runs
+        python claude_agent.py --snapshot      # what to look at, and whether a decision is due
+        python claude_agent.py --record ...    # save the decision Claude made
 
 FOR LEARNING ONLY. Paper trading. No real orders are placed. Not investment advice.
 """
@@ -27,6 +32,8 @@ import urllib.request
 
 import pandas as pd
 
+import logbook
+import market_context as mc
 import paper_arena as pa
 
 API_URL = "https://api.anthropic.com/v1/messages"
@@ -74,8 +81,8 @@ def save_log(log):
         f.write("\n")
 
 
-def snapshot(closes, res, log):
-    """Everything Claude sees: data, indicators, the rule agents and its own past decisions."""
+def snapshot(closes, res, log, ctx=None):
+    """Everything Claude sees: data, indicators, breadth, flows, the rule agents and its past decisions."""
     n, m, latest = closes["NIFTY 50"], res["market"], res["latest"]
     year = n.loc[str(latest.year)]
     lines = [
@@ -85,8 +92,9 @@ def snapshot(closes, res, log):
         f"5-day {m['sma5']:,.0f}. RSI(2) {m['rsi2']:.0f}, RSI(14) {pa.rsi(n, 14).iloc[-1]:.0f}.",
         f"{latest.year} so far: high {year.max():,.0f} on {year.idxmax():%d %b}, low {year.min():,.0f} on "
         f"{year.idxmin():%d %b}.",
-        "Index returns over 1 month / 3 months / 6 months:",
     ]
+    lines += mc.describe(ctx or {})
+    lines.append("Index returns over 1 month / 3 months / 6 months:")
     for name in closes.columns:
         s = closes[name].dropna()
         if len(s) > 126:
@@ -142,30 +150,60 @@ def parse_decision(text):
 
 
 # ----------------------------------- main ---------------------------------------
-def main(now=None):
+def status(latest, log, now):
+    """Is a decision due? Claude decides once per close, and only between that close and the next
+    market open, so it can never use information from the session in which its decision is filled."""
+    if any(d["date"] == latest.date().isoformat() for d in log):
+        return False, f"Claude already decided after the close of {latest.date()}."
+    next_open = dt.datetime.combine((latest + pd.offsets.BDay(1)).date(), dt.time(9, 0), IST)
+    if now >= next_open:
+        return False, (f"The newest close in the data is {latest.date()} and the next session has already "
+                       "opened. Wait until the latest close reaches the data (usually after 7:30 pm IST).")
+    return True, f"Decide for the close of {latest.date()}; the decision is filled at the next close."
+
+
+def make_record(latest, decision, model, now, searches=0):
+    try:
+        position = float(decision["position"])
+    except (TypeError, KeyError, ValueError):
+        raise ValueError("position must be 0, 0.5 or 1")
+    if position not in ALLOWED:
+        raise ValueError(f"position must be 0, 0.5 or 1, not {position}")
+    summary = str(decision.get("summary", "")).strip()
+    if not summary:
+        raise ValueError("a one-sentence summary is required")
+    return {
+        "date": latest.date().isoformat(),
+        "position": position,
+        "summary": summary[:300],
+        "reasons": [str(r)[:300] for r in decision.get("reasons", []) if str(r).strip()][:5],
+        "go_to_cash_if": str(decision.get("go_to_cash_if", ""))[:200],
+        "go_fully_in_if": str(decision.get("go_fully_in_if", ""))[:200],
+        "model": model,
+        "searches": searches,
+        "made_at": now.isoformat(timespec="minutes"),
+    }
+
+
+def run_api(now=None):
+    """GitHub Actions mode: ask Claude through the Claude API."""
     key = os.environ.get("ANTHROPIC_API_KEY", "").strip()
     if not key:
         print("No ANTHROPIC_API_KEY set, so the Claude agent keeps its last position.")
         return
+    now = now or dt.datetime.now(IST)
     log = load_log()
     closes = pa.load_all()
     res = pa.compute(closes)
-    latest = res["latest"]
-    if any(d["date"] == latest.date().isoformat() for d in log):
-        print(f"Claude already decided after the close of {latest.date()}. Nothing to do.")
-        return
-    # Claude may only decide between a close and the next market open, so it can never
-    # use information from the session in which its decision is filled.
-    now = now or dt.datetime.now(IST)
-    next_open = dt.datetime.combine((latest + pd.offsets.BDay(1)).date(), dt.time(9, 0), IST)
-    if now >= next_open:
-        print(f"The latest close in the data is {latest.date()}, and the next session has already opened. "
-              "Claude waits for the newest close to reach the data.")
+    due, why = status(res["latest"], log, now)
+    if not due:
+        print(why)
         return
 
     system = RULES.format(news=NEWS_ON.format(n=MAX_SEARCHES) if MAX_SEARCHES > 0 else NEWS_OFF)
+    user_text = snapshot(closes, res, log, mc.context())
     try:
-        data = ask_claude(system, snapshot(closes, res, log), key)
+        data = ask_claude(system, user_text, key)
     except urllib.error.HTTPError as err:
         print(f"Claude API error {err.code}: {err.read()[:500]!r}. Keeping the last position.")
         return
@@ -174,30 +212,75 @@ def main(now=None):
         return
 
     text = "".join(b.get("text", "") for b in data.get("content", []) if b.get("type") == "text")
-    decision = parse_decision(text)
-    try:
-        position = float(decision["position"])
-    except (TypeError, KeyError, ValueError):
-        position = None
-    if position not in ALLOWED:
-        print(f"No valid decision in Claude's reply, so it keeps its last position. Reply was:\n{text[:1500]}")
-        return
-
     searches = data.get("usage", {}).get("server_tool_use", {}).get("web_search_requests", 0)
-    record = {
-        "date": latest.date().isoformat(),
-        "position": position,
-        "summary": str(decision.get("summary", ""))[:300],
-        "reasons": [str(r)[:300] for r in decision.get("reasons", [])][:5],
-        "go_to_cash_if": str(decision.get("go_to_cash_if", ""))[:200],
-        "go_fully_in_if": str(decision.get("go_fully_in_if", ""))[:200],
-        "model": MODEL,
-        "searches": searches,
-        "made_at": now.isoformat(timespec="minutes"),
-    }
+    try:
+        record = make_record(res["latest"], parse_decision(text) or {}, MODEL, now, searches)
+    except ValueError as err:
+        print(f"No valid decision in Claude's reply ({err}), so it keeps its last position. Reply was:\n{text[:1500]}")
+        return
     log.append(record)
     save_log(log)
-    print(f"Claude decided {position:.0%} in Nifty 50 after the close of {latest.date()}: {record['summary']}")
+    logbook.save_snapshot(record["date"], user_text + "\n\nCLAUDE'S REPLY\n" + text,
+                          f"What Claude ({MODEL}, through the API) saw on {record['made_at']}, and its reply.")
+    print(f"Claude decided {record['position']:.0%} in Nifty 50 after the close of {record['date']}: {record['summary']}")
+
+
+def run_snapshot(now=None):
+    """Routine mode, step 1: print what Claude should look at and whether a decision is due."""
+    now = now or dt.datetime.now(IST)
+    log = load_log()
+    closes = pa.load_all()
+    res = pa.compute(closes)
+    due, why = status(res["latest"], log, now)
+    print(f"DECISION NEEDED: {'yes' if due else 'no'}. {why}\n")
+    print(RULES.split("{news}")[0].strip())
+    print("\n" + NEWS_ON.format(n=MAX_SEARCHES) + "\n")
+    print(snapshot(closes, res, log, mc.context()))
+
+
+def run_record(args, now=None):
+    """Routine mode, step 2: validate and save the decision Claude made."""
+    now = now or dt.datetime.now(IST)
+    log = load_log()
+    closes = pa.load_all()
+    res = pa.compute(closes)
+    latest = res["latest"]
+    due, why = status(latest, log, now)
+    if not due:
+        raise SystemExit(f"Not saved: {why}")
+    decision = {"position": args.position, "summary": args.summary or "", "reasons": args.reason or [],
+                "go_to_cash_if": args.cash_if or "", "go_fully_in_if": args.in_if or ""}
+    try:
+        record = make_record(latest, decision, args.model, now)
+    except ValueError as err:
+        raise SystemExit(f"Not saved: {err}")
+    text = snapshot(closes, res, log, mc.context())
+    log.append(record)
+    save_log(log)
+    logbook.save_snapshot(record["date"], text, f"What {args.model} decided from on {record['made_at']}. "
+                                                "Its news searches aren't included; its reasons are in claude.json.")
+    print(f"Saved: {record['position']:.0%} in Nifty 50 after the close of {record['date']}. "
+          f"Now commit decisions/claude.json and decisions/snapshots, and push them to main.")
+
+
+def main():
+    import argparse
+    parser = argparse.ArgumentParser(description="The Claude agent's daily decision.")
+    parser.add_argument("--snapshot", action="store_true", help="print the data Claude decides from")
+    parser.add_argument("--record", action="store_true", help="save a decision Claude has made")
+    parser.add_argument("--position", type=float, help="0, 0.5 or 1")
+    parser.add_argument("--summary", help="one plain sentence")
+    parser.add_argument("--reason", action="append", help="a short reason (repeat for more)")
+    parser.add_argument("--cash-if", dest="cash_if", help="what would make Claude go to cash")
+    parser.add_argument("--in-if", dest="in_if", help="what would make Claude go fully in")
+    parser.add_argument("--model", default="Claude (routine)", help="who made the decision")
+    args = parser.parse_args()
+    if args.snapshot:
+        run_snapshot()
+    elif args.record:
+        run_record(args)
+    else:
+        run_api()
 
 
 if __name__ == "__main__":
