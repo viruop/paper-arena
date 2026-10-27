@@ -27,5 +27,21 @@
     "go_fully_in_if": "Nifty closes above its 50-day average (about 23,370, falling)",
     "model": "Claude Opus 5.5 (in chat)",
     "made_at": "2026-10-26T17:21+05:30"
+  },
+  {
+    "date": "2026-10-27",
+    "position": 0.5,
+    "summary": "Holding half: a flat day with buying in mid and small caps, but Nifty is still below its falling 50- and 200-day averages, with Brent above $115 and the US Fed decision due.",
+    "reasons": [
+      "Neither trigger was hit: Nifty closed at 22,750, above 22,000 and below its 50-day average of about 23,340.",
+      "The trend is still down: Nifty is below its 50-day and 200-day averages, and only 15% of Nifty stocks were above their 200-day average on 23 Oct.",
+      "Brent crude above $115 and a weak rupee are the main risks; foreign investors sold Rs 1,462 crore on 26 Oct while domestic funds bought Rs 2,610 crore.",
+      "Mid and small caps rose 1% and 2.7% today, so selling isn't broad; half keeps part of any rebound without adding risk before the Fed decision."
+    ],
+    "go_to_cash_if": "Nifty closes below 22,000",
+    "go_fully_in_if": "Nifty closes above its 50-day average (about 23,340, falling)",
+    "model": "Claude Opus 5.5 (in chat)",
+    "searches": 0,
+    "made_at": "2026-10-27T19:56+05:30"
   }
 ]
