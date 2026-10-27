@@ -6,10 +6,14 @@ can't silently change:
 
   logs/daily.csv          one row per agent per day: holding, value, return since start, trade
   logs/trades.csv         every trade, with Nifty 50's close that day
+  logs/starts.json        when each newer agent starts (written once, the first time it's seen)
   decisions/snapshots/    the data snapshot behind each Claude decision
   logs/journal.md         your own notes (you edit this one)
 
-If a later replay of the arena disagrees with the saved rows, for example because the data
+Each group of agents is logged once its prices for a day are final: the Nifty agents when the
+day's close is in, the F&O agents once NSE's option prices are saved, and the gold and
+multi-asset agents once every ETF price is in. So rows for different groups can arrive on
+different nights. If a later replay disagrees with saved rows, for example because a data
 source corrected an old price, the page shows a warning. The saved log stays the official record.
 
 FOR LEARNING ONLY. No real orders are placed.
@@ -18,9 +22,11 @@ FOR LEARNING ONLY. No real orders are placed.
 import csv
 import os
 
+import numpy as np
 import pandas as pd
 
 import paper_arena as pa
+import starts
 
 LOG_DIR = "logs"
 DAILY = os.path.join(LOG_DIR, "daily.csv")
@@ -48,49 +54,120 @@ def append(path, cols, rows):
         writer.writerows(rows)
 
 
-def update(res, closes):
-    """Add every day after the last saved one. Returns (daily rows added, trades added)."""
+# ------------------------------ the agents' results -------------------------------
+def nifty_block(res):
+    """The original Nifty agents (and Claude) from paper_arena."""
     if not res["started"]:
+        return None
+    values = res["values"]
+    labels = {a: pd.Series({d: pa.label(res["positions"][a].loc[d]) for d in values.index}) for a in values.columns}
+    return {"values": values, "labels": labels, "trades": [dict(t) for t in res["trades"]], "final": res["latest"]}
+
+
+def extra_block(res):
+    """The F&O or the gold and multi-asset agents."""
+    if not res or not res.get("started"):
+        return None
+    return {"values": res["values"], "labels": res["labels"], "trades": [dict(t) for t in res["trades"]],
+            "final": res["final_until"]}
+
+
+def fno_results():
+    """The F&O agents' results, or None if they can't be computed tonight."""
+    try:
+        import fno_arena
+        return fno_arena.compute()
+    except Exception as exc:  # keep logging the other agents even if the F&O part fails
+        print(f"  ! F&O agents skipped: {exc}")
+        return None
+
+
+def asset_results():
+    """The gold and multi-asset agents' results, or None if they can't be computed tonight."""
+    try:
+        import asset_arena
+        return asset_arena.compute()
+    except Exception as exc:  # keep logging the other agents even if this part fails
+        print(f"  ! Gold and multi-asset agents skipped: {exc}")
+        return None
+
+
+def register_new_agents():
+    """Give every newer agent seen for the first time its start date (the next weekday)."""
+    names = []
+    for module, attr in (("fno_arena", "RULES"), ("asset_arena", "AGENTS")):
+        try:
+            names += list(getattr(__import__(module), attr))
+        except Exception as exc:
+            print(f"  ! {module} not loaded: {exc}")
+    return starts.register(names)
+
+
+def merged(res, fres=None, ares=None):
+    """Every group of agents, each with its own last final day."""
+    blocks = [b for b in (nifty_block(res), extra_block(fres), extra_block(ares)) if b]
+    return blocks or None
+
+
+# --------------------------------- writing the log --------------------------------
+def update(view, closes):
+    """Add each agent's final days after its last saved one. Returns (daily rows added, trades added)."""
+    if not view:
         return 0, 0
     nifty = closes["NIFTY 50"]
     saved = read(DAILY, DAILY_COLS)
-    last = pd.Timestamp(saved["date"].max()) if len(saved) else None
-    traded = {(t["date"], t["agent"]): t["what"] for t in res["trades"]}
-    rows = []
-    for day in res["values"].index:
-        if last is not None and day <= last:
-            continue
-        for agent in res["values"].columns:
-            value = float(res["values"].at[day, agent])
-            rows.append({
-                "date": day.date().isoformat(),
-                "agent": agent,
-                "holding": pa.label(res["positions"][agent].loc[day]),
-                "value": f"{value:.2f}",
-                "since_start": f"{value / pa.CAPITAL - 1:.6f}",
-                "trade": traded.get((day, agent), ""),
-                "nifty_close": f"{nifty.loc[day]:.2f}",
-            })
+    last = {a: pd.Timestamp(d) for a, d in saved.groupby("agent")["date"].max().items()} if len(saved) else {}
+    rows, trade_rows = [], []
+    for block in view:
+        traded = {}
+        for t in block["trades"]:
+            traded.setdefault((t["date"], t["agent"]), []).append(t["what"])
+        for agent in block["values"].columns:
+            since = last.get(agent)
+            labels = block["labels"][agent]
+            for day in block["values"].index:
+                if day > block["final"] or (since is not None and day <= since):
+                    continue
+                if labels.get(day, "") == "Not started yet":
+                    continue
+                value = float(block["values"].at[day, agent])
+                close = nifty.get(day, np.nan)
+                rows.append({
+                    "date": day.date().isoformat(),
+                    "agent": agent,
+                    "holding": labels.get(day, ""),
+                    "value": f"{value:.2f}",
+                    "since_start": f"{value / pa.CAPITAL - 1:.6f}",
+                    "trade": "; ".join(traded.get((day, agent), [])),
+                    "nifty_close": "" if np.isnan(close) else f"{close:.2f}",
+                })
+        for t in block["trades"]:
+            since = last.get(t["agent"])
+            if (since is None or t["date"] > since) and t["date"] <= block["final"]:
+                close = nifty.get(t["date"], t.get("nifty", np.nan))
+                trade_rows.append({"date": t["date"].date().isoformat(), "agent": t["agent"], "trade": t["what"],
+                                   "nifty_close": "" if close is None or np.isnan(close) else f"{close:.2f}"})
+    rows.sort(key=lambda r: (r["date"], r["agent"]))
+    trade_rows.sort(key=lambda r: (r["date"], r["agent"]))
     append(DAILY, DAILY_COLS, rows)
-    trade_rows = [{"date": t["date"].date().isoformat(), "agent": t["agent"], "trade": t["what"],
-                   "nifty_close": f"{t['nifty']:.2f}"}
-                  for t in sorted(res["trades"], key=lambda t: (t["date"], t["agent"]))
-                  if last is None or t["date"] > last]
     append(TRADES, TRADE_COLS, trade_rows)
     return len(rows), len(trade_rows)
 
 
-def drift(res, tolerance=1.0):
+def drift(view, tolerance=1.0):
     """Saved rows whose value differs from tonight's replay by more than `tolerance` rupees."""
-    if not res.get("started") or not os.path.exists(DAILY):
+    if not view or not os.path.exists(DAILY):
         return None
     diffs = []
     for row in read(DAILY, DAILY_COLS).itertuples(index=False):
         day = pd.Timestamp(row.date)
-        if row.agent in res["values"].columns and day in res["values"].index:
-            gap = abs(float(res["values"].at[day, row.agent]) - float(row.value))
-            if gap > tolerance:
-                diffs.append((gap, day, row.agent))
+        for block in view:
+            values = block["values"]
+            if row.agent in values.columns and day in values.index:
+                gap = abs(float(values.at[day, row.agent]) - float(row.value))
+                if gap > tolerance:
+                    diffs.append((gap, day, row.agent))
+                break
     if not diffs:
         return None
     gap, day, agent = max(diffs)
@@ -106,6 +183,7 @@ def summary():
             "days": saved["date"].nunique(), "trades": len(read(TRADES, TRADE_COLS))}
 
 
+# ------------------------------- Claude's snapshots -------------------------------
 def snapshot_path(date):
     return os.path.join(SNAPSHOT_DIR, f"{date}.txt")
 
@@ -137,12 +215,16 @@ def ensure_snapshot(closes, res):
 
 
 def main():
+    added_agents = register_new_agents()
+    if added_agents:
+        print(f"New agents start on {starts.load()[added_agents[0]]}: {', '.join(added_agents)}")
     closes = pa.load_all()
     res = pa.compute(closes)
-    added, trades = update(res, closes)
-    snap = ensure_snapshot(closes, res)
+    view = merged(res, fno_results(), asset_results())
+    added, trades = update(view, closes)
+    snap = ensure_snapshot(closes, res) if res["started"] else False
     print(f"Logged {added} daily rows and {trades} trades." + (" Saved a decision snapshot." if snap else ""))
-    found = drift(res)
+    found = drift(view)
     if found:
         rows = f"{found['rows']} {'row' if found['rows'] == 1 else 'rows'}"
         print(f"  ! Replay differs from the saved log on {rows} (largest Rs {found['largest']:,.0f}).")

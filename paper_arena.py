@@ -88,6 +88,12 @@ def load_close(name):
     s = s[s > 0].loc[DATA_FROM:]
     if s.empty:
         raise ValueError("no data returned")
+    if DATA_SOURCE == "github":          # the free dataset sometimes misses a day: top up from Yahoo
+        try:
+            import market_data
+            s = market_data.extend_with_yahoo(s, ticker)
+        except ImportError:
+            pass
     return s
 
 

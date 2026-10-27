@@ -19,6 +19,8 @@ import matplotlib.dates  # noqa: E402
 import matplotlib.ticker  # noqa: E402
 import pandas as pd  # noqa: E402
 
+import asset_arena  # noqa: E402
+import fno_arena  # noqa: E402
 import logbook  # noqa: E402
 import market_context as mc  # noqa: E402
 import nifty_backtest as bt  # noqa: E402
@@ -34,8 +36,8 @@ COLORS = {  # same colour for an agent on every chart; light and dark versions
     "dark": {"Cash only": "#9AA59F", "Buy & hold": "#6EA8E6", "200-day trend": "#F07F55",
              "Golden cross": "#55C48A", "RSI(2) dip-buy": "#B68CF0", "Momentum rotation": "#E5B23A"},
 }
-EXTRA = {"light": ["#1F9E9E", "#C2417F", "#5B6FD0", "#6F8F00"],
-         "dark": ["#4CC9C9", "#E879AE", "#93A3F0", "#A7C93B"]}
+EXTRA = {"light": ["#1F9E9E", "#C2417F", "#5B6FD0", "#6F8F00", "#D9622B", "#2F6FB0", "#8A5BC2", "#B8860B"],
+         "dark": ["#4CC9C9", "#E879AE", "#93A3F0", "#A7C93B", "#F08A5D", "#6EA8E6", "#B68CF0", "#E5B23A"]}
 THEMES = {"light": {"fg": "#1E2B25", "muted": "#5C6B63", "bg": "#FFFFFF", "grid": "#DCE3DF"},
           "dark": {"fg": "#DDE6E1", "muted": "#93A49B", "bg": "#17211C", "grid": "#2E3C35"}}
 
@@ -105,7 +107,9 @@ def draw(series, filename, log=False, split=None, money_axis="plain"):
         ax.tick_params(colors=c["muted"], labelsize=9)
         for spine in ax.spines.values():
             spine.set_visible(False)
-        locator = matplotlib.dates.AutoDateLocator()
+        span = max(v.index[-1] for _, v in series.items()) - min(v.index[0] for _, v in series.items())
+        locator = (matplotlib.dates.DayLocator(interval=max(1, span.days // 6)) if span.days < 20
+                   else matplotlib.dates.AutoDateLocator())
         ax.xaxis.set_major_locator(locator)
         ax.xaxis.set_major_formatter(matplotlib.dates.ConciseDateFormatter(locator))
         leg = ax.legend(fontsize=8.5, frameon=False, loc="upper center", bbox_to_anchor=(0.5, -0.09),
@@ -131,7 +135,9 @@ def draw_breadth(series, filename):
         ax.axhline(50, color=c["muted"], ls=":", lw=1)
         ax.set_ylim(0, 100)
         ax.yaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda v, _: f"{v:.0f}%"))
-        locator = matplotlib.dates.AutoDateLocator()
+        span = max(v.index[-1] for _, v in series.items()) - min(v.index[0] for _, v in series.items())
+        locator = (matplotlib.dates.DayLocator(interval=max(1, span.days // 6)) if span.days < 20
+                   else matplotlib.dates.AutoDateLocator())
         ax.xaxis.set_major_locator(locator)
         ax.xaxis.set_major_formatter(matplotlib.dates.ConciseDateFormatter(locator))
         ax.grid(color=c["grid"], lw=0.8)
@@ -223,12 +229,14 @@ figure{margin:1rem 0 0}
 img{max-width:100%;height:auto;display:block;border-radius:.5rem;background:var(--surface)}
 figcaption{color:var(--muted);font-size:.9rem;margin-top:.5rem}
 .panel{background:var(--surface);border-radius:.5rem;padding:.25rem .75rem}
+.tlist{list-style:none;margin:0}.tlist li{padding:.6rem 0;border-bottom:1px solid var(--rule)}.tlist li:last-child{border-bottom:0}.tlist .meta{display:block}.tl-what{display:block;margin-top:.15rem}
 .decision{background:var(--surface);border-left:3px solid var(--board);border-radius:.25rem;padding:.9rem 1rem;margin-top:1rem}
 .decision h3{font:600 1.15rem/1.2 "Barlow Condensed","Arial Narrow",system-ui,sans-serif;margin:0 0 .4rem}
 .decision ul{margin:.25rem 0 .5rem;padding-left:1.2rem}
 .decision p{margin:0 0 .35rem}
 .warn{background:var(--surface);border-left:3px solid var(--down);border-radius:.25rem;padding:.9rem 1rem;margin-top:1.5rem}
 .links{margin:.5rem 0 0;padding-left:1.2rem}
+section>h3{font:600 1.15rem/1.2 "Barlow Condensed","Arial Narrow",system-ui,sans-serif;margin:1.6rem 0 .5rem}
 .links li{margin:.3rem 0}
 .how{background:var(--surface);border-left:3px solid var(--score);padding:.9rem 1rem;border-radius:.25rem;margin-top:1rem}
 code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.9em;background:var(--rule);
@@ -395,8 +403,8 @@ def calls_html(res):
             f"<tbody>{rows}</tbody></table></div>{how}</section>")
 
 
-def drift_html(res):
-    found = logbook.drift(res)
+def drift_html(view):
+    found = logbook.drift(view)
     if not found:
         return ""
     return (f"<div class='warn' role='status'><strong>The saved log and tonight's replay disagree</strong> on "
@@ -423,10 +431,155 @@ def logs_html():
     items = [("logs/daily.csv", "Daily log", False, "every agent's holding and value each day"),
              ("logs/trades.csv", "Trade log", False, "every trade, with Nifty 50's close"),
              ("decisions/snapshots", "Claude's snapshots", True, "the data behind each Claude decision"),
+             ("data/fno", "NSE option prices", True, "the daily option prices the F&O agents traded at"),
+             ("data/market", "Saved market prices", True, "daily ETF, gold, silver and S&P 500 prices for the gold "
+                                                         "and multi-asset agents"),
+             ("logs/starts.json", "Start dates", False, "when each newer agent started paper trading"),
              ("logs/journal.md", "Your journal", False, "your evening notes, which you edit on GitHub")]
     links = "".join(f"<li>{link(p, t, f)}: {esc(d)}</li>" for p, t, f, d in items)
     return (f"<section aria-labelledby='log-h'><h2 id='log-h'>Permanent record</h2>{intro}"
             f"<ul class='links'>{links}</ul></section>")
+
+
+def fno_backtest_html(fbt):
+    if not fbt:
+        return ""
+    rows, first, last = fbt
+    items = []
+    for r in rows:
+        if r["fixed"] or abs(r["high"] - r["low"]) < 0.005:
+            ret = f"<span class='{tone(r['mid'])}'>{pct(r['mid'], True)}</span>"
+        else:
+            ret = f"{pct(r['low'], True, 0)} to {pct(r['high'], True, 0)}"
+        items.append(f"<li><strong>{esc(r['agent'])}</strong><span class='tl-what'>Return a year {ret} · "
+                     f"worst fall {pct(r['worst_fall'], digits=0)}</span></li>")
+    return (f"<h3>Backtest, {day(first)} to {day(last)}</h3><ul class='panel tlist'>{''.join(items)}</ul>"
+            f"<p class='meta'>After costs, with {inr(pa.CAPITAL)} at 3x exposure (option buying: 3% of capital a "
+            f"week). Free data has no past option prices, so the backtest estimates them from India VIX; the "
+            f"ranges show results at three different estimates, and worst falls use the middle one. The futures "
+            f"rows use real index prices. Paper trading above uses NSE’s real prices where it has them.</p>")
+
+
+def rupee_text(text):
+    """Trade notes say "+Rs 1,234" / "-Rs 1,234"; show them with the rupee sign and a true minus."""
+    return esc(text).replace("-Rs ", "\u2212\u20b9").replace("+Rs ", "+\u20b9")
+
+
+def fno_html(fres, fbt):
+    head = "<section aria-labelledby='fno-h'><h2 id='fno-h'>F&amp;O arena</h2>"
+    intro = (f"<p>Seven futures and options strategies, each with {inr(pa.CAPITAL)} of virtual money. They are kept "
+             f"apart from the Nifty agents because they use leverage. In SEBI’s study of FY26, 87.7% of "
+             f"individual F&amp;O traders lost money.</p>")
+    if fres is None:
+        return head + intro + "<p class='meta'>The F&amp;O agents couldn’t be updated tonight.</p>" + \
+            fno_backtest_html(fbt) + "</section>"
+    rules = "".join(f"<li><strong>{esc(n)}:</strong> {esc(r['rule'])}</li>" for n, r in fres["board"].iterrows())
+    if not fres["started"]:
+        when = (f"on {day(fres['start'])}" if fres.get("start") is not None
+                else "on the first trading day after these files are added")
+        body = (f"<p class='meta'>Paper trading starts {when}.</p>"
+                f"<ul class='links'>{rules}</ul>")
+    else:
+        rows = []
+        for rank, (name, r) in enumerate(fres["board"].iterrows(), start=1):
+            today = rupee_text(r["today"]) if isinstance(r["today"], str) else "<span class='quiet'>No trade</span>"
+            rows.append(
+                f"<tr><td class='rank c-rank'>{rank}</td><td class='agent c-agent'>{esc(name)}</td>"
+                f"<td class='c-holding'>{esc(r['holding'])}</td>"
+                f"<td class='r num-big c-value'>{inr(r['value'])}</td>"
+                f"<td class='r c-since {tone(r['since_start'])}'>{pct(r['since_start'], True, 2)}</td>"
+                f"<td class='r c-fall'>{pct(r['worst_fall'])}</td><td class='r c-trades'>{r['trades']}</td>"
+                f"<td class='c-today'>{today}</td></tr>")
+        real = (f"Option prices: NSE’s real prices on {fres['real_days']} of {fres['days']} trading days"
+                + ("." if fres["real_days"] == fres["days"] else ", estimates on the rest."))
+        body = (f"<p class='meta'>Started with {inr(pa.CAPITAL)} each on {day(fres['start'])}. {real}</p>"
+                f"<div class='board'><div class='scroll'><table><thead><tr><th><span class='visually-hidden'>Rank"
+                f"</span>#</th><th>Agent</th><th>Holding now</th><th class='r'>Value</th><th class='r'>Since start"
+                f"</th><th class='r'>Worst fall</th><th class='r'>Trades</th><th>Today</th></tr></thead>"
+                f"<tbody>{''.join(rows)}</tbody></table></div></div>")
+        since = fres["values"].loc[fres["start"]:]
+        if len(since) >= 2:
+            draw({n: since[n] for n in since.columns}, "fno")
+            body += "<figure>" + picture("fno", "Line chart of each F&O agent's virtual value since it started") \
+                + "</figure>"
+        recent = fres["trades"][:20]
+        if recent:
+            items = "".join(f"<li><span class='meta'>{day(t['date'])} · {esc(t['agent'])}</span>"
+                            f"<span class='tl-what'>{rupee_text(t['what'])}</span></li>" for t in recent)
+            body += (f"<h3>Latest F&amp;O trades</h3><ul class='panel tlist'>{items}</ul>"
+                     f"<p class='meta'>Every trade is in the trade log under Permanent record.</p>")
+        body += f"<h3>Rules</h3><ul class='links'>{rules}</ul>"
+    return head + intro + body + fno_backtest_html(fbt) + "</section>"
+
+
+def asset_backtest_html(abt):
+    if not abt:
+        return ""
+    rows, sources = abt
+    items = []
+    for r in rows:
+        verdict = (f"<span class='{tone(1)}'>passes</span>" if r["pass"] else f"<span class='{tone(-1)}'>fails</span>")
+        items.append(f"<li><strong>{esc(r['agent'])}</strong><span class='tl-what'>{pct(r['cagr'], True)} a year, "
+                     f"worst fall {pct(r['dd'], digits=0)}. {esc(r['bench'])}: {pct(r['bench_cagr'], True)}, worst "
+                     f"{pct(r['bench_dd'], digits=0)}. Pass bar {verdict}.</span>"
+                     f"<span class='meta'>{day(r['start'])} to {day(r['end'])}</span></li>")
+    return (f"<h3>Backtest after costs</h3><ul class='panel tlist'>{''.join(items)}</ul>"
+            f"<p class='meta'>ETF trades cost 0.05% a buy or sell, Gold Petal futures 0.05% plus a monthly roll, and "
+            f"idle cash earns {pa.CASH_RATE:.0%}. Every rule acts at the close the day after its signal. The pass bar "
+            f"is the research report's test for each agent, met in both halves of the period at normal and double "
+            f"costs. Gold prices: {esc(sources.get('GOLDBEES', ''))}. Past results don’t predict future ones.</p>")
+
+
+def asset_html(ares, abt):
+    head = "<section aria-labelledby='asset-h'><h2 id='asset-h'>Gold and multi-asset arena</h2>"
+    intro = (f"<p>Six agents built from research into the Trade Like Berlin YouTube channel and strategies shared "
+             f"on Reddit and X, each with {inr(pa.CAPITAL)} of virtual money. They trade NSE ETFs and MCX gold "
+             f"futures, which Indian residents can legally use. The two controls test the channel’s own rules; "
+             f"the research expects them to lose.</p>")
+    if ares is None:
+        return head + intro + "<p class='meta'>These agents couldn’t be updated tonight.</p>" + \
+            asset_backtest_html(abt) + "</section>"
+    why = ares.get("why", {})
+    rules = "".join(f"<li><strong>{esc(n)}:</strong> {esc(r['rule'])}"
+                    + (f" <span class='meta'>Now: {esc(why[n])}</span>" if n in why else "") + "</li>"
+                    for n, r in ares["board"].iterrows())
+    if not ares["started"]:
+        first = ares.get("first_start")
+        when = f"on {day(first)}" if first is not None else "on the first trading day after these files are added"
+        body = f"<p class='meta'>Paper trading starts {when}.</p><ul class='links'>{rules}</ul>"
+    else:
+        rows = []
+        for rank, (name, r) in enumerate(ares["board"].iterrows(), start=1):
+            today = esc(r["today"]) if isinstance(r["today"], str) else "<span class='quiet'>No trade</span>"
+            nxt = (f"<span class='chip'>{esc(r['next'])}</span>" if isinstance(r["next"], str)
+                   else "<span class='quiet'>Hold</span>")
+            rows.append(
+                f"<tr><td class='rank c-rank'>{rank}</td><td class='agent c-agent'>{esc(name)}</td>"
+                f"<td class='c-holding'>{esc(r['holding'])}</td>"
+                f"<td class='r num-big c-value'>{inr(r['value'])}</td>"
+                f"<td class='r c-since {tone(r['since_start'])}'>{pct(r['since_start'], True, 2)}</td>"
+                f"<td class='r c-fall'>{pct(r['worst_fall'])}</td><td class='r c-trades'>{r['trades']}</td>"
+                f"<td class='c-today'>{today}</td><td class='c-next'><span class='m-label'>At next close: </span>"
+                f"{nxt}</td></tr>")
+        body = (f"<p class='meta'>Prices up to the close on {day(ares['latest'])}. Each agent started with "
+                f"{inr(pa.CAPITAL)} on its own start date.</p>"
+                f"<div class='board'><div class='scroll'><table><thead><tr><th><span class='visually-hidden'>Rank"
+                f"</span>#</th><th>Agent</th><th>Holding now</th><th class='r'>Value</th><th class='r'>Since start"
+                f"</th><th class='r'>Worst fall</th><th class='r'>Trades</th><th>Today</th><th>At next close</th>"
+                f"</tr></thead><tbody>{''.join(rows)}</tbody></table></div></div>")
+        first = ares.get("first_start")
+        since = ares["values"].loc[first:] if first is not None else ares["values"].iloc[0:0]
+        if len(since) >= 2:
+            draw({n: since[n] for n in since.columns}, "assets")
+            body += "<figure>" + picture("assets", "Line chart of each gold and multi-asset agent's virtual value") \
+                + "</figure>"
+        recent = ares["trades"][:20]
+        if recent:
+            items = "".join(f"<li><span class='meta'>{day(t['date'])} · {esc(t['agent'])}</span>"
+                            f"<span class='tl-what'>{esc(t['what'])}</span></li>" for t in recent)
+            body += f"<h3>Latest trades</h3><ul class='panel tlist'>{items}</ul>"
+        body += f"<h3>Rules and where each signal stands</h3><ul class='links'>{rules}</ul>"
+    return head + intro + body + asset_backtest_html(abt) + "</section>"
 
 
 def backtest_html(rows, curves, first, last):
@@ -456,7 +609,7 @@ def backtest_html(rows, curves, first, last):
             f"<p class='meta'>Past results don't predict future ones.</p></section>")
 
 
-def page(res, bt_parts, ctx):
+def page(res, bt_parts, ctx, fres=None, fbt=None, view=None, ares=None, abt=None):
     built = dt.datetime.now(IST)
     if res["started"]:
         status = (f"Prices up to the close on {day(res['latest'])}. Day {res['days']} of paper trading, "
@@ -480,11 +633,11 @@ def page(res, bt_parts, ctx):
 <div class="wrap">
 <header>
 <h1>Paper arena</h1>
-<p class="lede">Six rule-following agents and Claude trade Nifty, each with {inr(pa.CAPITAL)} of virtual money. Nothing here is real money.</p>
+<p class="lede">Six rule-following agents and Claude trade Nifty, each with {inr(pa.CAPITAL)} of virtual money. Seven F&amp;O agents and six gold and multi-asset agents trade in arenas of their own. Nothing here is real money.</p>
 <p class="meta">{status}</p>
 </header>
 <main>
-{drift_html(res)}
+{drift_html(view)}
 {board_html(res)}
 {market_html(res, ctx)}
 {why_html(res)}
@@ -492,12 +645,14 @@ def page(res, bt_parts, ctx):
 {trades_html(res)}
 {claude_html(res)}
 {calls_html(res)}
+{fno_html(fres, fbt)}
+{asset_html(ares, abt)}
 {logs_html()}
 {backtest_html(*bt_parts)}
 </main>
 <footer>
 <p>For learning only. Not investment advice. No real orders are placed.</p>
-<p>Data: free daily index data from <a href="{DATA_URL}">indian-market-historical-data</a>, for personal, non-commercial use.</p>
+<p>Data: free daily index data from <a href="{DATA_URL}">indian-market-historical-data</a>, and ETF, gold, silver and S&amp;P 500 prices from Yahoo Finance’s public data, both for personal, non-commercial use.</p>
 <p>Page built on {day(built)} at {built:%H:%M} IST.</p>
 </footer>
 </div>
@@ -511,10 +666,24 @@ def main():
     res = pa.compute()
     ctx = mc.context()
     bt_parts = backtest_summary()
+    fres = logbook.fno_results()
+    try:
+        fbt = fno_arena.backtest_rows()
+    except Exception as exc:  # the page still builds without the F&O backtest
+        print(f"  ! F&O backtest skipped: {exc}")
+        fbt = None
+    ares = logbook.asset_results()
+    try:
+        abt = asset_arena.backtest_rows(ares["market"] if ares else None)
+    except Exception as exc:  # the page still builds without this backtest
+        print(f"  ! Gold and multi-asset backtest skipped: {exc}")
+        abt = None
+    view = logbook.merged(res, fres, ares)
     with open(os.path.join(SITE, "index.html"), "w", encoding="utf-8") as f:
-        f.write(page(res, bt_parts, ctx))
-    if res["started"]:
-        log = res["values"].round(2)
+        f.write(page(res, bt_parts, ctx, fres, fbt, view, ares, abt))
+    if view:
+        log = pd.concat([b["values"] for b in view], axis=1).round(2)
+        log = log.loc[:, ~log.columns.duplicated()]
         log.index.name = "Date"
         log.to_csv(os.path.join(SITE, "paper_arena_log.csv"))
     print(f"Built {SITE}/index.html")
