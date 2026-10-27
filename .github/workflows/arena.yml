@@ -40,15 +40,24 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: python claude_agent.py
 
+      - name: Update saved ETF, gold, silver and S&P 500 prices
+        continue-on-error: true   # if Yahoo can't be reached, the saved copies in data/market are used
+        run: python market_data.py
+
+      - name: Download NSE option prices for the F&O agents
+        continue-on-error: true   # if NSE can't be reached, the F&O agents use estimated prices
+        run: python fno_prices.py
+
       - name: Add the newest days to the permanent logs
         run: python logbook.py
 
-      - name: Save decisions and logs
+      - name: Save decisions, logs and option prices
         run: |
-          if [ -n "$(git status --porcelain decisions logs)" ]; then
+          if [ -n "$(git status --porcelain decisions logs data)" ]; then
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add decisions logs
+            if [ -d data ]; then git add data; fi
             git commit -m "Arena logs and decisions, $(date -u +%Y-%m-%d)"
             git pull --rebase origin main
             git push origin HEAD:main
