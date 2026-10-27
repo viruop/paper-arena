@@ -6,7 +6,9 @@ Where the prices come from, in order:
      download never loses history. Old rows are kept as they are; only the last 10 days can be
      revised by a fresh download.
   2. Yahoo Finance's public daily chart data, for ETFs, gold and silver futures and the S&P 500.
-     Bars for a session that hasn't closed yet are dropped.
+     Bars for a session that hasn't closed yet are dropped. Downloads always ask for an explicit
+     date span: asked for its whole history ("range=max"), Yahoo quietly sends monthly bars.
+     A saved copy that isn't made of daily bars is ignored and downloaded again.
   3. For backtests only (nav_fallback=True): daily NAVs of the same ETFs from the free mutual
      fund dataset at github.com/aswinv90/indian-market-historical-data. Those NAVs stop on
      18 Sep 2026, so the nightly run never relies on them.
@@ -43,6 +45,7 @@ SERIES = {
 US_SERIES = {"GOLD", "SILVER", "SP500"}
 
 YAHOO_HOSTS = ("query1.finance.yahoo.com", "query2.finance.yahoo.com")
+DAYS_BACK = {"1mo": 40, "3mo": 100}   # calendar days asked for by the short downloads
 HEADERS = {"User-Agent": ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
                           "(KHTML, like Gecko) Chrome/126.0 Safari/537.36"),
            "Accept": "application/json"}
@@ -54,8 +57,14 @@ COLUMNS = ["Open", "High", "Low", "Close"]
 
 # ------------------------------------ Yahoo --------------------------------------
 def yahoo(symbol, period="max", tz="Asia/Kolkata", cutoff="16:00", timeout=20):
-    """Daily bars from Yahoo's chart endpoint, without any session that hasn't closed yet."""
-    query = f"range={period}&interval=1d&includePrePost=false&events=div%2Csplit"
+    """Daily bars from Yahoo's chart endpoint, without any session that hasn't closed yet.
+
+    period is "max" (everything since HISTORY_FROM), "3mo" or "1mo". The span is always sent as
+    explicit dates: with range=max Yahoo returns monthly bars even when daily ones are asked for."""
+    end = int(pd.Timestamp.now(tz="UTC").timestamp()) + 86400
+    start = (int(pd.Timestamp(HISTORY_FROM, tz="UTC").timestamp()) if period == "max"
+             else end - 86400 * DAYS_BACK.get(period, 100))
+    query = f"period1={start}&period2={end}&interval=1d&includePrePost=false&events=div%2Csplit"
     last_error = None
     for host in YAHOO_HOSTS:
         url = f"https://{host}/v8/finance/chart/{urllib.parse.quote(symbol, safe='')}?{query}"
@@ -68,9 +77,12 @@ def yahoo(symbol, period="max", tz="Asia/Kolkata", cutoff="16:00", timeout=20):
             last_error = exc
     else:
         raise RuntimeError(f"Yahoo has no data for {symbol}: {last_error}")
+    meta = result.get("meta", {})
+    if meta.get("dataGranularity", "1d") != "1d":
+        raise RuntimeError(f"Yahoo sent {meta.get('dataGranularity')} bars for {symbol}, not daily ones")
     stamps = result.get("timestamp") or []
     quote = result["indicators"]["quote"][0]
-    zone = result.get("meta", {}).get("exchangeTimezoneName") or tz
+    zone = meta.get("exchangeTimezoneName") or tz
     days = pd.to_datetime(stamps, unit="s", utc=True).tz_convert(zone).tz_localize(None).normalize()
     df = pd.DataFrame({c: pd.to_numeric(pd.Series(quote.get(c.lower(), [np.nan] * len(days))), errors="coerce").values
                        for c in COLUMNS}, index=days)
@@ -80,7 +92,20 @@ def yahoo(symbol, period="max", tz="Asia/Kolkata", cutoff="16:00", timeout=20):
     if len(df) and df.index[-1] >= now.tz_localize(None).normalize() and now.strftime("%H:%M") < cutoff:
         df = df.iloc[:-1]                       # today's session is still trading
     df.index.name = "Date"
-    return df.loc[HISTORY_FROM:]
+    df = df.loc[HISTORY_FROM:]
+    if not looks_daily(df):
+        raise RuntimeError(f"Yahoo's bars for {symbol} aren't daily")
+    return df
+
+
+def looks_daily(df):
+    """True for daily bars. Monthly, weekly or quarterly bars, or a mix of those with daily ones,
+    fail: many of their gaps between rows are longer than a week. Holidays never are, and a few
+    missing days in a daily series don't matter."""
+    if len(df) < 3:
+        return True
+    gaps = np.diff(df.index.values).astype("timedelta64[D]").astype(int)
+    return bool(np.median(gaps) <= 4 and np.mean(gaps > 6) < 0.10)
 
 
 # ------------------------------------ cache --------------------------------------
@@ -93,11 +118,17 @@ def empty():
 
 
 def read_cache(name):
+    """The saved copy, or nothing if it is missing or isn't made of daily bars (a copy saved from
+    Yahoo's monthly bars is never used; the next refresh replaces it with a full daily download)."""
     path = cache_path(name)
     if not os.path.exists(path):
         return empty()
     df = pd.read_csv(path, parse_dates=["Date"], index_col="Date")
-    return df[COLUMNS].astype(float)
+    df = df[COLUMNS].astype(float).sort_index()
+    if not looks_daily(df):
+        print(f"  ! {name}: the saved copy isn't daily prices; ignoring it", file=sys.stderr)
+        return empty()
+    return df
 
 
 def merge(cached, fresh):
