@@ -12,5 +12,20 @@
     "go_fully_in_if": "Nifty closes above its 50-day average (about 23,440)",
     "model": "Claude (in chat)",
     "made_at": "2026-10-23"
+  },
+  {
+    "date": "2026-10-26",
+    "position": 0.5,
+    "summary": "Holding half: Nifty bounced above the October low, but the trend is still down and oil is a big risk.",
+    "reasons": [
+      "Neither trigger was hit: Nifty closed at 22,753, above 22,000 and below its 50-day average (about 23,370).",
+      "Nifty rose 0.68% after four straight falls and held well above the 8 Oct low of 22,232, but it is still 5.6% below its 200-day average.",
+      "Brent crude above $114, the rupee near 95 per dollar, heavy foreign selling in October and the US Fed decision on 28 Oct are big risks.",
+      "Breadth is still weak: 443 stocks hit 52-week lows today against 20 new highs."
+    ],
+    "go_to_cash_if": "Nifty closes below 22,000",
+    "go_fully_in_if": "Nifty closes above its 50-day average (about 23,370, falling)",
+    "model": "Claude Opus 5.5 (in chat)",
+    "made_at": "2026-10-26T17:21+05:30"
   }
 ]
