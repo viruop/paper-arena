@@ -8,7 +8,8 @@ Where the prices come from, in order:
   2. Yahoo Finance's public daily chart data, for ETFs, gold and silver futures and the S&P 500.
      Bars for a session that hasn't closed yet are dropped. Downloads always ask for an explicit
      date span: asked for its whole history ("range=max"), Yahoo quietly sends monthly bars.
-     A saved copy that isn't made of daily bars is ignored and downloaded again.
+     A saved copy that isn't made of daily bars is ignored and downloaded again. Bad prices that
+     jump and come straight back (see drop_spikes) are removed.
   3. For backtests only (nav_fallback=True): daily NAVs of the same ETFs from the free mutual
      fund dataset at github.com/aswinv90/indian-market-historical-data. Those NAVs stop on
      18 Sep 2026, so the nightly run never relies on them.
@@ -95,7 +96,38 @@ def yahoo(symbol, period="max", tz="Asia/Kolkata", cutoff="16:00", timeout=20):
     df = df.loc[HISTORY_FROM:]
     if not looks_daily(df):
         raise RuntimeError(f"Yahoo's bars for {symbol} aren't daily")
-    return df
+    return drop_spikes(df)
+
+
+def drop_spikes(df):
+    """Remove bad prices that jump and come straight back:
+      - a split-like jump of more than 40% that returns to within 3% of the price before it within
+        3 sessions (Yahoo shows the Dec 2019 unit splits of GOLDBEES, 1:100, and NIFTYBEES, 1:10,
+        that way for two days), and
+      - a one-day move of more than 12% that is undone the next session, to within 2% (NIFTYBEES
+        on 6 Oct 2010).
+    Real swings, such as silver's in Jan to Mar 2026 or Nifty's in Oct 2008 and Mar 2020, don't
+    come back that fast and are kept."""
+    if len(df) < 3:
+        return df
+    c = df["Close"].to_numpy(float)
+    keep = np.ones(len(c), bool)
+    ref, i = c[0], 1
+    while i < len(c):
+        move = abs(np.log(c[i] / ref))
+        back_at = None
+        for jump, back, days in ((0.40, 0.03, 3), (0.12, 0.02, 1)):
+            if move > np.log(1 + jump):
+                back_at = next((k for k in range(1, days + 1)
+                                if i + k < len(c) and abs(np.log(c[i + k] / ref)) < np.log(1 + back)), None)
+                if back_at is not None:
+                    break
+        if back_at is not None:
+            keep[i:i + back_at] = False          # the bad days
+            i += back_at                         # carry on from the day the price came back
+            continue
+        ref, i = c[i], i + 1
+    return df[keep]
 
 
 def looks_daily(df):
@@ -128,7 +160,7 @@ def read_cache(name):
     if not looks_daily(df):
         print(f"  ! {name}: the saved copy isn't daily prices; ignoring it", file=sys.stderr)
         return empty()
-    return df
+    return drop_spikes(df)
 
 
 def merge(cached, fresh):
