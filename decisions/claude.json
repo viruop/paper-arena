@@ -43,5 +43,21 @@
     "model": "Claude Opus 5.5 (in chat)",
     "searches": 0,
     "made_at": "2026-10-27T19:56+05:30"
+  },
+  {
+    "date": "2026-10-28",
+    "position": 0.5,
+    "summary": "Holding half: Nifty recovered most of a 1% intraday drop and foreign investors turned buyers, but the trend is still down and Brent near $116 adds risk ahead of tonight's Fed decision.",
+    "reasons": [
+      "Neither trigger was hit: Nifty closed at 22,699, above 22,000 and below its 50-day average of about 23,300.",
+      "Buyers stepped in: Nifty closed only 0.2% lower after falling 1% intraday, and foreign investors bought Rs 4,240 crore on 27 Oct, their biggest purchase this month.",
+      "The trend is still down: Nifty is below its falling 50- and 200-day averages, and only 19% of Nifty stocks were above their 200-day average on 26 Oct.",
+      "Brent near $116 after an attack on a Saudi refinery and the US Fed decision tonight are the main risks; half a position limits the damage if they go badly."
+    ],
+    "go_to_cash_if": "Nifty closes below 22,000",
+    "go_fully_in_if": "Nifty closes above its 50-day average (about 23,300, falling)",
+    "model": "Claude Opus 5.5 (in chat)",
+    "searches": 0,
+    "made_at": "2026-10-28T17:31+05:30"
   }
 ]
