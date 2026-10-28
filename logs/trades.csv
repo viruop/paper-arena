@@ -2,3 +2,8 @@ date,agent,trade,nifty_close
 2026-10-23,Buy & hold,Bought NIFTY 50,22600.00
 2026-10-23,Momentum rotation,Bought NIFTY PHARMA,22600.00
 2026-10-26,Claude,Bought 50% NIFTY 50,22753.20
+2026-10-28,3-day rule + US filter (control),Bought NIFTYBEES,22698.85
+2026-10-28,Gold breakdown short (control),Sold gold short (Gold Petal),22698.85
+2026-10-28,Gold/silver reversion,Bought SILVERBEES,22698.85
+2026-10-28,Gold/silver trend,Bought GOLDBEES,22698.85
+2026-10-28,Nifty-gold switch,Bought NIFTYBEES,22698.85
