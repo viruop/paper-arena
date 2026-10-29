@@ -12,7 +12,8 @@ added), using instruments an Indian resident can legally trade:
   Gold breakdown short (control)      short gold through MCX Gold Petal futures, or cash
   3-day rule + US filter (control)    NIFTYBEES or cash
 
-The two controls test the YouTube channel's own rules; the research expects them to lose.
+The two controls trade the YouTube channel's own rules (see berlin.py); the research
+expected them to lose.
 Timing matches the other agents: a rule reads a day's close and trades at the next trading
 day's close. Signals that use US markets (COMEX gold and silver, the S&P 500) only see US
 sessions that ended before India's close that day. Channel rules use closing prices only.
@@ -203,16 +204,19 @@ def silver_breakdown_recent(m, n=20, within=5):
 def gold_breakdown_short(m, entry=55, stop=20, target=0.10, silver_filter=False, signal="GOLD"):
     close, low_prior, stop_level = gold_signal(m, entry, stop, signal)
     silver = silver_breakdown_recent(m) if silver_filter else pd.Series(1.0, index=m.idx)
-    pos, ref, out = 0.0, None, []
-    for c, lo, hi, sf in zip(close.values, low_prior.values, stop_level.values, silver.values):
+    pos, ref, out, events = 0.0, None, [], []
+    for day, c, lo, hi, sf in zip(m.idx, close.values, low_prior.values, stop_level.values, silver.values):
         if not (np.isnan(c) or np.isnan(lo) or np.isnan(hi)):
             if pos == 0 and c < lo and sf > 0:
                 pos, ref = -1.0, c
+                events.append((day, "short", c))
             elif pos == -1 and (c <= ref * (1 - target) or c > hi):
+                events.append((day, "target" if c <= ref * (1 - target) else "stop", c / ref - 1))
                 pos, ref = 0.0, None
         out.append(pos)
     W = frame(m.idx, **{"GOLD FUT": out})
     W.attrs["ref"] = ref                        # the close that triggered the open short, if any
+    W.attrs["events"] = events                  # (decision day, "short"/"target"/"stop", price or gold's move)
     return W
 
 
@@ -347,6 +351,34 @@ def status(m, day, Ws=None):
     return out
 
 
+BERLIN = ("Gold breakdown short (control)", "3-day rule + US filter (control)")
+
+
+def claim_check(m, Ws, name, since, R=None, live=True):
+    """How the channel's claim held up for a Berlin agent from `since`: one plain sentence."""
+    W = Ws[name]
+    if name == "Gold breakdown short (control)":
+        ev = [e for e in W.attrs.get("events", []) if e[0] >= since]
+        shorts = sum(1 for e in ev if e[1] == "short")
+        target = sum(1 for e in ev if e[1] == "target")
+        stops = [e[2] for e in ev if e[1] == "stop"]
+        open_ = W["GOLD FUT"].iloc[-1] < 0
+        if not shorts and not target and not stops:
+            return "The short it opened on its first day is still open." if open_ and live else "No short has closed yet."
+        text = (f"{shorts} {'short' if shorts == 1 else 'shorts'} opened; gold fell the full 10% after "
+                f"{target}, and {len(stops)} hit the stop")
+        if stops:
+            text += f" (gold up {np.mean(stops):+.1%} on average by then)"
+        return text + (". One short is open." if open_ and live else ".")
+    if name == "3-day rule + US filter (control)":
+        R = m.returns().loc[:m.final] if R is None else R
+        rate, n = first_day_hits(W, R.loc[since:], "NIFTYBEES")
+        if not n:
+            return "No entries yet."
+        return f"The first full day was a gain after {round(rate * n)} of {n} entries ({rate:.0%})."
+    return ""
+
+
 def ready(m):
     """The first day each rule has all its inputs, so backtests don't count months spent waiting for data."""
     out = {}
@@ -413,11 +445,13 @@ def compute(m=None):
                      "today": action_text(prev.iloc[-1], now) if changed.iloc[-1] else None,
                      "next": action_text(now, wanted, past=False) if (wanted - now).abs().sum() > 1e-9 else None,
                      "rule": rule, "start": s0})
+    checks = {r["agent"]: claim_check(m, Ws, r["agent"], r["start"], R) for r in rows
+              if r["agent"] in BERLIN and r["start"] is not None and r["holding"] != "Not started yet"}
     board = pd.DataFrame(rows).set_index("agent").sort_values("value", ascending=False)
     return dict(started=any(len(v) and (lab != "Not started yet").any() for v, lab in zip(values.values(), labels.values())),
                 latest=latest, values=pd.DataFrame(values, index=idx), labels=labels,
                 trades=sorted(trades, key=lambda t: (t["date"], t["agent"]), reverse=True), board=board,
-                final_until=latest, sources=m.sources, why=status(m, latest, Ws), market=m,
+                final_until=latest, sources=m.sources, why=status(m, latest, Ws), market=m, checks=checks,
                 first_start=min((r["start"] for r in rows if r["start"] is not None), default=None))
 
 
@@ -486,7 +520,7 @@ def passes(name, halves):
     """The report's pass bar, judged on each half: dict half -> (agent stats, {benchmark: stats})."""
     ok = []
     for agent, bench in halves.values():
-        if name.startswith("3-day rule") and not agent.get("hit", 0) >= 0.60:
+        if name == "3-day rule + US filter (control)" and not agent.get("hit", 0) >= 0.60:
             ok.append(False)
         if name == "Gold breakout":
             ok.append(agent["ratio"] > bench["Hold GOLDBEES"]["ratio"])
@@ -507,7 +541,7 @@ def evaluate(m, name, W, cost_mult=1.0, lag=1, R=None, s0=None):
     end = R.index[-1]
     eq = run(W, R, s0, cost_mult, lag)
     mid = s0 + (end - s0) / 2
-    asset = NEEDS[name][0] if not name.startswith("Gold breakdown") else "GOLD FUT"
+    asset = NEEDS[name][0] if not name == "Gold breakdown short (control)" else "GOLD FUT"
     halves = {}
     for label_, a, b in (("first half", s0, mid), ("second half", mid, end)):
         part = eq.loc[a:b]
@@ -540,7 +574,8 @@ def backtest_rows(m=None):
         except (IndexError, ValueError):
             continue
         bench_name = COMPARE[name][0]
-        rows.append({"agent": name, "cagr": base["stats"]["cagr"], "dd": base["stats"]["dd"],
+        check = claim_check(m, {name: W}, name, base["start"], R, live=False) if name in BERLIN else ""
+        rows.append({"agent": name, "check": check, "cagr": base["stats"]["cagr"], "dd": base["stats"]["dd"],
                      "bench": bench_name, "bench_cagr": base["bench"][bench_name]["cagr"],
                      "bench_dd": base["bench"][bench_name]["dd"], "trades_yr": base["stats"]["trades_yr"],
                      "pass": bool(base["pass"] and strict["pass"]), "start": base["start"], "end": base["end"]})

@@ -1,0 +1,13 @@
+id,posted_at,kind,instrument,side,entry_type,entry,stop,target,rr,horizon,event_at,exit_at,price_ref,scorable,note
+77661,2026-10-27T05:06:00Z,level,NIFTY,short,market,,,,,intraday,,2026-10-27T07:04:00Z,,yes,"""I'm shorting nifty with a small sl"" (option buying). Closed in post 77665."
+77667,2026-10-27T07:37:00Z,level,NIFTY,short,market,,,,,intraday,,,,yes,"""Re-entering shorts!!"" No levels given."
+77687,2026-10-27T08:24:00Z,level,NIFTY,short,break,22685,22705,22622,,intraday,,,,yes,"Breakdown of 22679-22686 (trigger 22685, post 77688), stop 22705, target 22622."
+77704,2026-10-27T09:33:00Z,option,NIFTY,short,,,,,,intraday,,,,no,"Sell 22800 CE at Rs 25, stop Rs 5: an option premium, which free data can't price intraday."
+77719,2026-10-27T10:21:00Z,event,NZDCAD,,,,,,,event,2026-10-28T01:00:00Z,,,yes,"RBNZ rate decision at 6:30 AM IST, traded with the prep video's plan."
+77721,2026-10-27T16:00:00Z,level,GOLD,short,market,4064,,,,positional,,,77721,yes,"""GOLD at 4064$ ... add positional shorts"", stop at a ""pre-planned area"" not given in text."
+77736,2026-10-28T13:42:00Z,event,USDCAD,,,,,,,event,2026-10-28T13:45:00Z,2026-10-28T14:04:00Z,,yes,"Position for the Bank of Canada decision, RR 1:7; exited in post 77737 (""No major move"")."
+77743,2026-10-28T17:54:00Z,option,GOLD,short,,,,,,positional,,,,no,"GOLDMINI puts on MCX: an option premium, which free data can't price."
+77746,2026-10-29T03:54:00Z,option,SENSEX,,,,,,,intraday,,,,no,"Sold the Sensex 73300 straddle at Rs 500: option premiums."
+77750,2026-10-29T04:20:00Z,level,GOLD,short,break,4034,,,,positional,,,77721,yes,"Adding to gold shorts if gold breaks below 4034$."
+77751,2026-10-29T04:22:00Z,level,NIFTY,long,market,,22703,,2,intraday,,,,yes,"Trend line breakout trade, stop around 22703 (post 77749), RR 1:2."
+77767,2026-10-29T07:49:00Z,option,NIFTY,short,,,,,,intraday,,,,no,"Shorts on a breakdown of a red line drawn only on a chart image."

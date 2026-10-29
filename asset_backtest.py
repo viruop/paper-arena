@@ -51,7 +51,7 @@ def report(m, name, W, s0=None, note=""):
     header("  after costs, trading at the next close (the arena's rule)")
     hit = res["stats"].get("hit")
     line("Agent", res["stats"], f"  first-day hit {pct(hit).strip()} of {res['stats']['entries']}"
-         if name.startswith(("3-day", "Gold breakdown")) else "")
+         if name in aa.BERLIN else "")
     for bn, st in res["bench"].items():
         line(bn, st)
     for half, (st, bench) in res["halves"].items():
@@ -73,7 +73,7 @@ def arms(m, title, items):
             r = aa.evaluate(m, name, W, s0=s0)
             print(f"    {label:44s} {pct(r['stats']['cagr'], True)} a year, worst {pct(r['stats']['dd'])}, "
                   f"{r['stats']['trades_yr']:.1f} trades/yr" + (f", hit {pct(r['stats']['hit']).strip()}"
-                                                              if name.startswith(("3-day", "Gold breakdown")) else "")
+                                                              if name in aa.BERLIN else "")
                   + f" ({r['start'].date()} on)")
         except (IndexError, ValueError):
             print(f"    {label:44s} no price data yet")

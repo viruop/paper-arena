@@ -2,8 +2,8 @@ name: Daily paper arena
 
 on:
   schedule:
-    - cron: "0 15 * * 1-5"    # 8:30 pm IST, Monday to Friday (the free data updates around 7:30 pm IST)
-    - cron: "30 17 * * 1-5"   # 11:00 pm IST, a backup run in case the data was late
+    - cron: "17 15 * * 1-5"   # 8:47 pm IST, Monday to Friday (off the hour: runs set for :00 often start hours late)
+    - cron: "43 16 * * 1-5"   # 10:13 pm IST, a backup run in case the data was late
   push:
     branches: [main]          # rebuild the page whenever you edit a file, e.g. to add your own call
   workflow_dispatch:          # adds a "Run workflow" button on the Actions tab
@@ -47,6 +47,10 @@ jobs:
       - name: Download NSE option prices for the F&O agents
         continue-on-error: true   # if NSE can't be reached, the F&O agents use estimated prices
         run: python fno_prices.py
+
+      - name: Trade Like Berlin - save Telegram posts and paper trade his calls
+        continue-on-error: true   # if Telegram or Yahoo can't be reached, it tries again the next night
+        run: python berlin_calls.py
 
       - name: Add the newest days to the permanent logs
         run: python logbook.py

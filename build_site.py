@@ -20,6 +20,9 @@ import matplotlib.ticker  # noqa: E402
 import pandas as pd  # noqa: E402
 
 import asset_arena  # noqa: E402
+import berlin  # noqa: E402
+import berlin_calls  # noqa: E402
+import berlin_study  # noqa: E402
 import fno_arena  # noqa: E402
 import logbook  # noqa: E402
 import market_context as mc  # noqa: E402
@@ -258,6 +261,34 @@ column-gap:.6rem;row-gap:.1rem;padding:.75rem .1rem;border-bottom:1px solid var(
 .board .c-holding{grid-area:holding;color:var(--board-muted)}.board .c-since{grid-area:since}
 .board .c-next{grid-area:next;margin-top:.35rem}.m-label{display:inline;color:var(--board-muted)}
 .board .c-fall,.board .c-trades,.board .c-today{display:none}}
+
+.scoreboard{background:var(--board);color:var(--board-ink);border-radius:.75rem;padding:1rem 1rem .5rem;margin-top:1.75rem}
+.scoreboard h2{color:var(--board-ink);margin-bottom:.25rem}
+.scoreboard .meta{color:var(--board-muted)}
+.scoreboard th{color:var(--board-muted);border-bottom-color:var(--board-rule)}
+.scoreboard td{border-bottom-color:var(--board-rule);vertical-align:top}
+.scoreboard tr.grp td{color:var(--score);font:600 1.05rem/1.2 "Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+padding-top:1.1rem;border-bottom:1px solid var(--board-rule)}
+.scoreboard td.name{white-space:normal;font-weight:600}
+.scoreboard .sub{display:block;font-weight:400;font-size:.88rem;color:var(--board-muted);margin-top:.1rem}
+.scoreboard .up{color:var(--board-up)}.scoreboard .down{color:var(--board-down)}
+.scoreboard tr:last-child td{border-bottom:0}
+details.more{background:var(--surface);border-radius:.6rem;margin-top:.9rem;padding:0 1rem}
+details.more>summary{cursor:pointer;list-style:none;padding:.95rem 0;display:flex;justify-content:space-between;
+align-items:baseline;gap:1rem;font:600 1.3rem/1.2 "Barlow Condensed","Arial Narrow",system-ui,sans-serif}
+details.more>summary::-webkit-details-marker{display:none}
+details.more>summary::after{content:"+";color:var(--muted);font-size:1.4rem}
+details.more[open]>summary::after{content:"\2212"}
+details.more>summary .hint{flex:1;font:400 .92rem/1.35 "Barlow",system-ui,sans-serif;color:var(--muted)}
+details.more[open]{padding-bottom:1rem}
+details.more section{margin-top:1.25rem}
+details.more section h2{font-size:1.3rem}
+details.more.solo>section>h2:first-child{display:none}
+details.more.solo>section{margin-top:0}
+details.mini summary{cursor:pointer;color:var(--muted);font-size:.95rem;margin-top:.4rem}
+.calls li .tl-what{white-space:normal}
+@media (max-width:40rem){.scoreboard{padding:.85rem .6rem .4rem}details.more>summary{flex-wrap:wrap}
+details.more>summary .hint{flex-basis:100%;order:3}}
 """
 
 
@@ -407,11 +438,10 @@ def drift_html(view):
     found = logbook.drift(view)
     if not found:
         return ""
-    return (f"<div class='warn' role='status'><strong>The saved log and tonight's replay disagree</strong> on "
-            f"{found['rows']} {'row' if found['rows'] == 1 else 'rows'} (largest difference {inr(found['largest'])}, "
-            f"for {esc(found['agent'])} on "
-            f"{day(found['date'])}). This usually means the data source corrected an old price. The saved log "
-            f"stays the official record.</div>")
+    return (f"<p class='meta'>Note: tonight’s replay differs from the saved log on {found['rows']} "
+            f"{'row' if found['rows'] == 1 else 'rows'} (largest {inr(found['largest'])}, {esc(found['agent'])} on "
+            f"{day(found['date'])}), usually because a data source corrected an old price. The saved log stays "
+            f"the official record.</p>")
 
 
 def logs_html():
@@ -435,6 +465,10 @@ def logs_html():
              ("data/market", "Saved market prices", True, "daily ETF, gold, silver and S&P 500 prices for the gold "
                                                          "and multi-asset agents"),
              ("logs/starts.json", "Start dates", False, "when each newer agent started paper trading"),
+             ("data/berlin/telegram_posts.csv", "Telegram archive", False, "every Trade Like Berlin Telegram post, "
+                                                                          "saved the night it appeared"),
+             ("data/berlin/telegram_calls.csv", "Tagged calls", False, "which posts count as trade calls, and their levels"),
+             ("logs/berlin_calls.csv", "Call results", False, "how each call did when paper traded"),
              ("logs/journal.md", "Your journal", False, "your evening notes, which you edit on GitHub")]
     links = "".join(f"<li>{link(p, t, f)}: {esc(d)}</li>" for p, t, f, d in items)
     return (f"<section aria-labelledby='log-h'><h2 id='log-h'>Permanent record</h2>{intro}"
@@ -512,10 +546,13 @@ def fno_html(fres, fbt):
     return head + intro + body + fno_backtest_html(fbt) + "</section>"
 
 
-def asset_backtest_html(abt):
+def asset_backtest_html(abt, names=None):
     if not abt:
         return ""
     rows, sources = abt
+    rows = [r for r in rows if names is None or r["agent"] in names]
+    if not rows:
+        return ""
     items = []
     for r in rows:
         verdict = (f"<span class='{tone(1)}'>passes</span>" if r["pass"] else f"<span class='{tone(-1)}'>fails</span>")
@@ -531,14 +568,15 @@ def asset_backtest_html(abt):
 
 
 def asset_html(ares, abt):
+    names = [n for n in asset_arena.AGENTS if n not in berlin.STRATEGIES]
+    ares = only(ares, names)
     head = "<section aria-labelledby='asset-h'><h2 id='asset-h'>Gold and multi-asset arena</h2>"
-    intro = (f"<p>Six agents built from research into the Trade Like Berlin YouTube channel and strategies shared "
-             f"on Reddit and X, each with {inr(pa.CAPITAL)} of virtual money. They trade NSE ETFs and MCX gold "
-             f"futures, which Indian residents can legally use. The two controls test the channel’s own rules; "
-             f"the research expects them to lose.</p>")
+    intro = (f"<p>Four agents built from the research's evidence and from strategies shared on Reddit and X, "
+             f"each with {inr(pa.CAPITAL)} of virtual money. They trade NSE gold, silver and Nifty ETFs, which "
+             f"Indian residents can legally use. The channel’s own two rules are under Trade Like Berlin.</p>")
     if ares is None:
         return head + intro + "<p class='meta'>These agents couldn’t be updated tonight.</p>" + \
-            asset_backtest_html(abt) + "</section>"
+            asset_backtest_html(abt, names) + "</section>"
     why = ares.get("why", {})
     rules = "".join(f"<li><strong>{esc(n)}:</strong> {esc(r['rule'])}"
                     + (f" <span class='meta'>Now: {esc(why[n])}</span>" if n in why else "") + "</li>"
@@ -579,7 +617,201 @@ def asset_html(ares, abt):
                             f"<span class='tl-what'>{esc(t['what'])}</span></li>" for t in recent)
             body += f"<h3>Latest trades</h3><ul class='panel tlist'>{items}</ul>"
         body += f"<h3>Rules and where each signal stands</h3><ul class='links'>{rules}</ul>"
-    return head + intro + body + asset_backtest_html(abt) + "</section>"
+    return head + intro + body + asset_backtest_html(abt, names) + "</section>"
+
+
+def only(res, names):
+    """A copy of an arena's results with just some of its agents."""
+    if res is None:
+        return None
+    out = dict(res)
+    out["board"] = res["board"][res["board"].index.isin(names)]
+    out["values"] = res["values"][[c for c in res["values"].columns if c in names]]
+    out["trades"] = [t for t in res["trades"] if t["agent"] in names]
+    out["started"] = bool((out["board"]["holding"] != "Not started yet").any())
+    starts_ = [d for d in out["board"].get("start", pd.Series(dtype=object)) if d is not None and not pd.isna(d)]
+    out["first_start"] = min(starts_) if starts_ else None
+    return out
+
+
+def ist(ts):
+    t = pd.Timestamp(ts).tz_convert("Asia/Kolkata")
+    return f"{t.day} {t:%b}, {t:%H:%M}"
+
+
+# ------------------------------- the scoreboard ----------------------------------
+def board_rows(res, names=None):
+    """(name, value, since start, small note) for each agent of one arena, best first."""
+    if res is None:
+        return []
+    board = res["board"] if names is None else res["board"][res["board"].index.isin(names)]
+    out = []
+    for name, r in board.iterrows():
+        if r["holding"] == "Not started yet":
+            start = r.get("start")
+            note = (f"Starts {day(start)}" if start is not None and not pd.isna(start) else "Starts soon")
+            out.append((name, None, None, note))
+        else:
+            out.append((name, r["value"], r["since_start"], r["holding"]))
+    return sorted(out, key=lambda x: -(x[1] or 0))
+
+
+def overview_html(res, fres, ares, tg):
+    """Every strategy on one board: the quickest answer to "is it making money?"."""
+    berlin_names = [n for n, i in berlin.STRATEGIES.items() if i["kind"] == "agent"]
+    nifty = board_rows(res) if res["started"] else [(n, None, None, f"Starts {day(pd.Timestamp(pa.START))}")
+                                                    for n in res["plan"]]
+    tl = board_rows(ares, berlin_names)
+    tl = [(berlin.STRATEGIES[n]["title"], v, c, note) for n, v, c, note in tl]
+    if tg:
+        for book, title, what in (("events", "Forex news-event plan", "event"), ("calls", "His Telegram calls", "call")):
+            b = tg["books"][book]
+            done = b["wins"] + b["losses"]
+            note = (f"{done} {what}{'s' if done != 1 else ''} closed, {b['wins']} won" if done else
+                    f"No {what}s closed yet") + (f"; {b['pending']} open" if b["pending"] else "")
+            tl.append((title, b["value"], b["value"] / berlin_calls.CAPITAL - 1, note))
+    groups = [("Nifty 50 agents and Claude", nifty), ("Trade Like Berlin", tl),
+              ("Gold and multi-asset", board_rows(ares, [n for n in asset_arena.AGENTS if n not in berlin.STRATEGIES])),
+              ("F&amp;O (3x leverage)", board_rows(fres))]
+    rows = []
+    for title, items in groups:
+        if not items:
+            continue
+        rows.append(f"<tr class='grp'><td colspan='3'>{title}</td></tr>")
+        for name, value, since, note in items:
+            val = inr(value) if value is not None else "–"
+            chg = (f"<span class='{tone(since)}'>{pct(since, True, 2)}</span>" if since is not None else "")
+            rows.append(f"<tr><td class='name'>{esc(name)}<span class='sub'>{esc(note)}</span></td>"
+                        f"<td class='r num-big'>{val}</td><td class='r'>{chg}</td></tr>")
+    return (f"<section class='scoreboard' aria-labelledby='sb-h'><h2 id='sb-h'>Every strategy</h2>"
+            f"<p class='meta'>Each started with {inr(pa.CAPITAL)} of virtual money on its own start date. "
+            f"Tap a section below for details.</p><div class='scroll'><table><thead><tr><th>Strategy</th>"
+            f"<th class='r'>Value</th><th class='r'>Since start</th></tr></thead><tbody>{''.join(rows)}"
+            f"</tbody></table></div></section>")
+
+
+def claude_latest_html(res):
+    log = res.get("claude_log") or []
+    if not log:
+        return ""
+    d = log[0]
+    conds = ""
+    if d.get("go_to_cash_if"):
+        conds += f"<li>Goes to cash if {esc(d['go_to_cash_if'].rstrip('.'))}.</li>"
+    if d.get("go_fully_in_if"):
+        conds += f"<li>Goes fully in if {esc(d['go_fully_in_if'].rstrip('.'))}.</li>"
+    return (f"<section aria-labelledby='cl-h'><h2 id='cl-h'>Claude’s latest call</h2>"
+            f"<article class='decision'><h3>{day(pd.Timestamp(d['date']))}: {float(d['position']):.0%} in Nifty 50"
+            f"</h3><p>{esc(d.get('summary', ''))}</p><ul>{conds}</ul></article></section>")
+
+
+def more(title, hint, inner, solo=False):
+    if not inner:
+        return ""
+    return (f"<details class='more{' solo' if solo else ''}'><summary>{title}<span class='hint'>{hint}</span>"
+            f"</summary>{inner}</details>")
+
+
+# ------------------------------- Trade Like Berlin --------------------------------
+def call_line(call, res):
+    """One Telegram call for the page: what he said and what paper trading it did."""
+    note = esc(call["note"])
+    if call["scorable"] != "yes":
+        return f"{note} <span class='meta'>Not scored.</span>"
+    mine = res[res["id"].astype(str) == str(call["id"])] if len(res) else res
+    if not len(mine):
+        return f"{note} <span class='meta'>Open, or waiting for its prices.</span>"
+    if (mine["outcome"] == "not filled").all():
+        return f"{note} <span class='meta'>Never triggered.</span>"
+    pnl = pd.to_numeric(mine["pnl_rs"]).sum()
+    legs = ", ".join(f"{r['leg']} {r['side']} {r['outcome']}" if call["kind"] == "event" else r["outcome"]
+                     for _, r in mine.iterrows())
+    money = f"{'+' if pnl >= 0 else '−'}₹{abs(pnl):,.0f}"
+    return f"{note} <strong class='{tone(pnl)}'>{money}</strong> <span class='meta'>({esc(legs)})</span>"
+
+
+def telegram_html(tg):
+    if not tg:
+        return "<p class='meta'>The Telegram record couldn’t be read tonight.</p>"
+    calls, res = tg["calls"], tg["results"]
+    b = tg["books"]["calls"]
+    def li(c):
+        return (f"<li><span class='meta'>{ist(c['posted_at'])} IST · {esc(c['instrument'])}</span>"
+                f"<span class='tl-what'>{call_line(c, res)}</span></li>")
+    ordered = [c for _, c in calls.sort_values("posted_at", ascending=False).iterrows()] if len(calls) else []
+    items = [li(c) for c in ordered[:6]]
+    older = "".join(li(c) for c in ordered[6:])
+    scored = int((calls["scorable"] == "yes").sum()) if len(calls) else 0
+    return (f"<h3>His Telegram calls, paper traded</h3>"
+            f"<p>Every post on <a href='{berlin.TELEGRAM}'>his Telegram channel</a> since "
+            f"{day(pd.Timestamp(berlin.TELEGRAM_FROM))} is saved each night ({tg['posts']} so far"
+            + (f", {tg['changed']} changed after saving" if tg["changed"] else "") + "). "
+            f"Of {len(calls)} trade calls, {scored} have levels free data can check; each risks ₹1,000. "
+            f"Gold and Nifty calls: <strong>{inr(b['value'])}</strong>, {b['wins']} won and {b['losses']} lost"
+            + (f", {b['pending']} still open" if b["pending"] else "") + ".</p>"
+            f"<ul class='panel tlist calls'>{''.join(items)}</ul>"
+            + (f"<details class='mini'><summary>Older calls ({len(ordered) - 6})</summary>"
+               f"<ul class='panel tlist calls'>{older}</ul></details>" if older else "") +
+            f"<p class='meta'>Market calls fill at the next 5-minute bar after the post; a missing stop is set at "
+            f"0.2% (Nifty) or 1.5% (gold) and said so. Option-premium trades and levels drawn only on chart "
+            f"images can’t be scored. Claims made after the move don’t count.</p>")
+
+
+def study_line(st):
+    if not st:
+        return ""
+    call = st.get("call")
+    after = (f" On 28 Oct the move was {pct(call['move'], True, 2)} against a {call['bias']} bias: "
+             f"{'a hit' if call['hit'] else 'a miss'}." if call else
+             f" The 28 Oct decision is checked once the Fed’s weekly rates include it.")
+    return (f"In {st['n']} RBNZ decisions since {st['first'].year}, the next move followed the last 5 days "
+            f"{pct(st['hit'], digits=0)} of the time (ordinary days {pct(st['control_hit'], digits=0)}), so the "
+            f"direction rule is a coin flip. The size claim holds better: decision days moved a median "
+            f"{pct(st['median_move'], digits=2)} against {pct(st['control_median'], digits=2)} on other days."
+            + after)
+
+
+def berlin_html(ares, abt, tg, st):
+    """The channel's strategies: one short card per video, then its Telegram calls."""
+    boards, why, checks = {}, {}, {}
+    if ares is not None:
+        boards = {n: r for n, r in ares["board"].iterrows()}
+        why, checks = ares.get("why", {}), ares.get("checks", {})
+    tested = {r["agent"]: r for r in (abt[0] if abt else [])}
+    cards = []
+    for name, info in berlin.STRATEGIES.items():
+        if info["kind"] == "agent":
+            r = boards.get(name)
+            if r is None:
+                now = "Couldn’t be updated tonight."
+            elif r["holding"] == "Not started yet":
+                now = "Starts paper trading on the next trading day."
+            else:
+                now = (f"<strong>{inr(r['value'])}</strong> (<span class='{tone(r['since_start'])}'>"
+                       f"{pct(r['since_start'], True, 2)}</span> since {day(r['start'])}), holding "
+                       f"{esc(r['holding'])}. {esc(why.get(name, ''))}")
+            bt_ = tested.get(name)
+            past = (f"Backtest {day(bt_['start'])} to {day(bt_['end'])}: {pct(bt_['cagr'], True)} a year against "
+                    f"{esc(bt_['bench']).lower()} at {pct(bt_['bench_cagr'], True)}. {esc(bt_.get('check', ''))}"
+                    if bt_ else "")
+            paper = checks.get(name)
+            result = (esc(paper) + " " if paper else "") + past
+        else:
+            b = tg["books"]["events"] if tg else None
+            now = (f"<strong>{inr(b['value'])}</strong> from {b['wins'] + b['losses']} event"
+                   f"{'s' if b['wins'] + b['losses'] != 1 else ''} traded so far." if b else "")
+            result = study_line(st)
+        cards.append(
+            f"<article class='decision'><h3>{esc(info['title'])}</h3>"
+            f"<p class='meta'>Video: “<a href='{esc(info['url'])}'>{esc(info['video'])}</a>”, "
+            f"{day(pd.Timestamp(info['published']))}</p><p>{esc(info['claim'])}</p><dl class='why'>"
+            f"<dt>Now</dt><dd>{now}</dd>" + (f"<dt>Does the claim hold?</dt><dd>{result}</dd>" if result else "")
+            + f"</dl><details class='mini'><summary>How it’s tested</summary><p class='meta'>{esc(info['changes'])}"
+            f"</p></details></article>")
+    return (f"<section aria-labelledby='berlin-h'><h2 id='berlin-h'>Trade Like Berlin</h2>"
+            f"<p>Strategies from the <a href='{berlin.CHANNEL}'>Trade Like Berlin</a> YouTube channel and its "
+            f"Telegram calls, all paper traded by fixed rules. Gaps such as a missing stop are filled and stated. "
+            f"New video? Send Claude the link.</p>{''.join(cards)}{telegram_html(tg)}</section>")
 
 
 def backtest_html(rows, curves, first, last):
@@ -609,7 +841,7 @@ def backtest_html(rows, curves, first, last):
             f"<p class='meta'>Past results don't predict future ones.</p></section>")
 
 
-def page(res, bt_parts, ctx, fres=None, fbt=None, view=None, ares=None, abt=None):
+def page(res, bt_parts, ctx, fres=None, fbt=None, view=None, ares=None, abt=None, tg=None, st=None):
     built = dt.datetime.now(IST)
     if res["started"]:
         status = (f"Prices up to the close on {day(res['latest'])}. Day {res['days']} of paper trading, "
@@ -633,22 +865,24 @@ def page(res, bt_parts, ctx, fres=None, fbt=None, view=None, ares=None, abt=None
 <div class="wrap">
 <header>
 <h1>Paper arena</h1>
-<p class="lede">Six rule-following agents and Claude trade Nifty, each with {inr(pa.CAPITAL)} of virtual money. Seven F&amp;O agents and six gold and multi-asset agents trade in arenas of their own. Nothing here is real money.</p>
+<p class="lede">Every strategy here trades {inr(pa.CAPITAL)} of virtual money by fixed rules, so you can see which ones actually make money. Nothing here is real money.</p>
 <p class="meta">{status}</p>
 </header>
 <main>
 {drift_html(view)}
-{board_html(res)}
-{market_html(res, ctx)}
-{why_html(res)}
-{arena_chart_html(res)}
-{trades_html(res)}
-{claude_html(res)}
-{calls_html(res)}
-{fno_html(fres, fbt)}
-{asset_html(ares, abt)}
-{logs_html()}
-{backtest_html(*bt_parts)}
+{overview_html(res, fres, ares, tg)}
+{claude_latest_html(res)}
+{berlin_html(ares, abt, tg, st)}
+<section aria-labelledby='more-h'><h2 id='more-h'>Details</h2>
+{more("Nifty 50 agents", "Standings, the market, why each agent holds what it holds, trades",
+      board_html(res) + market_html(res, ctx) + why_html(res) + arena_chart_html(res) + trades_html(res))}
+{more("Claude’s decisions", "Every decision with its reasons", claude_html(res), solo=True)}
+{more("Gold and multi-asset arena", "Four ETF agents, their rules and backtests", asset_html(ares, abt), solo=True)}
+{more("F&amp;O arena", "Seven futures and options agents, 3x leverage", fno_html(fres, fbt), solo=True)}
+{more("Backtest since 2010", "How the Nifty rules did before paper trading", backtest_html(*bt_parts), solo=True)}
+{more("Your calls", "Add your own Nifty calls", calls_html(res), solo=True)}
+{more("Permanent record", "The logs and saved data behind this page", logs_html(), solo=True)}
+</section>
 </main>
 <footer>
 <p>For learning only. Not investment advice. No real orders are placed.</p>
@@ -678,9 +912,19 @@ def main():
     except Exception as exc:  # the page still builds without this backtest
         print(f"  ! Gold and multi-asset backtest skipped: {exc}")
         abt = None
+    try:
+        tg = berlin_calls.summary()
+    except Exception as exc:  # the page still builds without the Telegram record
+        print(f"  ! Telegram record skipped: {exc}")
+        tg = None
+    try:
+        st = berlin_study.study(berlin_study.rates(refresh=False))
+    except Exception as exc:  # no saved Fed rates yet
+        print(f"  ! RBNZ study skipped: {exc}")
+        st = None
     view = logbook.merged(res, fres, ares)
     with open(os.path.join(SITE, "index.html"), "w", encoding="utf-8") as f:
-        f.write(page(res, bt_parts, ctx, fres, fbt, view, ares, abt))
+        f.write(page(res, bt_parts, ctx, fres, fbt, view, ares, abt, tg, st))
     if view:
         log = pd.concat([b["values"] for b in view], axis=1).round(2)
         log = log.loc[:, ~log.columns.duplicated()]

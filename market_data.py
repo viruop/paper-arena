@@ -164,16 +164,16 @@ def read_cache(name):
 
 
 def merge(cached, fresh):
-    """Keep saved rows; let a fresh download add new days, fill gaps and revise the last few days."""
+    """Keep saved rows; let a fresh download add new days, fill gaps and revise the last few days.
+    A saved day is never deleted: a download made after midnight can be missing the latest session."""
     if cached.empty:
         return fresh
     if fresh.empty:
         return cached
     cutoff = cached.index[-1] - pd.Timedelta(days=REVISABLE_DAYS)
-    old = cached[cached.index <= cutoff]
-    gaps = fresh[(fresh.index <= cutoff) & ~fresh.index.isin(old.index)]
-    new = fresh[fresh.index > cutoff]
-    return pd.concat([old, gaps, new]).sort_index()
+    kept = cached[(cached.index <= cutoff) | ~cached.index.isin(fresh.index)]
+    revised = fresh[(fresh.index > cutoff) | ~fresh.index.isin(cached.index)]
+    return pd.concat([kept, revised]).sort_index()
 
 
 def refresh(name):

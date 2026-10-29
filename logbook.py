@@ -10,9 +10,10 @@ can't silently change:
   decisions/snapshots/    the data snapshot behind each Claude decision
   logs/journal.md         your own notes (you edit this one)
 
-Each group of agents is logged once its prices for a day are final: the Nifty agents when the
-day's close is in, the F&O agents once NSE's option prices are saved, and the gold and
-multi-asset agents once every ETF price is in. So rows for different groups can arrive on
+Each group of agents is logged once its prices for a day are in: the Nifty agents when the
+day's close is in, the F&O agents the same night (with NSE's option prices if that night's
+download worked, estimates otherwise), and the gold and multi-asset agents once every ETF
+price is in. The Trade Like Berlin Telegram calls have their own record, logs/berlin_calls.csv. So rows for different groups can arrive on
 different nights. If a later replay disagrees with saved rows, for example because a data
 source corrected an old price, the page shows a warning. The saved log stays the official record.
 
@@ -207,6 +208,8 @@ def ensure_snapshot(closes, res):
     log = ca.load_log()
     latest = res["latest"].date().isoformat()
     if not any(d["date"] == latest for d in log) or os.path.exists(snapshot_path(latest)):
+        return False
+    if any(d["date"] > latest for d in log):   # the data is behind a later decision (e.g. a run after midnight)
         return False
     earlier = [d for d in log if d["date"] != latest]
     text = ca.snapshot(closes, res, earlier, mc.context())

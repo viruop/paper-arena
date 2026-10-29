@@ -3,8 +3,8 @@ fno_arena.py - the paper arena's F&O agents.
 
 Seven futures and options strategies from fno_backtest.py trade Nifty with virtual money, each
 from the start date logs/starts.json gives it (the first trading day after it was added).
-Option trades use NSE's real opening and closing prices saved by fno_prices.py, and
-estimated prices only for days or contracts NSE's file doesn't cover. Futures trades use the
+Option trades use NSE's real opening and closing prices saved by fno_prices.py when that night's
+download worked, and estimated prices (from India VIX) for days or contracts NSE's file doesn't cover. Futures trades use the
 Nifty 50 index itself. Intraday stop-losses are judged from the day's high and low.
 
 FOR LEARNING ONLY. Not investment advice. No real orders are placed.

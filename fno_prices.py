@@ -5,8 +5,8 @@ opening and closing prices instead of estimates.
 
 Each night it fetches the newest trading days that don't have a file yet. Besides the two
 nearest expiries it keeps every monthly expiry within about three months, for the low-VIX straddle. If NSE can't be
-reached, the arena uses estimated prices for that day. After GRACE more trading days a missing
-day is given up for good, so saved results never change afterwards.
+reached, the arena uses estimated prices for that day straight away, so the F&O agents log every
+night like the other agents. A day logged with estimates keeps them, so saved results never change.
 
 Run:  python fno_prices.py
 FOR LEARNING ONLY. Not investment advice. No real orders are placed.
@@ -26,7 +26,7 @@ URL = "https://nsearchives.nseindia.com/content/fo/BhavCopy_NSE_FO_0_0_0_{:%Y%m%
 HEADERS = {"User-Agent": ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
                           "(KHTML, like Gecko) Chrome/126.0 Safari/537.36"),
            "Referer": "https://www.nseindia.com/", "Accept": "*/*"}
-GRACE = 2            # trading days to keep retrying a missing day
+GRACE = 0            # extra trading days to wait for a missing NSE file before logging (0: log the same night)
 KEEP_EXPIRIES = 2    # nearest expiries to keep
 MONTHLY_DAYS = 100   # also keep every monthly expiry within this many days (for the low-VIX straddle)
 KEEP_RANGE = 0.08    # strikes within 8% of Nifty

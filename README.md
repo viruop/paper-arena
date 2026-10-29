@@ -1,6 +1,6 @@
 # Paper arena
 
-Six agents follow simple Nifty rules and Claude makes its own decisions, each with ₹1 lakh of virtual money, and a web page shows how they're doing. GitHub runs everything every weekday evening.
+Rule-following agents, Claude, F&O strategies, gold and multi-asset agents and the Trade Like Berlin channel's strategies each trade ₹1 lakh of virtual money, and one web page shows which of them make money. GitHub runs everything every weekday evening.
 
 For learning only. Not investment advice. No real orders are placed.
 
@@ -17,7 +17,11 @@ For learning only. Not investment advice. No real orders are placed.
 | `fno_arena.py` | Paper-trades the same seven strategies |
 | `fno_prices.py` | Downloads NSE's daily option prices for the F&O agents |
 | `data/fno/` | The NSE option prices the F&O agents traded at (added automatically) |
-| `asset_arena.py` | Six gold and multi-asset agents: gold, silver and Nifty ETFs, and MCX gold futures |
+| `asset_arena.py` | Six gold and multi-asset agents (two of them the Trade Like Berlin channel's rules): gold, silver and Nifty ETFs, and MCX gold futures |
+| `berlin.py` | The Trade Like Berlin videos being tested: claim, changes and the name each trades under |
+| `berlin_calls.py` | Saves every Trade Like Berlin Telegram post each night and paper trades his calls |
+| `berlin_study.py` | Checks the forex video's claim on every RBNZ rate decision since 1999 |
+| `data/berlin/` | The Telegram archive and the tagged calls |
 | `asset_backtest.py` | Backtests the gold and multi-asset agents against their benchmarks |
 | `market_data.py` | Downloads and saves daily ETF, gold, silver and S&P 500 prices |
 | `data/market/` | The saved prices (added automatically) |
@@ -46,7 +50,9 @@ The first run starts by itself when you upload the files in step 3. It fails bec
 
 ## Every day
 
-Nothing. The page updates on weekdays at about 8:30 pm IST, with a backup run at 11 pm, after the free price data updates. GitHub sometimes starts scheduled runs a little late.
+Nothing, apart from Claude's decision if you make it in chat (say "Claude agent update"). The page updates on weekdays at about 8:45 pm IST, with a backup run at about 10:15 pm. The runs are set a few minutes off the hour because GitHub often starts runs set for the hour hours late.
+
+The page starts with **Every strategy**: one board with each strategy's value and return since it started, grouped by arena. Below it are Claude's latest call and the Trade Like Berlin section; everything else (rules, charts, trades, backtests, logs) is folded under **Details**.
 
 ## F&O arena
 
@@ -62,11 +68,23 @@ Seven futures and options strategies trade Nifty in a separate arena, each with 
 
 Futures and option selling use 3x the agent's capital. Costs include brokerage, exchange charges, GST, stamp duty, slippage and STT at the rates in force on each date.
 
-Each night `fno_prices.py` downloads NSE's daily F&O price file and saves the Nifty options the agents need to `data/fno/`, so option trades use real opening and closing prices. If NSE can't be reached, that day uses estimated prices; a day is written to the permanent logs only once its prices are final, so saved results never change. Futures trades use the Nifty 50 index itself, and intraday stop-losses are judged from the day's high and low.
+Each night `fno_prices.py` tries to download NSE's daily F&O price file and save the Nifty options the agents need to `data/fno/`, so option trades use real opening and closing prices. If NSE can't be reached (it often blocks cloud servers), that day uses prices estimated from India VIX. Either way the agents log every night, like the other agents, and a logged day never changes. The page says how many days used real prices. Futures trades use the Nifty 50 index itself, and intraday stop-losses are judged from the day's high and low.
 
 `python fno_backtest.py` runs the same strategies from February 2019, when weekly Nifty options began. Free data has no past option prices, so the backtest estimates them from India VIX and shows how much results change with that estimate. Treat option results as a rough guide; the paper trading with real prices is the real test.
 
 In SEBI's study of FY26, 87.7% of individual F&O traders lost money. Nothing here is a recommendation to trade F&O.
+
+## Trade Like Berlin
+
+The page has a section for the [Trade Like Berlin](https://www.youtube.com/@tradelikeberlin_) YouTube channel and its [Telegram channel](https://t.me/tradelikeberlin). Each video gets a card: the claim, what had to change to test it legally and mechanically, where it stands, and whether the claim holds.
+
+- **Gold breakdown short** ("GOLD IS PREPARING FOR SOMETHING BIG", 22 Oct 2026), traded as the agent "Gold breakdown short (control)": short gold through MCX Gold Petal futures when COMEX gold closes below its lowest low of the previous 55 sessions; buy back after a 10% fall or a close above the highest close of the previous 20. The video gives no stop, so one is added.
+- **3-day rule** ("BTST TRADE RULES", 26 Oct 2025), traded as "3-day rule + US filter (control)": buy NIFTYBEES when Nifty closes above the previous 3 days' high and its 10-day average while the S&P 500 is up over 3 sessions; sell when Nifty closes below the previous 3 days' low.
+- **Forex news-event plan** ("THE FOREX TRADE OPPORTUNITY", 25 Oct 2026): trade a rate decision in the direction of the last 4-5 days, with a two-sided hedge. Offshore forex isn't legal for Indian residents, so this is only ever paper traded: each event he announces is traded on 5-minute prices with the video's stops and targets. `berlin_study.py` also checks the direction claim ("6 out of 10") on 209 RBNZ decisions since 1999: the move followed the last 5 days 50% of the time, no better than ordinary days, though decision days do move about twice as much.
+
+**Telegram.** Each night `berlin_calls.py` saves every new post from his public channel to `data/berlin/telegram_posts.csv`, with the time Telegram shows; a post he edits later is saved again, so the record can't be rewritten. Posts that tell followers to take a position, or say he has taken one, are tagged as calls in `data/berlin/telegram_calls.csv` (ask Claude: "Berlin Telegram update"). Every call is paper traded by fixed rules: it risks ₹1,000, fills at the next 5-minute bar after the post (or when price crosses his level), and uses his stop and target. A missing stop is set at 0.2% for Nifty or 1.5% for gold, and said so. Results go to `logs/berlin_calls.csv` and are never rewritten. Option-premium trades and levels drawn only on chart images can't be checked with free data and are listed as not scored.
+
+**New strategy video?** Send Claude the link. The steps are in `.claude/skills/berlin-new-video/SKILL.md`: a new agent with a new name and an entry in `berlin.py`. Existing agents never change.
 
 ## Gold and multi-asset arena
 
@@ -81,7 +99,7 @@ Six agents built from research into the Trade Like Berlin YouTube channel and st
 
 Every rule acts at the close after its signal, like the other agents. Signals that use US markets only see US sessions that ended before India's close that day. ETF trades cost 0.05% a buy or sell; Gold Petal 0.05% plus a monthly roll. Idle cash earns 6%.
 
-`market_data.py` downloads the prices from Yahoo Finance's public data each night and saves them in `data/market/`, so a failed download never loses history. `python asset_backtest.py` backtests every agent against the benchmark the research set for it, in both halves of the period, at double costs and with its variant settings; add `--nav` to fall back to daily ETF NAVs where no saved prices exist. In a backtest on ETF NAVs from 2007 to Sep 2026, none of the six passed its bar: the gold breakout trailed simply holding gold (11.1% a year against 14.2%) with only a slightly smaller worst fall, the Nifty-gold switch matched a 50/50 mix, and both channel rules did worse than cash. They paper-trade anyway, so you can watch whether that holds.
+`market_data.py` downloads the prices from Yahoo Finance's public data each night and saves them in `data/market/`, so a failed download never loses history. `python asset_backtest.py` backtests every agent against the benchmark the research set for it, in both halves of the period, at double costs and with its variant settings; add `--nav` to fall back to daily ETF NAVs where no saved prices exist. On Yahoo's daily prices from 2009, none of the six passes its bar: the gold breakout trailed simply holding gold (10.6% a year against 13.0%), the Nifty-gold switch lost to a 50/50 mix in the first half, and both channel rules did worse than cash. They paper-trade anyway, so you can watch whether that holds.
 
 ## Start dates
 
@@ -98,7 +116,7 @@ Every run adds the newest days to two logs and commits them to the repository:
 - `logs/daily.csv`: one row per agent per day, with its holding, value, return since start and any trade.
 - `logs/trades.csv`: every trade, with Nifty 50's close that day.
 
-Each group of agents is logged once its prices for the day are final: the Nifty agents when the close is in, the F&O agents once NSE's option prices are saved (or after two days of trying), and the gold and multi-asset agents once every ETF price is in. Rows for different groups can therefore arrive on different nights. Old rows are never rewritten, so past results can't quietly change. If a later replay of the arena disagrees with the saved rows, for example because the data source corrected an old price, the page shows a warning, and the saved log stays the official record.
+Each group of agents is logged once its prices for the day are final: the Nifty agents when the close is in, the F&O agents the same night, and the gold and multi-asset agents once every ETF price is in. Rows for different groups can therefore arrive on different nights. Old rows are never rewritten, so past results can't quietly change. If a later replay of the arena disagrees with the saved rows, for example because the data source corrected an old price, the page shows a warning, and the saved log stays the official record.
 
 Each Claude decision also gets a file in `decisions/snapshots/` with the data it was based on. Write your own evening notes in `logs/journal.md`; it has a short template.
 
