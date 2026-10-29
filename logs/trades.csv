@@ -7,3 +7,6 @@ date,agent,trade,nifty_close
 2026-10-28,Gold/silver reversion,Bought SILVERBEES,22698.85
 2026-10-28,Gold/silver trend,Bought GOLDBEES,22698.85
 2026-10-28,Nifty-gold switch,Bought NIFTYBEES,22698.85
+2026-10-29,Futures trend (long/short),"Sold futures at the open, 22,691",22936.75
+2026-10-29,Intraday futures,"Bought at the open 22,691, closed at 22,937: +Rs 3,042",22936.75
+2026-10-29,Intraday short straddle,"Sold the 22,700 straddle at 309.8, bought back at 342.1: -Rs 483",22936.75

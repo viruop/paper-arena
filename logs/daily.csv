@@ -33,3 +33,23 @@ date,agent,holding,value,since_start,trade,nifty_close
 2026-10-28,Momentum rotation,NIFTY PHARMA,104681.57,0.046816,,22698.85
 2026-10-28,Nifty-gold switch,NIFTYBEES,100000.00,0.000000,Bought NIFTYBEES,22698.85
 2026-10-28,RSI(2) dip-buy,Cash,100069.95,0.000699,,22698.85
+2026-10-29,200-day trend,Cash,100093.27,0.000933,,22936.75
+2026-10-29,3-day rule + US filter (control),NIFTYBEES,100832.16,0.008322,,22936.75
+2026-10-29,Buy & hold,NIFTY 50,101389.24,0.013892,,22936.75
+2026-10-29,Cash only,Cash,100093.27,0.000933,,22936.75
+2026-10-29,Claude,50% NIFTY 50,100412.22,0.004122,,22936.75
+2026-10-29,Futures trend (long/short),Short futures (3x),96648.70,-0.033513,"Sold futures at the open, 22,691",22936.75
+2026-10-29,Gold breakdown short (control),Short gold (Gold Petal),100645.47,0.006455,,22936.75
+2026-10-29,Gold breakout,Cash,100023.31,0.000233,,22936.75
+2026-10-29,Gold/silver reversion,SILVERBEES,97880.40,-0.021196,,22936.75
+2026-10-29,Gold/silver trend,GOLDBEES,99301.15,-0.006989,,22936.75
+2026-10-29,Golden cross,Cash,100093.27,0.000933,,22936.75
+2026-10-29,Intraday futures,Nothing overnight,103065.36,0.030654,"Bought at the open 22,691, closed at 22,937: +Rs 3,042",22936.75
+2026-10-29,Intraday short straddle,Nothing overnight,99539.89,-0.004601,"Sold the 22,700 straddle at 309.8, bought back at 342.1: -Rs 483",22936.75
+2026-10-29,Low-VIX long straddle,Cash,100023.13,0.000231,,22936.75
+2026-10-29,Momentum rotation,NIFTY PHARMA,105349.91,0.053499,,22936.75
+2026-10-29,Nifty-gold switch,NIFTYBEES,100832.16,0.008322,,22936.75
+2026-10-29,RSI(2) dip-buy,Cash,100093.27,0.000933,,22936.75
+2026-10-29,Weekly iron condor,Cash,100023.13,0.000231,,22936.75
+2026-10-29,Weekly option buying,Cash,100023.13,0.000231,,22936.75
+2026-10-29,Weekly short strangle,Cash,100023.13,0.000231,,22936.75
