@@ -1,10 +1,12 @@
 """
 berlin_calls.py - the Trade Like Berlin Telegram channel, archived and paper traded.
 
-Each night it:
+It:
   1. saves every new post from the public channel (t.me/s/tradelikeberlin) to
-     data/berlin/telegram_posts.csv, with the time Telegram shows. A post that later changes is
-     saved again as a new version, so nothing he edits afterwards rewrites the record;
+     data/berlin/telegram_posts.csv, with the time Telegram shows, every 30 minutes through
+     .github/workflows/telegram.yml (archive()). A post that later changes is saved again as a
+     new version, so nothing he edits afterwards rewrites the record;
+  and each night (main()):
   2. keeps the last 60 days of 5-minute prices (Yahoo) for every instrument his calls use, in
      data/market/intraday/;
   3. paper trades every call tagged in data/berlin/telegram_calls.csv once its time window has
@@ -408,11 +410,8 @@ def summary():
 
 
 def main():
-    try:
-        added = archive()
-        print(f"Telegram: saved {added} new or changed posts.")
-    except Exception as exc:  # Telegram unreachable: try again tomorrow
-        print(f"Telegram not reached: {exc}")
+    # New posts are saved every 30 minutes by .github/workflows/telegram.yml (archive()), not here,
+    # so the two workflows never edit the same file at once.
     calls = read_calls()
     open_ = calls[(calls.get("scorable", pd.Series(dtype=str)) == "yes")] if len(calls) else calls
     done = set(read_results()["id"].astype(str))
