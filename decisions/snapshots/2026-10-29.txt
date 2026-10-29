@@ -1,0 +1,28 @@
+Data as of the close of 2026-10-29, recorded by the nightly run after this decision was saved. News searches aren't included.
+
+Latest close: Thursday 29 October 2026. Your decision is filled at the next trading day's close.
+Nifty 50 close: 22,936.75 (+1.05% on the day).
+Averages: 200-day 24,057, 50-day 23,277, 20-day 22,685, 5-day 22,748. RSI(2) 87, RSI(14) 51.
+2026 so far: high 26,329 on 02 Jan, low 22,232 on 08 Oct.
+Breadth on 27 Oct: 25% of Nifty 50 stocks are above their 200-day average and 24% above their 50-day average (50 stocks with data).
+  A month ago: 27% above the 200-day, 16% above the 50-day.
+Institutional flows on 28 Oct (Rs crore, cash market): FII +872, DII +643. Last 5 sessions: FII +1,079, DII +8,130.
+Index returns over 1 month / 3 months / 6 months:
+  NIFTY 50: +1.0% / -5.7% / -5.1%
+  NIFTY BANK: +1.2% / -3.9% / -0.9%
+  NIFTY IT: +15.2% / +2.2% / +9.0%
+  NIFTY PHARMA: -0.8% / +1.4% / +14.8%
+  NIFTY MIDCAP 50: -2.2% / -7.6% / -2.2%
+The arena (each agent started with Rs 1 lakh):
+  Momentum rotation: holds NIFTY PHARMA, value Rs 1.05 lakh (+5.35% since start); at next close: hold. 6-month returns: NIFTY PHARMA +15.3%, NIFTY IT +10.0%, NIFTY BANK -0.9%, NIFTY MIDCAP 50 -2.3%, NIFTY 50 -4.4%. The best one must beat cash (3.0%) to be bought; next decision on the last trading day of October.
+  Buy & hold: holds NIFTY 50, value Rs 1.01 lakh (+1.39% since start); at next close: hold. Bought at the first close and never sells.
+  Claude: holds 50% NIFTY 50, value Rs 1.00 lakh (+0.41% since start); at next close: hold. Latest decision (2026-10-29): 50% in Nifty 50. Holding half: Nifty rose 1% after the Fed held rates and foreign investors kept buying, but it is still below its falling 50- and 200-day averages, so the trend hasn't turned yet. Goes to cash if Nifty closes below 22,000. Goes fully in if Nifty closes above its 50-day average (about 23,280, falling).
+  200-day trend: holds Cash, value Rs 1.00 lakh (+0.09% since start); at next close: hold. Nifty 22,937 is BELOW its 200-day average 24,057, so it wants cash.
+  Cash only: holds Cash, value Rs 1.00 lakh (+0.09% since start); at next close: hold. Never buys. Earns the liquid-fund rate. This is the bar every agent must beat.
+  RSI(2) dip-buy: holds Cash, value Rs 1.00 lakh (+0.09% since start); at next close: hold. RSI(2) is 87. It buys when RSI(2) is below 10 while Nifty is above its 200-day average (no today) and sells when Nifty closes above its 5-day average 22,748.
+  Golden cross: holds Cash, value Rs 1.00 lakh (+0.09% since start); at next close: hold. 50-day average 23,277 is BELOW the 200-day average 24,057, so it wants cash.
+Your decisions so far (newest first):
+  2026-10-28: 50% in Nifty. Holding half: Nifty recovered most of a 1% intraday drop and foreign investors turned buyers, but the trend is still down and Brent near $116 adds risk ahead of tonight's Fed decision. Cash if: Nifty closes below 22,000. Fully in if: Nifty closes above its 50-day average (about 23,300, falling).
+  2026-10-27: 50% in Nifty. Holding half: a flat day with buying in mid and small caps, but Nifty is still below its falling 50- and 200-day averages, with Brent above $115 and the US Fed decision due. Cash if: Nifty closes below 22,000. Fully in if: Nifty closes above its 50-day average (about 23,340, falling).
+  2026-10-26: 50% in Nifty. Holding half: Nifty bounced above the October low, but the trend is still down and oil is a big risk. Cash if: Nifty closes below 22,000. Fully in if: Nifty closes above its 50-day average (about 23,370, falling).
+  2026-10-23: 50% in Nifty. Half in near the October low: the trend is still down, but much of the fall has already happened. Cash if: Nifty closes below 22,000. Fully in if: Nifty closes above its 50-day average (about 23,440).
