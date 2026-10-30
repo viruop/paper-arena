@@ -2,7 +2,7 @@ name: Save Telegram posts
 
 on:
   schedule:
-    - cron: "13,43 3-18 * * *"   # every 30 minutes, about 8:45 am to 12:15 am IST, every day
+    - cron: "13,43 * * * *"   # every 30 minutes, day and night (he also posts at night)
   workflow_dispatch:              # adds a "Run workflow" button on the Actions tab
 
 permissions:
