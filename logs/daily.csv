@@ -53,3 +53,23 @@ date,agent,holding,value,since_start,trade,nifty_close
 2026-10-29,Weekly iron condor,Cash,100023.13,0.000231,,22936.75
 2026-10-29,Weekly option buying,Cash,100023.13,0.000231,,22936.75
 2026-10-29,Weekly short strangle,Cash,100023.13,0.000231,,22936.75
+2026-10-30,200-day trend,Cash,100116.61,0.001166,,23053.10
+2026-10-30,3-day rule + US filter (control),NIFTYBEES,101221.04,0.012210,,23053.10
+2026-10-30,Buy & hold,NIFTY 50,101903.55,0.019035,,23053.10
+2026-10-30,Cash only,Cash,100116.61,0.001166,,23053.10
+2026-10-30,Claude,50% NIFTY 50,100678.60,0.006786,,23053.10
+2026-10-30,Futures trend (long/short),Short futures (3x),95020.27,-0.049797,,23053.10
+2026-10-30,Gold breakdown short (control),Short gold (Gold Petal),101678.35,0.016784,,23053.10
+2026-10-30,Gold breakout,Cash,100046.63,0.000466,,23053.10
+2026-10-30,Gold/silver reversion,SILVERBEES,94358.42,-0.056416,,23053.10
+2026-10-30,Gold/silver trend,GOLDBEES,98328.36,-0.016716,,23053.10
+2026-10-30,Golden cross,Cash,100116.61,0.001166,,23053.10
+2026-10-30,Intraday futures,Nothing overnight,99131.07,-0.008689,"Bought at the open 22,964, closed at 23,053: +Rs 929",23053.10
+2026-10-30,Intraday short straddle,Nothing overnight,100682.44,0.006824,"Sold the 22,950 straddle at 263.9, bought back at 244.8: +Rs 202",23053.10
+2026-10-30,Low-VIX long straddle,Cash,100046.26,0.000463,,23053.10
+2026-10-30,Momentum rotation,NIFTY PHARMA,106982.95,0.069830,,23053.10
+2026-10-30,Nifty-gold switch,NIFTYBEES,101221.04,0.012210,,23053.10
+2026-10-30,RSI(2) dip-buy,Cash,100116.61,0.001166,,23053.10
+2026-10-30,Weekly iron condor,Cash,100046.26,0.000463,,23053.10
+2026-10-30,Weekly option buying,Cash,100046.26,0.000463,,23053.10
+2026-10-30,Weekly short strangle,Cash,100046.26,0.000463,,23053.10

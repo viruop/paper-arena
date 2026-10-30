@@ -10,3 +10,5 @@ date,agent,trade,nifty_close
 2026-10-29,Futures trend (long/short),"Sold futures at the open, 22,691",22936.75
 2026-10-29,Intraday futures,"Bought at the open 22,691, closed at 22,937: +Rs 3,042",22936.75
 2026-10-29,Intraday short straddle,"Sold the 22,700 straddle at 309.8, bought back at 342.1: -Rs 483",22936.75
+2026-10-30,Intraday futures,"Bought at the open 22,964, closed at 23,053: +Rs 929",23053.10
+2026-10-30,Intraday short straddle,"Sold the 22,950 straddle at 263.9, bought back at 244.8: +Rs 202",23053.10
