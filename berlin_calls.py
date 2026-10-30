@@ -29,7 +29,8 @@ How a call is paper traded (each call risks Rs 1,000, 1% of Rs 1 lakh):
     the stop counts (we can't see the order inside 5 minutes).
   - Gold levels are spot prices (XAUUSD); they are moved onto COMEX futures by the gap between
     futures and his quoted price at the call named in price_ref.
-  - Costs: 0.03% a side for Nifty futures, 0.05% for gold futures, 0.015% for currencies.
+  - Costs: 0.03% a side for Nifty futures, 0.05% for gold futures and Bitcoin, 0.015% for currencies.
+  - Bitcoin calls trade BTC-USD; a missing stop is 1% intraday or 3% positional.
   - A break call whose price is already past his target when it fills is skipped: the move
     had already happened.
   - Event calls follow his NZD/CAD prep video: 33 minutes before the news, a "naked" position
@@ -65,10 +66,10 @@ RESULT_COLS = ["id", "posted_at", "kind", "instrument", "leg", "side", "fill_at"
 
 RISK_RS = 1000.0
 CAPITAL = 100000.0
-SYMBOLS = {"NIFTY": "^NSEI", "GOLD": "GC=F"}           # currencies use "<PAIR>=X"
-COST = {"NIFTY": 0.0003, "GOLD": 0.0005}               # a side; currencies 0.00015
+SYMBOLS = {"NIFTY": "^NSEI", "GOLD": "GC=F", "BTC": "BTC-USD"}   # currencies use "<PAIR>=X"
+COST = {"NIFTY": 0.0003, "GOLD": 0.0005, "BTC": 0.0005}   # a side; currencies 0.00015
 DEFAULT_STOP = {("NIFTY", "intraday"): 0.002, ("GOLD", "positional"): 0.015, ("GOLD", "intraday"): 0.004,
-                ("NIFTY", "positional"): 0.015}
+                ("NIFTY", "positional"): 0.015, ("BTC", "intraday"): 0.01, ("BTC", "positional"): 0.03}
 NIFTY_CLOSE_UTC = "10:00"                               # 3:30 pm IST
 HEADERS = {"User-Agent": ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
                           "(KHTML, like Gecko) Chrome/126.0 Safari/537.36")}
