@@ -670,6 +670,10 @@ def overview_html(res, fres, ares, tg):
             note = (f"{done} {what}{'s' if done != 1 else ''} closed, {b['wins']} won" if done else
                     f"No {what}s closed yet") + (f"; {b['pending']} open" if b["pending"] else "")
             tl.append((title, b["value"], b["value"] / berlin_calls.CAPITAL - 1, note))
+        for info in (i for i in berlin.STRATEGIES.values() if i["kind"] == "series"):
+            trades, n, ours, _ = series_numbers(info, tg)
+            tl.append(("Small-capital series", pa.CAPITAL + ours, ours / pa.CAPITAL,
+                       f"{n} of 10 trades closed, Rs 10,000 risk each"))
     groups = [("Nifty 50 agents and Claude", nifty), ("Trade Like Berlin", tl),
               ("Gold and multi-asset", board_rows(ares, [n for n in asset_arena.AGENTS if n not in berlin.STRATEGIES])),
               ("F&amp;O (3x leverage)", board_rows(fres))]
@@ -771,6 +775,32 @@ def study_line(st):
             + after)
 
 
+def series_numbers(info, tg):
+    """(his series trades, how many closed, our rupees at his size, his reported rupees for the closed ones)."""
+    trades = dict(info.get("trades", {}))
+    if tg and len(tg["calls"]):
+        for cid in tg["calls"].loc[tg["calls"]["note"].str.startswith("[series]"), "id"]:
+            trades.setdefault(str(cid), None)
+    res = tg["results"] if tg else pd.DataFrame()
+    done = res[res["id"].astype(str).isin(trades) & (res["outcome"] != "not filled")] if len(res) else res
+    ours = float(pd.to_numeric(done["r"]).sum() * info["risk_rs"]) if len(done) else 0.0
+    n = done["id"].nunique() if len(done) else 0
+    reported = [v for k, v in trades.items() if v is not None and k in set(done["id"].astype(str) if len(done) else [])]
+    return trades, n, ours, reported
+
+
+def series_lines(info, tg):
+    """The small-capital series: his trades scored on Nifty at his own size, next to what he reported."""
+    trades, n, ours, reported = series_numbers(info, tg)
+    sign = "+" if ours >= 0 else "\u2212"
+    now = (f"{len(trades)} of his 10 series trade{'s' if len(trades) != 1 else ''} posted so far; {n} closed. Scored on "
+           f"Nifty at Rs 10,000 risk each: <strong class='{tone(ours)}'>{sign}\u20b9{abs(ours):,.0f}</strong>"
+           + (f" (he reported +\u20b9{sum(reported):,.0f} from his option trades)." if reported else "."))
+    result = ("Too early: the claim is about the full 10 trades. At 10% risk a trade, five losses in a row, which "
+              "happens in about 1 of 9 runs of 10 trades at 50% accuracy, would cut the account by about 40%.")
+    return now, result
+
+
 def berlin_html(ares, abt, tg, st):
     """The channel's strategies: one short card per video, then its Telegram calls."""
     boards, why, checks = {}, {}, {}
@@ -796,6 +826,8 @@ def berlin_html(ares, abt, tg, st):
                     if bt_ else "")
             paper = checks.get(name)
             result = (esc(paper) + " " if paper else "") + past
+        elif info["kind"] == "series":
+            now, result = series_lines(info, tg)
         else:
             b = tg["books"]["events"] if tg else None
             now = (f"<strong>{inr(b['value'])}</strong> from {b['wins'] + b['losses']} event"
