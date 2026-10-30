@@ -117,7 +117,11 @@ def parse(page):
             "posted_at": pd.Timestamp(when.group(1)).tz_convert("UTC").strftime("%Y-%m-%dT%H:%M:%SZ"),
             "edited": "yes" if re.search(r'message_meta">[^<]*edited', block) else "no",
             "reply_to": reply.group(1) if reply else "",
-            "media": "yes" if re.search(r"tgme_widget_message_(photo|video|roundvideo|document)", block) else "no",
+            # "voice" for a voice note, "yes" for a photo, video or file. Posts saved before 30 Oct 2026
+            # have "no" on voice notes: a blank post saved then with "no" is usually a voice note.
+            "media": ("voice" if re.search(r"tgme_widget_message_voice", block) else
+                      "yes" if re.search(r"tgme_widget_message_(photo|video|roundvideo|document|audio)", block)
+                      else "no"),
             "text": clean(body.group(1)) if body else "",
         })
     return posts
