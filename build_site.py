@@ -746,19 +746,26 @@ def telegram_html(tg):
     items = [li(c) for c in ordered[:6]]
     older = "".join(li(c) for c in ordered[6:])
     scored = int((calls["scorable"] == "yes").sum()) if len(calls) else 0
+    names = {"NIFTY": "Nifty", "GOLD": "gold", "BTC": "Bitcoin"}
+    traded = set(calls.loc[(calls["kind"] == "level") & (calls["scorable"] == "yes"), "instrument"]) if len(calls) else set()
+    markets = [names[k] for k in names if k in traded] + sorted(traded - set(names))
+    book = (", ".join(markets[:-1]) + " and " + markets[-1] if len(markets) > 1 else "".join(markets)) or "market"
     return (f"<h3>His Telegram calls, paper traded</h3>"
             f"<p>Every post on <a href='{berlin.TELEGRAM}'>his Telegram channel</a> since "
-            f"{day(pd.Timestamp(berlin.TELEGRAM_FROM))} is saved each night ({tg['posts']} so far"
+            f"{day(pd.Timestamp(berlin.TELEGRAM_FROM))} is saved within about half an hour ({tg['posts']} so far"
             + (f", {tg['changed']} changed after saving" if tg["changed"] else "") + "). "
             f"Of {len(calls)} trade calls, {scored} have levels free data can check; each risks ₹1,000. "
-            f"Gold and Nifty calls: <strong>{inr(b['value'])}</strong>, {b['wins']} won and {b['losses']} lost"
-            + (f", {b['pending']} still open" if b["pending"] else "") + ".</p>"
+            f"{book[0].upper() + book[1:]} calls: <strong>{inr(b['value'])}</strong>, {b['wins']} won and "
+            f"{b['losses']} lost" + (f", {b['pending']} still open" if b["pending"] else "") + ".</p>"
             f"<ul class='panel tlist calls'>{''.join(items)}</ul>"
             + (f"<details class='mini'><summary>Older calls ({len(ordered) - 6})</summary>"
                f"<ul class='panel tlist calls'>{older}</ul></details>" if older else "") +
-            f"<p class='meta'>Market calls fill at the next 5-minute bar after the post; a missing stop is set at "
-            f"0.2% (Nifty) or 1.5% (gold) and said so. Option-premium trades and levels drawn only on chart "
-            f"images can’t be scored. Claims made after the move don’t count.</p>")
+            f"<p class='meta'>Market calls fill at the next 5-minute bar after the post, or when his level breaks. "
+            f"A missing stop is added and said so (for example 0.2% for Nifty intraday, 1.5% for gold positional, "
+            f"1% for Bitcoin intraday). A call is scored once its window ends: the close for Nifty intraday, "
+            f"24 hours for other intraday calls, 14 days for positional ones, or his exit post. Option-premium "
+            f"trades and levels drawn only on chart images can’t be scored. Claims made after the move don’t "
+            f"count.</p>")
 
 
 def study_line(st):
@@ -793,7 +800,7 @@ def series_lines(info, tg):
     """The small-capital series: his trades scored on Nifty at his own size, next to what he reported."""
     trades, n, ours, reported = series_numbers(info, tg)
     sign = "+" if ours >= 0 else "\u2212"
-    now = (f"{len(trades)} of his 10 series trade{'s' if len(trades) != 1 else ''} posted so far; {n} closed. Scored on "
+    now = (f"{len(trades)} of his 10 series trades posted so far; {n} closed. Scored on "
            f"Nifty at Rs 10,000 risk each: <strong class='{tone(ours)}'>{sign}\u20b9{abs(ours):,.0f}</strong>"
            + (f" (he reported +\u20b9{sum(reported):,.0f} from his option trades)." if reported else "."))
     result = ("Too early: the claim is about the full 10 trades. At 10% risk a trade, five losses in a row, which "
@@ -967,3 +974,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
