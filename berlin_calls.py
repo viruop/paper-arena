@@ -209,11 +209,24 @@ def read_bars(sym):
     return df.astype(float)
 
 
+REVISE_HOURS = 2       # saved bars this close to the newest saved bar can still be corrected
+
+
 def update_bars(sym, keep_days=75):
-    """Add the newest 5-minute bars to the saved copy; never deletes a saved bar except very old ones."""
+    """Add the newest 5-minute bars to the saved copy. A saved bar stays as first saved, except in the
+    last two hours, where the newest bar may still have been forming: Yahoo serves slightly different
+    copies of older bars from one download to the next, and taking every new copy rewrote thousands of
+    rows each run and could change the prices a call is judged on. Never deletes a saved bar except
+    very old ones."""
     old = read_bars(sym)
     new = yahoo_5m(sym)
-    both = pd.concat([old[~old.index.isin(new.index)], new]).sort_index()
+    if len(old):
+        cutoff = old.index.max() - pd.Timedelta(hours=REVISE_HOURS)
+        kept = old[(old.index <= cutoff) | ~old.index.isin(new.index)]
+        added = new[(new.index > cutoff) | ~new.index.isin(old.index)]
+        both = pd.concat([kept, added]).sort_index()
+    else:
+        both = new.sort_index()
     both = both[both.index >= pd.Timestamp.now(tz="UTC") - pd.Timedelta(days=keep_days)]
     os.makedirs(BARS_DIR, exist_ok=True)
     both.round(5).to_csv(bars_path(sym), index_label="time")
