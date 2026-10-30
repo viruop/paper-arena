@@ -1,4 +1,4 @@
-Data as of the close of 2026-10-30, recorded by the nightly run after this decision was saved. News searches aren't included.
+What Claude (routine) decided from on 2026-10-30T20:41+05:30. Its news searches aren't included; its reasons are in claude.json.
 
 Latest close: Friday 30 October 2026. Your decision is filled at the next trading day's close.
 Nifty 50 close: 23,053.10 (+0.51% on the day).
@@ -16,7 +16,7 @@ Index returns over 1 month / 3 months / 6 months:
 The arena (each agent started with Rs 1 lakh):
   Momentum rotation: holds NIFTY PHARMA, value Rs 1.07 lakh (+6.98% since start); at next close: hold. 6-month returns: NIFTY PHARMA +16.6%, NIFTY IT +11.5%, NIFTY BANK -1.3%, NIFTY MIDCAP 50 -3.0%, NIFTY 50 -4.7%. The best one must beat cash (3.0%) to be bought; decided at today's close.
   Buy & hold: holds NIFTY 50, value Rs 1.02 lakh (+1.90% since start); at next close: hold. Bought at the first close and never sells.
-  Claude: holds 50% NIFTY 50, value Rs 1.01 lakh (+0.68% since start); at next close: hold. Latest decision (2026-10-30): 50% in Nifty 50. Holding half: Nifty rose for a second day to 23,053, but the gains came from IT and pharma while mid and small caps fell, and it is still below its falling 50-day average with Brent near $116. Goes to cash if Nifty closes below 22,000. Goes fully in if Nifty closes above its 50-day average (about 23,255, falling).
+  Claude: holds 50% NIFTY 50, value Rs 1.01 lakh (+0.68% since start); at next close: hold. Latest decision (2026-10-29): 50% in Nifty 50. Holding half: Nifty rose 1% after the Fed held rates and foreign investors kept buying, but it is still below its falling 50- and 200-day averages, so the trend hasn't turned yet. Goes to cash if Nifty closes below 22,000. Goes fully in if Nifty closes above its 50-day average (about 23,280, falling).
   200-day trend: holds Cash, value Rs 1.00 lakh (+0.12% since start); at next close: hold. Nifty 23,053 is BELOW its 200-day average 24,041, so it wants cash.
   Cash only: holds Cash, value Rs 1.00 lakh (+0.12% since start); at next close: hold. Never buys. Earns the liquid-fund rate. This is the bar every agent must beat.
   RSI(2) dip-buy: holds Cash, value Rs 1.00 lakh (+0.12% since start); at next close: hold. RSI(2) is 93. It buys when RSI(2) is below 10 while Nifty is above its 200-day average (no today) and sells when Nifty closes above its 5-day average 22,838.
