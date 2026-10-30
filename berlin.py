@@ -59,4 +59,23 @@ STRATEGIES = {
                     "claim is also checked on every RBNZ decision since 1999."),
         "claimed": "the right direction 6 times out of 10",
     },
+    "Small-capital series": {
+        "kind": "series",
+        "title": "Scaling small capital (expiry option buying)",
+        "video": "THIS IS HOW I TRADE ON EXPIRY WITH SMALL CAPITAL",
+        "url": "https://www.youtube.com/watch?v=7R1eu7paNDc",
+        "published": "2026-10-29",
+        "claim": ("Grow Rs 1 lakh with 10 expiry-day option trades in Nifty, Sensex and MCX, risking 5-10% "
+                  "(about Rs 10,000) on each and taking only setups with at least 1:3 reward to risk. Even 50% "
+                  "accuracy is profitable; 'if 3 trades succeed, capital is up 30-40%', but 10 stops in a row "
+                  "would blow the account."),
+        "changes": ("There is no mechanical entry rule (he reads trend lines and open interest on the chart), so "
+                    "there is no agent to backtest. Instead every series trade he posts on Telegram is paper traded "
+                    "on Nifty's own 5-minute prices with his stop and target (he trades Sensex options from Nifty's "
+                    "chart), sized like his: Rs 10,000 at risk per trade. Option premiums can't be checked with free "
+                    "data, so his own reported rupees are shown next to it, not counted."),
+        "claimed": "a profitable series of 10 trades",
+        "risk_rs": 10000,
+        "trades": {"77751": 17878},     # Telegram call id -> his reported result in rupees (None if not reported)
+    },
 }
