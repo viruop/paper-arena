@@ -3,6 +3,9 @@ name: Save Telegram posts
 on:
   schedule:
     - cron: "13,43 * * * *"   # every 30 minutes, day and night (he also posts at night)
+  workflow_run:                   # also right after every arena run (8:47 and 10:13 pm IST, and after each
+    workflows: ["Daily paper arena"]  # upload), because GitHub often skips the 30-minute runs above
+    types: [completed]
   workflow_dispatch:              # adds a "Run workflow" button on the Actions tab
 
 permissions:
