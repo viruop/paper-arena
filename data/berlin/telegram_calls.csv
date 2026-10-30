@@ -11,3 +11,4 @@ id,posted_at,kind,instrument,side,entry_type,entry,stop,target,rr,horizon,event_
 77750,2026-10-29T04:20:00Z,level,GOLD,short,break,4034,,,,positional,,,77721,yes,"Adding to gold shorts if gold breaks below 4034$."
 77751,2026-10-29T04:22:00Z,level,NIFTY,long,market,,22703,,2,intraday,,,,yes,"Trend line breakout trade, stop around 22703 (post 77749), RR 1:2."
 77767,2026-10-29T07:49:00Z,option,NIFTY,short,,,,,,intraday,,,,no,"Shorts on a breakdown of a red line drawn only on a chart image."
+77779,2026-10-29T23:22:00Z,level,BTC,short,break,78400,,76355,,intraday,,,,yes,"""BIG OPPORTUNITY IN BITCOIN"" (4:12 video). Read from the video's chart, audio not transcribed: bearish, short below his orange zone 78,400-78,600, his measured move down to 76,355 (-2.35%). No stop shown, so 1% added."
