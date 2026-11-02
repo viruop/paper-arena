@@ -287,6 +287,7 @@ details.more.solo>section>h2:first-child{display:none}
 details.more.solo>section{margin-top:0}
 details.mini summary{cursor:pointer;color:var(--muted);font-size:.95rem;margin-top:.4rem}
 .calls li .tl-what{white-space:normal}
+.tl-fix{display:block;margin-top:.4rem;padding:.35rem .6rem;border-left:3px solid var(--score);background:var(--bg);font-size:.92rem}
 @media (max-width:40rem){.scoreboard{padding:.85rem .6rem .4rem}details.more>summary{flex-wrap:wrap}
 details.more>summary .hint{flex-basis:100%;order:3}}
 """
@@ -717,6 +718,28 @@ def more(title, hint, inner, solo=False):
 
 
 # ------------------------------- Trade Like Berlin --------------------------------
+CORRECTIONS = os.path.join("data", "berlin", "call_corrections.csv")
+
+
+def read_corrections():
+    """Notes on calls we tagged wrongly, from data/berlin/call_corrections.csv (id, added, source, note).
+    The file is only ever added to. A correction never changes a score: the call keeps the result it was
+    tagged with, and the note says what his actual levels would have given and where they come from."""
+    if not os.path.exists(CORRECTIONS):
+        return {}
+    out = {}
+    for _, r in pd.read_csv(CORRECTIONS, dtype=str, keep_default_na=False).iterrows():
+        out.setdefault(str(r["id"]), []).append(r)
+    return out
+
+
+def correction_lines(fixes):
+    return "".join(
+        f"<span class='tl-fix'><strong>Correction, {day(pd.Timestamp(f['added']))}:</strong> {esc(f['note'])}"
+        + (f" <a href='{esc(f['source'])}'>Source</a>" if f["source"].startswith("http") else "") + "</span>"
+        for f in fixes)
+
+
 def call_line(call, res):
     """One Telegram call for the page: what he said and what paper trading it did."""
     note = esc(call["note"])
@@ -739,9 +762,11 @@ def telegram_html(tg):
         return "<p class='meta'>The Telegram record couldn’t be read tonight.</p>"
     calls, res = tg["calls"], tg["results"]
     b = tg["books"]["calls"]
+    fixes = read_corrections()
     def li(c):
         return (f"<li><span class='meta'>{ist(c['posted_at'])} IST · {esc(c['instrument'])}</span>"
-                f"<span class='tl-what'>{call_line(c, res)}</span></li>")
+                f"<span class='tl-what'>{call_line(c, res)}</span>"
+                f"{correction_lines(fixes.get(str(c['id']), []))}</li>")
     ordered = [c for _, c in calls.sort_values("posted_at", ascending=False).iterrows()] if len(calls) else []
     items = [li(c) for c in ordered[:6]]
     older = "".join(li(c) for c in ordered[6:])
@@ -765,7 +790,7 @@ def telegram_html(tg):
             f"1% for Bitcoin intraday). A call is scored once its window ends: the close for Nifty intraday, "
             f"24 hours for other intraday calls, 14 days for positional ones, or his exit post. Option-premium "
             f"trades and levels drawn only on chart images can’t be scored. Claims made after the move don’t "
-            f"count.</p>")
+            f"count. If we misread a call, a correction is added under it, but its score stays as tagged.</p>")
 
 
 def study_line(st):
