@@ -14,3 +14,9 @@ date,agent,trade,nifty_close
 2026-10-30,Intraday short straddle,"Sold the 22,950 straddle at 263.9, bought back at 244.8: +Rs 202",23053.10
 2026-11-02,Intraday futures,"Bought at the open 23,222, closed at 23,441: +Rs 2,668",23440.80
 2026-11-02,Intraday short straddle,"Sold the 23,200 straddle at 201.9, stopped out at 262.4: -Rs 887",23440.80
+2026-11-03,Claude,Switched to NIFTY 50,23810.85
+2026-11-03,Intraday futures,"Bought at the open 23,582, closed at 23,811: +Rs 2,756",23810.85
+2026-11-03,Intraday short straddle,"Sold the 23,600 straddle at 208.9, stopped out at 271.6: -Rs 892",23810.85
+2026-11-03,Weekly iron condor,"Sold 24,300 CE at 30.1, sold 23,300 PE at 59.0, bought 24,800 CE at 5.8, bought 22,850 PE at 20.9 (expiry 9 Nov)",23810.85
+2026-11-03,Weekly option buying,"Bought 23,800 CE at 149.9 (expiry 9 Nov)",23810.85
+2026-11-03,Weekly short strangle,"Sold 24,300 CE at 30.1, sold 23,300 PE at 59.0 (expiry 9 Nov)",23810.85
