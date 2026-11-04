@@ -59,6 +59,12 @@ FOLDER = os.path.join("data", "berlin")
 POSTS = os.path.join(FOLDER, "telegram_posts.csv")
 CALLS = os.path.join(FOLDER, "telegram_calls.csv")
 RESULTS = os.path.join("logs", "berlin_calls.csv")
+UPDATES = os.path.join(FOLDER, "telegram_updates.csv")     # his later exits, stop moves and claims (add-only)
+REVIEWED = os.path.join(FOLDER, "telegram_reviewed.csv")    # Claude's decision on every post it reviewed (add-only)
+VARIANTS = os.path.join("logs", "berlin_variants.csv")      # each scored call also late and reversed
+UPDATE_COLS = ["id", "call_id", "posted_at", "action", "detail", "price", "trigger", "verdict", "note", "added_by"]
+VARIANT_COLS = ["id", "variant", "fill_at", "fill", "exit_at", "exit", "outcome", "r", "pnl_rs", "scored_at"]
+LATE_MIN = (15, 30)
 BARS_DIR = os.path.join("data", "market", "intraday")
 POST_COLS = ["id", "posted_at", "seen_at", "edited", "reply_to", "media", "text"]
 RESULT_COLS = ["id", "posted_at", "kind", "instrument", "leg", "side", "fill_at", "fill", "stop", "target",
@@ -90,8 +96,8 @@ def utc(text):
 
 
 # --------------------------------- Telegram ------------------------------------
-def fetch_page(before=None, timeout=30):
-    url = f"https://t.me/s/{CHANNEL}" + (f"?before={before}" if before else "")
+def fetch_page(before=None, timeout=30, handle=CHANNEL):
+    url = f"https://t.me/s/{handle}" + (f"?before={before}" if before else "")
     with urllib.request.urlopen(urllib.request.Request(url, headers=HEADERS), timeout=timeout) as resp:
         return resp.read().decode("utf-8", "replace")
 
@@ -102,11 +108,11 @@ def clean(fragment):
     return html.unescape(text).strip()
 
 
-def parse(page):
-    """Posts on one page of the channel's public preview: dicts with id, time, text and so on."""
+def parse(page, handle=CHANNEL):
+    """Posts on one page of a channel's public preview: dicts with id, time, text and so on."""
     posts = []
     for block in re.split(r'<div class="tgme_widget_message_wrap', page)[1:]:
-        pid = re.search(rf'data-post="{CHANNEL}/(\d+)"', block)
+        pid = re.search(rf'data-post="{handle}/(\d+)"', block)
         when = re.search(r'<time datetime="([^"]+)"', block)
         if not pid or not when:
             continue
@@ -127,10 +133,10 @@ def parse(page):
     return posts
 
 
-def read_posts():
-    if not os.path.exists(POSTS):
+def read_posts(path=POSTS):
+    if not os.path.exists(path):
         return pd.DataFrame(columns=POST_COLS)
-    return pd.read_csv(POSTS, dtype=str, keep_default_na=False)
+    return pd.read_csv(path, dtype=str, keep_default_na=False)
 
 
 def append(path, cols, rows):
@@ -145,17 +151,18 @@ def append(path, cols, rows):
         writer.writerows(rows)
 
 
-def archive(start_id=77656, max_pages=15, fetch=None):
-    """Save new posts, and new versions of changed ones. Returns how many rows were added."""
-    fetch = fetch or fetch_page
-    saved = read_posts()
+def archive(start_id=77656, max_pages=15, fetch=None, handle=CHANNEL, posts_path=POSTS):
+    """Save new posts, and new versions of changed ones. Returns how many rows were added.
+    Works for any public channel (channels.py passes its handle and file); Berlin is the default."""
+    fetch = fetch or (lambda before=None: fetch_page(before, handle=handle))
+    saved = read_posts(posts_path)
     latest = {}
     for _, row in saved.iterrows():
         latest[int(row["id"])] = row["text"]
     known = max(latest) if latest else start_id
     seen, before, pages = {}, None, 0
     while pages < max_pages:
-        found = parse(fetch(before))
+        found = parse(fetch(before), handle)
         pages += 1
         if not found:
             break
@@ -172,7 +179,7 @@ def archive(start_id=77656, max_pages=15, fetch=None):
         if pid < start_id or (pid in latest and latest[pid] == p["text"]):
             continue
         rows.append({**p, "seen_at": now, "edited": p["edited"] if pid not in latest else "changed after saving"})
-    append(POSTS, POST_COLS, rows)
+    append(posts_path, POST_COLS, rows)
     return len(rows)
 
 
@@ -256,6 +263,41 @@ def walk(bars, side, fill_at, fill, stop, target, end):
     return path.index[-1] + pd.Timedelta(minutes=5), path["Close"].iloc[-1], "time"
 
 
+def walk_managed(bars, side, fill_at, fill, stop, target, end, moves, aims=()):
+    """walk() with his stop moves applied. moves: (posted time, new stop, trigger or None). A move counts
+    from the first bar that starts after he posted it; one with a trigger ("breakeven when price reaches X")
+    counts from the bar after price reaches X. aims: (posted time, new target), counted the same way.
+    Returns (exit time, exit price, outcome)."""
+    sign = 1 if side == "long" else -1
+    path = bars[(bars.index >= fill_at) & (bars.index < end)]
+    pending, armed, moved = sorted(moves, key=lambda m: m[0]), [], False
+    goals = sorted(aims, key=lambda a: a[0])
+    for t, b in path.iterrows():
+        while goals and goals[0][0] <= t:
+            _, target = goals.pop(0)
+        while pending and pending[0][0] <= t:
+            _, new, trigger = pending.pop(0)
+            if trigger is None:
+                stop, moved = new, True
+            else:
+                armed.append((new, trigger))
+        hit_stop = b["Low"] <= stop if sign > 0 else b["High"] >= stop
+        hit_target = target is not None and (b["High"] >= target if sign > 0 else b["Low"] <= target)
+        if hit_stop:
+            gap = b["Open"] < stop if sign > 0 else b["Open"] > stop
+            return t, (b["Open"] if gap else stop), ("moved stop" if moved else "stop")
+        if hit_target:
+            gap = b["Open"] > target if sign > 0 else b["Open"] < target
+            return t, (b["Open"] if gap else target), "target"
+        for new, trigger in list(armed):
+            if (b["High"] >= trigger) if sign > 0 else (b["Low"] <= trigger):
+                stop, moved = new, True
+                armed.remove((new, trigger))
+    if len(path) == 0:
+        return None, None, "no prices"
+    return path.index[-1] + pd.Timedelta(minutes=5), path["Close"].iloc[-1], "time"
+
+
 def result_row(call, leg, side, fill_at, fill, stop, target, exit_at, exit_, outcome, risk_rs, instrument):
     sign = 1 if side == "long" else -1
     risk = abs(fill - stop) / fill
@@ -295,15 +337,25 @@ def gold_gap(calls, ref_id, bars):
     return 0.0 if after.empty else after["Open"].iloc[0] - num(ref.iloc[0]["entry"])
 
 
-def score_level(call, bars, calls):
-    """One level call: a list with one result row, [] if it never filled, None if not finished yet."""
+def score_level(call, bars, calls, updates=(), start=None, flip=False, target_level=None):
+    """One level call: a list with one result row, [] if it never filled, None if not finished yet.
+    updates: his later posts about this call from telegram_updates.csv; an exit ends it like exit_at does,
+    and stop and target moves apply from when he posted them. start: the earliest fill, for the delay test (a follower
+    acting late). flip: the same fill traded the other way, stop and target mirrored (his management is
+    left out). target_level: a fixed target (the on-time trade's), so a late follower aims where he did.
+    Without these arguments this is the original rule, unchanged."""
     posted, inst, side = utc(call["posted_at"]), call["instrument"], call["side"]
     end = window_end(call, posted)
+    his_exit = bool(str(call.get("exit_at", "")).strip())
+    exits = [utc(u["posted_at"]) for u in updates if u["action"] == "exit" and utc(u["posted_at"]) > posted]
+    if exits and min(exits) < end:
+        end, his_exit = min(exits), True
     if bars.empty or bars.index[-1] < end - pd.Timedelta(minutes=5):
         return None                                      # its window hasn't ended in the saved prices
     gap = gold_gap(calls, call.get("price_ref"), bars) if inst == "GOLD" else 0.0
     sign = 1 if side == "long" else -1
-    after = bars[(bars.index >= posted) & (bars.index < end)]
+    begin = posted if start is None else max(posted, start)
+    after = bars[(bars.index >= begin) & (bars.index < end)]
     if after.empty:
         return []
     if call["entry_type"] == "break":
@@ -323,16 +375,83 @@ def score_level(call, bars, calls):
         target += gap
     elif num(call.get("rr")) is not None:
         target = fill + sign * num(call["rr"]) * abs(fill - stop)
+    if target_level is not None:
+        target = target_level
     if (stop - fill) * sign >= 0:                        # filled beyond his stop: no sensible trade
         return []
     if target is not None and (target - fill) * sign <= 0:   # the move to his target had already happened
         return []
-    exit_at, exit_, outcome = walk(bars, side, fill_at, fill, stop, target, end)
+    moves, aims = [], []
+    if flip:
+        side, sign = ("short" if side == "long" else "long"), -sign
+        stop, target = 2 * fill - stop, (None if target is None else 2 * fill - target)
+    else:
+        for u in updates:
+            if u["action"] == "target" and utc(u["posted_at"]) > posted and num(u["price"]) is not None:
+                aims.append((utc(u["posted_at"]), num(u["price"]) + gap))     # "I'll book at X"
+            if u["action"] in ("stop", "stop_when") and utc(u["posted_at"]) > posted:
+                new = fill if str(u["price"]).strip().lower() == "entry" else num(u["price"])
+                trigger = num(u["trigger"]) if u["action"] == "stop_when" else None
+                if new is None or (u["action"] == "stop_when" and trigger is None):
+                    continue
+                if str(u["price"]).strip().lower() != "entry":
+                    new += gap
+                moves.append((utc(u["posted_at"]), new, None if trigger is None else trigger + gap))
+    if moves or aims:
+        exit_at, exit_, outcome = walk_managed(bars, side, fill_at, fill, stop, target, end, moves, aims)
+    else:
+        exit_at, exit_, outcome = walk(bars, side, fill_at, fill, stop, target, end)
     if exit_at is None:
         return []
-    if outcome == "time" and str(call.get("exit_at", "")).strip():
+    if outcome == "time" and his_exit:
         outcome = "his exit"
     return [result_row(call, "call", side, fill_at, fill, stop, target, exit_at, exit_, outcome, RISK_RS, inst)]
+
+
+OPTION_TRADE = re.compile(r"\b(?:CE|PE|puts?|calls?|options?)\b", re.I)
+
+
+def option_on_underlying(call):
+    """An options trade with a direction, in a market there are prices for: it's also scored on the market."""
+    return (call["kind"] == "option" and call["side"] in ("long", "short") and call["instrument"] in SYMBOLS
+            and bool(OPTION_TRADE.search(str(call["note"]))))
+
+
+def score_option(call, bars, calls, updates=()):
+    """An options trade scored on the market it's on, in its own book: in at the next bar after the post,
+    the usual default stop for that market and horizon, no target, out at the end of the window or when he
+    says he exited. Option premiums themselves can't be priced with free data."""
+    plain = dict(call)
+    plain.update(entry_type="market", entry="", stop="", target="", rr="", price_ref="")
+    rows = score_level(plain, bars, calls, updates)
+    for row in rows or []:
+        row["leg"] = "underlying"
+    return rows
+
+
+def variant_rows(call, bars, calls, updates=()):
+    """The same call 15 and 30 minutes late (a follower acting late) and reversed (did his direction
+    matter?). Checks only: they never change the call's own result. None if not finished yet."""
+    posted, now = utc(call["posted_at"]), pd.Timestamp.now(tz="UTC").strftime("%Y-%m-%dT%H:%M:%SZ")
+    base = score_level(call, bars, calls, updates)
+    if base is None:
+        return None
+    if not base:
+        return []
+    aim = num(base[0]["target"])                           # where the on-time trade aimed
+    checks = [(f"late{m}", {"start": posted + pd.Timedelta(minutes=m), "target_level": aim}) for m in LATE_MIN]
+    checks.append(("flip", {"flip": True}))
+    out = []
+    for name, kwargs in checks:
+        res = score_level(call, bars, calls, updates, **kwargs)
+        if res is None:
+            return None
+        row = res[0] if res else {}
+        out.append({"id": call["id"], "variant": name, "fill_at": row.get("fill_at", ""), "fill": row.get("fill", ""),
+                    "exit_at": row.get("exit_at", ""), "exit": row.get("exit", ""),
+                    "outcome": row.get("outcome", "not filled"), "r": row.get("r", 0), "pnl_rs": row.get("pnl_rs", 0),
+                    "scored_at": now})
+    return out
 
 
 def score_event(call, bars):
@@ -370,28 +489,94 @@ def read_calls():
     return pd.read_csv(CALLS, dtype=str, keep_default_na=False)
 
 
-def read_results():
-    if not os.path.exists(RESULTS):
+def read_results(path=RESULTS):
+    if not os.path.exists(path):
         return pd.DataFrame(columns=RESULT_COLS)
-    return pd.read_csv(RESULTS, dtype=str, keep_default_na=False)
+    return pd.read_csv(path, dtype=str, keep_default_na=False)
+
+
+def read_updates(path=UPDATES):
+    """His later posts about tagged calls: exits, stop moves and claims (data/<channel>/telegram_updates.csv).
+    Only ever added to; an exit or stop move counts only for a call that hasn't been scored yet."""
+    if not os.path.exists(path):
+        return pd.DataFrame(columns=UPDATE_COLS)
+    return pd.read_csv(path, dtype=str, keep_default_na=False)
+
+
+def read_variants(path=VARIANTS):
+    if not os.path.exists(path):
+        return pd.DataFrame(columns=VARIANT_COLS)
+    return pd.read_csv(path, dtype=str, keep_default_na=False)
+
+
+def claim_verdict(detail, outcomes):
+    """Does his claim agree with the record? detail: what he claimed ("tp", "tp1", "tp2", "sl", "be",
+    "activated"); outcomes: the result legs' outcomes for that call. "" when it can't be checked."""
+    if not outcomes or not detail:
+        return ""
+    hit = [o for o in outcomes if o.startswith("target")]
+    if detail == "sl":
+        return "matches" if any(o in ("stop", "moved stop") for o in outcomes) else "doesn't match"
+    if detail == "tp":
+        return "matches" if len(hit) == len(outcomes) else "doesn't match"
+    if detail.startswith("tp") and detail[2:].isdigit():
+        n = int(detail[2:])
+        names = {f"target {n}"} | ({"target"} if n == 1 else set())
+        return "matches" if any(o in names for o in hit) else "doesn't match"
+    if detail == "be":
+        return "matches" if any(o == "moved stop" for o in outcomes) else "doesn't match"
+    if detail == "activated":
+        return "matches" if outcomes != ["not filled"] else "doesn't match"
+    return ""
+
+
+def checked_claims(updates, results):
+    """updates with each claim's verdict: as written when Claude checked it, otherwise worked out from the
+    record once the call is scored (for "TP hit", "SL hit" and the like)."""
+    if not len(updates):
+        return updates
+    out = updates.copy()
+    legs = results[results["leg"] != "underlying"] if len(results) else results   # option trades' market leg
+    outcomes = legs.groupby("id")["outcome"].apply(list).to_dict() if len(legs) else {}    # has no target
+    blank = (out["action"] == "claim") & (out["verdict"] == "")
+    out.loc[blank, "verdict"] = [claim_verdict(d, outcomes.get(str(c), [])) for d, c in
+                                 zip(out.loc[blank, "detail"], out.loc[blank, "call_id"])]
+    return out
+
+
+def updates_for(updates, call_id):
+    if not len(updates):
+        return []
+    return [u for _, u in updates[updates["call_id"].astype(str) == str(call_id)].iterrows()]
 
 
 def score_all(bars_for):
-    """Score every finished call that has no result yet. bars_for(instrument) -> 5-minute bars."""
+    """Score every finished call that has no result yet. bars_for(instrument) -> 5-minute bars.
+    Options trades with a direction are scored on their market, as leg "underlying", in a book of their own."""
     calls = read_calls()
     if calls.empty:
         return 0
     done = set(read_results()["id"].astype(str))
+    updates = read_updates()
     rows, never = [], []
     for _, call in calls.iterrows():
-        if call["scorable"] != "yes" or str(call["id"]) in done:
+        if str(call["id"]) in done:
+            continue
+        option = call["scorable"] != "yes" and option_on_underlying(call)
+        if call["scorable"] != "yes" and not option:
             continue
         try:
             bars = bars_for(call["instrument"])
         except Exception as exc:  # no prices for this instrument tonight
             print(f"  ! call {call['id']}: {exc}", file=sys.stderr)
             continue
-        out = score_event(call, bars) if call["kind"] == "event" else score_level(call, bars, calls)
+        ups = updates_for(updates, call["id"])
+        if option:
+            out = score_option(call, bars, calls, ups)
+            if out:
+                rows += out
+            continue
+        out = score_event(call, bars) if call["kind"] == "event" else score_level(call, bars, calls, ups)
         if out is None:
             continue
         if not out:
@@ -404,48 +589,80 @@ def score_all(bars_for):
     return len(rows) + len(never)
 
 
+def score_variants(bars_for):
+    """The late and reversed checks for every scored level call that doesn't have them yet."""
+    calls, res, have = read_calls(), read_results(), set(read_variants()["id"].astype(str))
+    if calls.empty or not len(res):
+        return 0
+    traded = set(res.loc[(res["kind"] == "level") & (res["outcome"] != "not filled") & (res["leg"] == "call"), "id"].astype(str))
+    updates, rows = read_updates(), []
+    for _, call in calls.iterrows():
+        cid = str(call["id"])
+        if cid not in traded or cid in have:
+            continue
+        try:
+            out = variant_rows(call, bars_for(call["instrument"]), calls, updates_for(updates, cid))
+        except Exception as exc:  # no prices: try again next time
+            print(f"  ! checks for call {cid}: {exc}", file=sys.stderr)
+            continue
+        rows += out or []
+    append(VARIANTS, VARIANT_COLS, rows)
+    return len(rows)
+
+
 # --------------------------------- for the page ---------------------------------
 def summary():
-    """Everything the page shows about the channel: books of paper results, recent calls, archive size."""
+    """Everything the page shows about the channel: books of paper results, recent calls, archive size,
+    his later posts about each call, and the late and reversed checks."""
     calls, res, posts = read_calls(), read_results(), read_posts()
     out = {"posts": int(posts["id"].nunique()) if len(posts) else 0,
            "changed": int((posts["edited"] == "changed after saving").sum()) if len(posts) else 0,
-           "calls": calls, "results": res, "books": {}}
+           "calls": calls, "results": res, "books": {}, "updates": checked_claims(read_updates(), res),
+           "variants": read_variants()}
     if len(res):
         res = res.assign(pnl=pd.to_numeric(res["pnl_rs"]), r=pd.to_numeric(res["r"]))
-    for book, kinds in (("calls", ("level",)), ("events", ("event",))):
+    options = set(c["id"] for _, c in calls.iterrows() if option_on_underlying(c)) if len(calls) else set()
+    for book, kinds in (("calls", ("level",)), ("events", ("event",)), ("options", ("option",))):
         part = res[res["kind"].isin(kinds)] if len(res) else res
         traded = part[part["outcome"] != "not filled"] if len(part) else part
         per_call = traded.groupby("id")["pnl"].sum() if len(traded) else pd.Series(dtype=float)
+        wanted = (options if book == "options" else
+                  set(calls.loc[calls["kind"].isin(kinds) & (calls["scorable"] == "yes"), "id"]) if len(calls) else set())
         out["books"][book] = {
             "value": CAPITAL + (float(traded["pnl"].sum()) if len(traded) else 0.0),
             "scored": int(part["id"].nunique()) if len(part) else 0,
             "wins": int((per_call > 0).sum()), "losses": int((per_call <= 0).sum()),
-            "pending": int(len(set(calls.loc[calls["kind"].isin(kinds) & (calls["scorable"] == "yes"), "id"])
-                               - set(part["id"] if len(part) else []))) if len(calls) else 0,
+            "pending": len(wanted - set(part["id"] if len(part) else [])),
+            "per_call": per_call,
         }
     return out
 
 
 def main():
-    # New posts are saved every 30 minutes by .github/workflows/telegram.yml (archive()), not here,
-    # so the two workflows never edit the same file at once.
+    # New posts are saved every 30 minutes by .github/workflows/telegram.yml (channels.save_all()), not
+    # here, so the two workflows never edit the same file at once.
     calls = read_calls()
-    open_ = calls[(calls.get("scorable", pd.Series(dtype=str)) == "yes")] if len(calls) else calls
     done = set(read_results()["id"].astype(str))
-    needed = sorted({symbol(i) for i, cid in zip(open_.get("instrument", []), open_.get("id", []))
-                     if str(cid) not in done})
-    for sym in needed:
+    have = set(read_variants()["id"].astype(str))
+    wanted = [c for _, c in calls.iterrows() if (c["scorable"] == "yes" or option_on_underlying(c))
+              and (str(c["id"]) not in done or (c["kind"] == "level" and str(c["id"]) not in have))] if len(calls) else []
+    for sym in sorted({symbol(c["instrument"]) for c in wanted}):
         try:
             print(f"{sym}: {update_bars(sym)} five-minute bars saved.")
         except Exception as exc:  # Yahoo unreachable: the saved bars are used
             print(f"{sym}: not updated ({exc})")
-    print(f"Scored {score_all(lambda inst: read_bars(symbol(inst)))} calls.")
+    bars_for = lambda inst: read_bars(symbol(inst))
+    print(f"Scored {score_all(bars_for)} calls; {score_variants(bars_for)} late and reversed checks.")
     try:
         import berlin_study
         berlin_study.rates(refresh=True)        # the Fed's NZD/CAD rates for the forex video's check
     except Exception as exc:  # the saved copy is used
         print(f"Fed rates not updated: {exc}")
+    try:                                        # the other channels (channels.py), e.g. the signal channel
+        import channels
+        channels.score_all_channels()
+    except Exception as exc:  # one channel failing never stops the arena
+        print(f"Other channels not scored: {exc}")
 
 
 if __name__ == "__main__":
