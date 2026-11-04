@@ -16,7 +16,14 @@ the day it is added. Never start earlier: posts deleted before then can't be see
 earlier start would show only the calls he chose to leave up.
 """
 
+import json
+import os
+
+import pandas as pd
+
 import berlin_calls as bc
+
+PRICE_CHECK = os.path.join("data", "dukascopy_check.json")     # is the one-minute price feed reachable?
 
 CHANNELS = {
     "berlin": {
@@ -36,14 +43,25 @@ def posts_path(ch):
     return f"{ch['folder']}/telegram_posts.csv"
 
 
-def save_all(fetch_for=None):
-    """Save every channel's new posts, then read new signals. One channel failing doesn't stop the rest."""
+def deleted_path(ch):
+    return f"{ch['folder']}/telegram_deleted.csv"
+
+
+def save_all(fetch_for=None, gone_for=None, now=None):
+    """Save every channel's new posts, note saved posts he has deleted, then read new signals. Once a day
+    (the first run after midnight UTC) the whole archive is read again, so older deletions are noticed too.
+    One channel failing doesn't stop the rest."""
     import signal_calls
+    now = now or pd.Timestamp.now(tz="UTC")
+    full = now.hour == 0 and now.minute < 30
     report = []
     for key, ch in CHANNELS.items():
         try:
             fetch = fetch_for(ch) if fetch_for else None
-            saved = bc.archive(start_id=ch["start_id"], fetch=fetch, handle=ch["handle"], posts_path=posts_path(ch))
+            gone = gone_for(ch) if gone_for else None
+            saved = bc.archive(start_id=ch["start_id"], fetch=fetch, handle=ch["handle"], posts_path=posts_path(ch),
+                               deleted_path=deleted_path(ch), gone=gone, back_to=ch["start_id"] if full else None,
+                               max_pages=60 if full else 15)
             line = f"{ch['name']}: {saved} new or changed posts saved"
             if ch["tagging"] == "parser":
                 counts = signal_calls.parse_new(ch)
@@ -55,9 +73,35 @@ def save_all(fetch_for=None):
     return report
 
 
+def check_prices(path=PRICE_CHECK, now=None):
+    """Read one hour of gold from Dukascopy and note whether it worked, so a broken price feed shows up
+    before a signal needs it (on the page, and in the weekly scheduled task)."""
+    import dukascopy
+    now = now or pd.Timestamp.now(tz="UTC")
+    day = now.normalize() - pd.Timedelta(days=1)
+    while day.weekday() >= 5:                           # the last weekday: gold doesn't trade at weekends
+        day -= pd.Timedelta(days=1)
+    start = day + pd.Timedelta(hours=12)
+    status = {"checked_at": now.strftime("%Y-%m-%dT%H:%M:%SZ"), "hour": start.strftime("%Y-%m-%dT%H:%MZ")}
+    try:
+        bars = dukascopy.minute_bars("XAUUSD", start, start + pd.Timedelta(hours=1))
+        status.update(ok=bool(len(bars)), minutes=int(len(bars)),
+                      last_bid=round(float(bars["bid_c"].iloc[-1]), 3) if len(bars) else None)
+    except Exception as exc:
+        status.update(ok=False, error=str(exc)[:200])
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(status, f, indent=1)
+    print(f"Dukascopy prices: {'working' if status['ok'] else 'not reachable'} ({status.get('error', '')})")
+    return status
+
+
 def score_all_channels():
     """Paper trade the signal channels' finished calls (Berlin is scored by berlin_calls.main)."""
     import signal_calls
+    try:
+        check_prices()
+    except Exception as exc:  # the check itself must never stop the scoring
+        print(f"Dukascopy check failed: {exc}")
     for key, ch in CHANNELS.items():
         if ch["tagging"] != "parser":
             continue

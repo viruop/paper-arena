@@ -2,8 +2,9 @@
 scorecard.py - "Is this channel worth following?", the same written-down test for every channel.
 
 The bar was written down on 4 Nov 2026 (when 5 of Trade Like Berlin's calls had been scored and none of
-the second channel's) and is never changed, so it can't drift to fit the results. A channel gets a
-verdict only after MIN_CALLS scored calls; until then the checks show where it stands.
+the second channel's) and is never changed, so it can't drift to fit the results. Checks 9 and 10 were
+added the same evening, before any more calls were scored. A channel gets a verdict only after
+MIN_CALLS scored calls; until then the checks show where it stands.
 
   1. Enough calls: at least 40 scored calls, so a few lucky trades can't decide it.
   2. Makes money after costs, at Rs 1,000 risk per call.
@@ -13,7 +14,13 @@ verdict only after MIN_CALLS scored calls; until then the checks show where it s
   6. His direction matters: the same trades reversed do worse.
   7. Checkable: at least 60% of his trade calls have levels free data can score.
   8. Honest claims: where his own "TP hit" or "SL hit" posts can be checked, at least 80% match the record.
+  9. Not luck: the profit is big enough that a channel with no edge would make it less than 1 time in 20
+     (a one-sided test on the per-call results; needs at least 20 calls). A simulation of 4,000 channels
+     with no edge found about 1 in 8 passing checks 2 to 6 after 40 calls; with this check, about 1 in 30.
+ 10. His calls stay up: none of his calls was deleted from the channel after it was saved here.
 """
+
+import math
 
 import pandas as pd
 
@@ -24,9 +31,20 @@ def rupees(x):
     return f"{'+' if x >= 0 else '−'}₹{abs(x):,.0f}"
 
 
-def evaluate(per_call, variants, scorable, trade_calls, claims=None):
+def luck(per_call):
+    """(t statistic, one-sided chance of at least this profit with no edge) for the per-call results."""
+    n = len(per_call)
+    sd = float(per_call.std(ddof=1)) if n > 1 else 0.0
+    if n < 2 or sd == 0:
+        return None, None
+    t = float(per_call.mean()) / (sd / math.sqrt(n))
+    return t, 0.5 * math.erfc(t / math.sqrt(2))
+
+
+def evaluate(per_call, variants, scorable, trade_calls, claims=None, deleted_calls=0):
     """per_call: P&L per scored call (Series, posting order). variants: DataFrame with variant, pnl_rs.
-    claims: list of verdicts ("matches", "doesn't match"; others ignored). Returns checks and a verdict."""
+    claims: list of verdicts ("matches", "doesn't match"; others ignored). deleted_calls: how many of his
+    calls he deleted after they were saved. Returns checks and a verdict."""
     per_call = per_call.astype(float) if len(per_call) else pd.Series(dtype=float)
     n, total = len(per_call), float(per_call.sum())
     var = variants.assign(p=pd.to_numeric(variants["pnl_rs"], errors="coerce").fillna(0)) if len(variants) else None
@@ -53,6 +71,16 @@ def evaluate(per_call, variants, scorable, trade_calls, claims=None):
         ("His claims match the record", (matched / len(checked) >= 0.8) if checked else None,
          f"{matched} of {len(checked)} checked" if checked else "none checked yet"),
     ]
+    t, p = luck(per_call)
+    if n < 20 or p is None:
+        rows.append(("Not luck", None, "needs at least 20 calls"))
+    elif total <= 0:
+        rows.append(("Not luck", False, "no profit to test"))
+    else:
+        rows.append(("Not luck", p < 0.05, f"a profit this size happens by luck about 1 time in {max(1, round(1 / p)):,}"
+                     if p > 0 else "far beyond luck"))
+    rows.append(("His calls stay up", deleted_calls == 0,
+                 "none deleted" if deleted_calls == 0 else f"{deleted_calls} deleted after posting"))
     failed = [label for label, ok, _ in rows[1:] if ok is False]
     if n < MIN_CALLS:
         verdict = f"Too early to judge: {n} of {MIN_CALLS} calls scored."
@@ -78,7 +106,7 @@ def berlin_checks(tg):
     claims = ups.loc[ups["action"] == "claim", "verdict"].tolist() if ups is not None and len(ups) else []
     scorable = int((calls["scorable"] == "yes").sum()) if len(calls) else 0
     return evaluate(in_order(tg["books"]["calls"]["per_call"], calls), tg.get("variants", pd.DataFrame()),
-                    scorable, len(calls), claims)
+                    scorable, len(calls), claims, tg.get("deleted_calls", 0))
 
 
 def signal_checks(sm):
@@ -88,7 +116,7 @@ def signal_checks(sm):
     claims = sm["claims"]["verdict"].tolist() if len(sm["claims"]) else []
     scorable = int((calls["scorable"] == "yes").sum()) if len(calls) else 0
     return evaluate(in_order(sm["book"]["per_call"], calls), sm["variants"], scorable,
-                    len(calls) + sm["unread_trades"], claims)
+                    len(calls) + sm["unread_trades"], claims, sm.get("deleted_calls", 0))
 
 
 def all_checks():

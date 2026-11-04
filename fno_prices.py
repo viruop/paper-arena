@@ -27,6 +27,8 @@ HEADERS = {"User-Agent": ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit
                           "(KHTML, like Gecko) Chrome/126.0 Safari/537.36"),
            "Referer": "https://www.nseindia.com/", "Accept": "*/*"}
 GRACE = 0            # extra trading days to wait for a missing NSE file before logging (0: log the same night)
+LOG_AFTER = "22:00"  # ...but not before this time (IST), so an upload during the day can't log the day with
+                     # estimated prices before NSE has published its file
 KEEP_EXPIRIES = 2    # nearest expiries to keep
 MONTHLY_DAYS = 100   # also keep every monthly expiry within this many days (for the low-VIX straddle)
 KEEP_RANGE = 0.08    # strikes within 8% of Nifty
@@ -82,15 +84,20 @@ def load(day):
     return df
 
 
-def final_until(dates, start):
-    """Latest day up to which every trading day since `start` has its NSE file or was given up."""
+def final_until(dates, start, now=None):
+    """Latest day up to which every trading day since `start` has its NSE file or was given up. A day without
+    its file is given up once GRACE later trading days exist, and, with no later day yet, only after
+    LOG_AFTER IST that evening (the 8:47 and 10:13 pm runs try NSE first)."""
+    now = now or pd.Timestamp.now(tz="Asia/Kolkata")
     dates = pd.DatetimeIndex(dates)
     since = dates[dates >= pd.Timestamp(start)]
     if since.empty:
         return dates[-1]
     last_ok = since[0] - pd.Timedelta(days=1)
     for i, d in enumerate(since):
-        given_up = len(since) - 1 - i >= GRACE
+        later = len(since) - 1 - i
+        evening = pd.Timestamp(f"{pd.Timestamp(d):%Y-%m-%d} {LOG_AFTER}").tz_localize("Asia/Kolkata")
+        given_up = later > GRACE or (later == GRACE and now >= evening)
         if os.path.exists(path(d)) or given_up:
             last_ok = d
         else:

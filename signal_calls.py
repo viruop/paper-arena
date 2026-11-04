@@ -79,6 +79,8 @@ def paths(ch):
             "claude_calls": os.path.join(folder, "claude_calls.csv"),
             "claude_updates": os.path.join(folder, "claude_updates.csv"),
             "claude_reviewed": os.path.join(folder, "claude_reviewed.csv"),
+            "corrections": os.path.join(folder, "call_corrections.csv"),     # Claude's notes on misread signals
+            "deleted": os.path.join(folder, "telegram_deleted.csv"),         # saved posts he deleted later
             "results": ch["results"], "variants": ch["results"].replace("_calls.csv", "_variants.csv")}
 
 
@@ -396,13 +398,27 @@ def variants(call, bars, updates=(), ended=False):
     return out
 
 
+def waiting_for_review(call, updates, reviewed):
+    """A post inside the signal's 24 hours still marked "needs review" (it may be his exit or a stop move,
+    and a score is never redone): the signal waits for Claude's answer. Returns the post id or ""."""
+    if not len(reviewed):
+        return ""
+    posted = bc.utc(call["posted_at"])
+    end = min([posted + WINDOW] + [bc.utc(u["posted_at"]) for u in updates
+                                    if u["action"] == "exit" and bc.utc(u["posted_at"]) > posted])
+    latest = reviewed.drop_duplicates("id", keep="last")
+    t = pd.to_datetime(latest["posted_at"], utc=True, errors="coerce")
+    open_ = latest[(latest["decision"] == "needs review") & (t > posted) & (t <= end)]
+    return str(open_["id"].iloc[0]) if len(open_) else ""
+
+
 def score_all(ch, bars_for=None, now=None):
     """Score every signal whose window has ended, and its checks. bars_for(instrument, start, end)."""
     p = paths(ch)
     now = now or pd.Timestamp.now(tz="UTC")
     bars_for = bars_for or dukascopy.minute_bars
     calls, results = read_both(p, "calls", CALL_COLS), read(p["results"], bc.RESULT_COLS)
-    updates = read_both(p, "updates", bc.UPDATE_COLS)
+    updates, reviewed = read_both(p, "updates", bc.UPDATE_COLS), read_both(p, "reviewed", REVIEW_COLS)
     have = set(read(p["variants"], bc.VARIANT_COLS)["id"].astype(str))
     done = set(results["id"].astype(str))
     rows, never, checks = [], [], []
@@ -414,6 +430,10 @@ def score_all(ch, bars_for=None, now=None):
         if now < posted + WINDOW + pd.Timedelta(hours=1):
             continue                                        # still in its window
         ups = [u for _, u in updates[updates["call_id"].astype(str) == cid].iterrows()]
+        wait = waiting_for_review(call, ups, reviewed) if cid not in done else ""
+        if wait:
+            print(f"  signal {cid} waits: post {wait} needs Claude's review", file=sys.stderr)
+            continue
         try:
             bars = bars_for(call["instrument"], posted.floor("h"), posted + WINDOW)
         except Exception as exc:  # no prices tonight: it waits
@@ -461,10 +481,23 @@ def summary(ch):
     scorable = calls[calls["scorable"] == "yes"] if len(calls) else calls
     latest = reviewed.drop_duplicates("id", keep="last") if len(reviewed) else reviewed   # a later line settles it
     review = latest[latest["decision"] == "needs review"] if len(latest) else latest
+    deleted = read(p["deleted"], bc.DELETED_COLS)
+    fixes = read(p["corrections"], ["id", "added", "source", "note"])
+    done, now = set(res["id"].astype(str)) if len(res) else set(), pd.Timestamp.now(tz="UTC")
+    waiting = {}
+    for _, c in (calls.iterrows() if len(calls) else []):
+        if str(c["id"]) not in done and c["scorable"] == "yes" and now >= bc.utc(c["posted_at"]) + WINDOW:
+            ups = [u for _, u in updates[updates["call_id"].astype(str) == str(c["id"])].iterrows()] if len(updates) else []
+            post = waiting_for_review(c, ups, reviewed)
+            if post:
+                waiting[str(c["id"])] = post
     return {"posts": len(posts), "promo": int(posts["text"].str.contains(PROMO).sum()) if len(posts) else 0,
             "calls": calls, "results": res, "updates": updates, "claims": claims, "variants": var,
             "review": review, "unread_trades": int(review["note"].str.startswith("Trade post").sum()) if len(review) else 0,
             "unlinked": int((latest["decision"] == "claim without signal").sum()) if len(latest) else 0,
+            "deleted": deleted, "waiting": waiting,
+            "deleted_calls": int(calls["id"].astype(str).isin(set(deleted["id"].astype(str))).sum()) if len(calls) else 0,
+            "corrections": {str(i): g.to_dict("records") for i, g in fixes.groupby("id")} if len(fixes) else {},
             "book": {"value": bc.CAPITAL + float(per_call.sum()), "scored": int(res["id"].nunique()) if len(res) else 0,
                      "wins": int((per_call > 0).sum()), "losses": int((per_call <= 0).sum()),
                      "pending": len(set(scorable["id"]) - set(res["id"] if len(res) else [])), "per_call": per_call}}

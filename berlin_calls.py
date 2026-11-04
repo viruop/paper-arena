@@ -61,6 +61,8 @@ CALLS = os.path.join(FOLDER, "telegram_calls.csv")
 RESULTS = os.path.join("logs", "berlin_calls.csv")
 UPDATES = os.path.join(FOLDER, "telegram_updates.csv")     # his later exits, stop moves and claims (add-only)
 REVIEWED = os.path.join(FOLDER, "telegram_reviewed.csv")    # Claude's decision on every post it reviewed (add-only)
+DELETED = os.path.join(FOLDER, "telegram_deleted.csv")      # saved posts he later deleted (add-only)
+DELETED_COLS = ["id", "posted_at", "noticed_at", "text"]
 VARIANTS = os.path.join("logs", "berlin_variants.csv")      # each scored call also late and reversed
 UPDATE_COLS = ["id", "call_id", "posted_at", "action", "detail", "price", "trigger", "verdict", "note", "added_by"]
 VARIANT_COLS = ["id", "variant", "fill_at", "fill", "exit_at", "exit", "outcome", "r", "pnl_rs", "scored_at"]
@@ -72,10 +74,11 @@ RESULT_COLS = ["id", "posted_at", "kind", "instrument", "leg", "side", "fill_at"
 
 RISK_RS = 1000.0
 CAPITAL = 100000.0
-SYMBOLS = {"NIFTY": "^NSEI", "GOLD": "GC=F", "BTC": "BTC-USD"}   # currencies use "<PAIR>=X"
-COST = {"NIFTY": 0.0003, "GOLD": 0.0005, "BTC": 0.0005}   # a side; currencies 0.00015
+SYMBOLS = {"NIFTY": "^NSEI", "GOLD": "GC=F", "BTC": "BTC-USD", "CRUDE": "CL=F"}   # currencies use "<PAIR>=X"
+COST = {"NIFTY": 0.0003, "GOLD": 0.0005, "BTC": 0.0005, "CRUDE": 0.0005}   # a side; currencies 0.00015
 DEFAULT_STOP = {("NIFTY", "intraday"): 0.002, ("GOLD", "positional"): 0.015, ("GOLD", "intraday"): 0.004,
-                ("NIFTY", "positional"): 0.015, ("BTC", "intraday"): 0.01, ("BTC", "positional"): 0.03}
+                ("NIFTY", "positional"): 0.015, ("BTC", "intraday"): 0.01, ("BTC", "positional"): 0.03,
+                ("CRUDE", "intraday"): 0.01, ("CRUDE", "positional"): 0.03}
 NIFTY_CLOSE_UTC = "10:00"                               # 3:30 pm IST
 HEADERS = {"User-Agent": ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
                           "(KHTML, like Gecko) Chrome/126.0 Safari/537.36")}
@@ -151,15 +154,50 @@ def append(path, cols, rows):
         writer.writerows(rows)
 
 
-def archive(start_id=77656, max_pages=15, fetch=None, handle=CHANNEL, posts_path=POSTS):
+def post_gone(handle, pid, timeout=20):
+    """True if the post's own page says it doesn't exist (deleted), False if it's there, None if unknown."""
+    url = f"https://t.me/{handle}/{pid}?embed=1&mode=tme"
+    try:
+        with urllib.request.urlopen(urllib.request.Request(url, headers=HEADERS), timeout=timeout) as resp:
+            page = resp.read().decode("utf-8", "replace")
+    except Exception:
+        return None
+    if "tgme_widget_message_error" in page or "Post not found" in page:
+        return True
+    return False if f'data-post="{handle}/{pid}"' in page else None
+
+
+def note_deleted(saved, seen, deleted_path, gone):
+    """Saved posts inside the range just read from the channel that no longer appear there, confirmed on the
+    post's own page, are added to deleted_path once. Returns how many were added."""
+    if not seen or saved.empty:
+        return 0
+    lo, hi = min(seen), max(seen)
+    done = set(read_posts(deleted_path)["id"].astype(str)) if os.path.exists(deleted_path) else set()
+    first = saved.drop_duplicates("id", keep="first").set_index("id")
+    now = pd.Timestamp.now(tz="UTC").strftime("%Y-%m-%dT%H:%M:%SZ")
+    rows = []
+    for pid in sorted(int(i) for i in first.index):
+        if lo < pid < hi and pid not in seen and str(pid) not in done and gone(pid) is True:
+            r = first.loc[str(pid)]
+            rows.append({"id": pid, "posted_at": r["posted_at"], "noticed_at": now, "text": r["text"][:300]})
+    append(deleted_path, DELETED_COLS, rows)
+    return len(rows)
+
+
+def archive(start_id=77656, max_pages=15, fetch=None, handle=CHANNEL, posts_path=POSTS, deleted_path=None,
+            gone=None, back_to=None):
     """Save new posts, and new versions of changed ones. Returns how many rows were added.
-    Works for any public channel (channels.py passes its handle and file); Berlin is the default."""
+    Works for any public channel (channels.py passes its handle and file); Berlin is the default.
+    deleted_path: also note saved posts he has deleted since (see note_deleted). back_to: read back to this
+    post id (a full check of the archive); normally only the newest 40 or so posts are read again."""
     fetch = fetch or (lambda before=None: fetch_page(before, handle=handle))
     saved = read_posts(posts_path)
     latest = {}
     for _, row in saved.iterrows():
         latest[int(row["id"])] = row["text"]
     known = max(latest) if latest else start_id
+    stop_at = max(back_to if back_to is not None else known - 40, start_id)
     seen, before, pages = {}, None, 0
     while pages < max_pages:
         found = parse(fetch(before), handle)
@@ -169,7 +207,7 @@ def archive(start_id=77656, max_pages=15, fetch=None, handle=CHANNEL, posts_path
         for p in found:
             seen[p["id"]] = p
         oldest = min(p["id"] for p in found)
-        if oldest <= max(known - 40, start_id) or oldest <= start_id:
+        if oldest <= stop_at or oldest <= start_id:
             break
         before = oldest
     now = pd.Timestamp.now(tz="UTC").strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -180,6 +218,11 @@ def archive(start_id=77656, max_pages=15, fetch=None, handle=CHANNEL, posts_path
             continue
         rows.append({**p, "seen_at": now, "edited": p["edited"] if pid not in latest else "changed after saving"})
     append(posts_path, POST_COLS, rows)
+    if deleted_path:
+        gone = gone or (lambda pid: post_gone(handle, pid))
+        found_gone = note_deleted(saved, seen, deleted_path, gone)
+        if found_gone:
+            print(f"{handle}: {found_gone} saved posts deleted from the channel since")
     return len(rows)
 
 
@@ -328,6 +371,18 @@ def window_end(call, posted):
     return posted + pd.Timedelta(days=14)
 
 
+def level_gap(calls, ref, bars):
+    """Futures minus his quoted price, for levels he gives on a spot or CFD chart. price_ref is either the id
+    of the call he quoted the price in (gold: "GOLD at 4064$") or "<price>@<UTC time>" for a quote posted
+    or shown at that time (crude oil: "96.13@2026-11-04T10:38:42Z")."""
+    ref = str(ref or "").strip()
+    m = re.fullmatch(r"(\d+(?:\.\d+)?)@(.+)", ref)
+    if m:
+        after = bars[bars.index >= utc(m.group(2))]
+        return 0.0 if after.empty else after["Open"].iloc[0] - float(m.group(1))
+    return gold_gap(calls, ref, bars) if ref else 0.0
+
+
 def gold_gap(calls, ref_id, bars):
     """COMEX futures minus his quoted spot price, at the call he quoted it in."""
     ref = calls[calls["id"].astype(str) == str(ref_id)]
@@ -352,7 +407,7 @@ def score_level(call, bars, calls, updates=(), start=None, flip=False, target_le
         end, his_exit = min(exits), True
     if bars.empty or bars.index[-1] < end - pd.Timedelta(minutes=5):
         return None                                      # its window hasn't ended in the saved prices
-    gap = gold_gap(calls, call.get("price_ref"), bars) if inst == "GOLD" else 0.0
+    gap = level_gap(calls, call.get("price_ref"), bars) if inst in ("GOLD", "CRUDE") else 0.0
     sign = 1 if side == "long" else -1
     begin = posted if start is None else max(posted, start)
     after = bars[(bars.index >= begin) & (bars.index < end)]
@@ -544,6 +599,43 @@ def checked_claims(updates, results):
     return out
 
 
+def read_log(path=REVIEWED):
+    """Claude's decision log (data/berlin/telegram_reviewed.csv), or None before it existed."""
+    if not os.path.exists(path):
+        return None
+    return pd.read_csv(path, dtype=str, keep_default_na=False)
+
+
+def call_end(call, updates=()):
+    """When a call's paper trade ends: its window, or his exit post if that came first."""
+    posted = utc(call["posted_at"])
+    if call["kind"] == "event":
+        end = (utc(call["exit_at"]) if str(call.get("exit_at", "")).strip()
+               else utc(call["event_at"]) + pd.Timedelta(minutes=EVENT["hold_min"]))
+    else:
+        end = window_end(call, posted)
+    exits = [utc(u["posted_at"]) for u in updates if u["action"] == "exit" and utc(u["posted_at"]) > posted]
+    return min([end] + exits)
+
+
+def waiting_for_review(call, updates, posts, log):
+    """Why a call isn't scored yet even though its window may be over ("" if nothing to wait for): a post he
+    made before the call ended that Claude hasn't reviewed yet, or one marked "needs levels". His exits and
+    stop moves are in those posts, and a score is never redone. Before the decision log existed, nothing waits."""
+    if log is None or not len(log) or not len(posts):
+        return ""
+    end = call_end(call, updates)
+    ids = posts["id"].astype(int)
+    inside = posts[(ids > int(call["id"])) & (pd.to_datetime(posts["posted_at"], utc=True) <= end)]
+    reviewed_upto = int(log["id"].astype(int).max())
+    later = [i for i in inside["id"] if int(i) > reviewed_upto]
+    if later:
+        return f"post {min(later, key=int)} isn't reviewed yet"
+    decision = log.drop_duplicates("id", keep="last").set_index("id")["decision"]
+    pending = [i for i in inside["id"] if decision.get(i) == "needs levels"]
+    return f"post {pending[0]} needs levels" if pending else ""
+
+
 def updates_for(updates, call_id):
     if not len(updates):
         return []
@@ -558,12 +650,18 @@ def score_all(bars_for):
         return 0
     done = set(read_results()["id"].astype(str))
     updates = read_updates()
+    posts, log = read_posts().drop_duplicates("id", keep="first"), read_log()
     rows, never = [], []
     for _, call in calls.iterrows():
         if str(call["id"]) in done:
             continue
         option = call["scorable"] != "yes" and option_on_underlying(call)
         if call["scorable"] != "yes" and not option:
+            continue
+        ups_ = updates_for(updates, call["id"])
+        wait = waiting_for_review(call, ups_, posts, log) if call_end(call, ups_) <= pd.Timestamp.now(tz="UTC") else ""
+        if wait:
+            print(f"  call {call['id']} waits: {wait}", file=sys.stderr)
             continue
         try:
             bars = bars_for(call["instrument"])
@@ -615,10 +713,22 @@ def summary():
     """Everything the page shows about the channel: books of paper results, recent calls, archive size,
     his later posts about each call, and the late and reversed checks."""
     calls, res, posts = read_calls(), read_results(), read_posts()
+    deleted = read_posts(DELETED) if os.path.exists(DELETED) else pd.DataFrame(columns=DELETED_COLS)
+    updates, log = read_updates(), read_log()
+    first = posts.drop_duplicates("id", keep="first") if len(posts) else posts
+    done, now = set(res["id"].astype(str)) if len(res) else set(), pd.Timestamp.now(tz="UTC")
+    waiting = {}
+    for _, c in (calls.iterrows() if len(calls) else []):
+        if str(c["id"]) not in done and (c["scorable"] == "yes" or option_on_underlying(c)):
+            ups = updates_for(updates, c["id"])
+            why = waiting_for_review(c, ups, first, log) if call_end(c, ups) <= now else ""
+            if why:
+                waiting[str(c["id"])] = why
     out = {"posts": int(posts["id"].nunique()) if len(posts) else 0,
            "changed": int((posts["edited"] == "changed after saving").sum()) if len(posts) else 0,
-           "calls": calls, "results": res, "books": {}, "updates": checked_claims(read_updates(), res),
-           "variants": read_variants()}
+           "calls": calls, "results": res, "books": {}, "updates": checked_claims(updates, res),
+           "variants": read_variants(), "deleted": deleted, "waiting": waiting,
+           "deleted_calls": int(calls["id"].astype(str).isin(set(deleted["id"].astype(str))).sum()) if len(calls) else 0}
     if len(res):
         res = res.assign(pnl=pd.to_numeric(res["pnl_rs"]), r=pd.to_numeric(res["r"]))
     options = set(c["id"] for _, c in calls.iterrows() if option_on_underlying(c)) if len(calls) else set()
