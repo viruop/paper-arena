@@ -16,7 +16,7 @@ Decide from what was known when he posted (the post, the posts before it, the pr
 
 1. **Read the new posts.** Use the archive `data/berlin/telegram_posts.csv` (times in UTC, text as first saved). Review every post with an id greater than the largest id in `data/berlin/telegram_reviewed.csv`, or in `telegram_calls.csv` if the log doesn't exist yet. For posts newer than the archive, read https://t.me/s/tradelikeberlin with the user's Research Tools (`scrape_url`; add `?before=<id>` for older pages).
 
-2. **Decide what each post is**, and add one line per post to `data/berlin/telegram_reviewed.csv`. The columns are `id,posted_at,reviewed_at,decision,call_id,note`.
+2. **Decide what each post is**, and add one line per post to `data/berlin/telegram_reviewed.csv`. The columns are `id,posted_at,reviewed_at,decision,call_id,note`. Review every new post each night: a call is scored only once this log covers every post he made before it ended, and a post left as `needs levels` holds the scores of the calls it falls inside.
    - `decision` is one of `call`, `update`, `claim`, `other` or `needs levels`.
    - `note` is a few words on why, for example "forecast, no position", "promotion" or "caption of call 77796".
    - A later line for the same post settles it, for example once the user sends the levels for a `needs levels` post.
@@ -27,12 +27,12 @@ Decide from what was known when he posted (the post, the posts before it, the pr
      - `level`: Nifty, gold or Bitcoin with a direction.
      - `event`: a currency trade on scheduled news, traded with the prep video's plan. Set `event_at` to the news time in UTC.
      - `option`: option premiums, or levels shown only on a chart image. An options trade with a direction on Nifty, gold or Bitcoin is also scored on the market itself, in a separate book. For that, set `side` and name the option in the note ("22800 CE", "puts").
-   - `instrument`: `NIFTY` (also for Sensex calls he takes from Nifty's chart), `GOLD`, `BTC`, or a currency pair like `NZDCAD`.
+   - `instrument`: `NIFTY` (also for Sensex calls he takes from Nifty's chart), `GOLD`, `BTC`, `CRUDE` (crude oil, scored on NYMEX WTI futures; also for his MCX or NSE crude options), or a currency pair like `NZDCAD`.
    - `side`: the direction on the market (buying puts or selling calls is `short`).
    - `entry_type` (`market` or `break`), `entry`, `stop` and `target`: exactly as written.
    - `rr`: when he gives only a reward ratio.
    - `horizon`: `intraday` or `positional`.
-   - `price_ref`: for gold, the id of his latest post quoting a gold price ("GOLD at 4064$"). It's used to move his spot levels onto COMEX futures.
+   - `price_ref`: for gold, the id of his latest post quoting a gold price ("GOLD at 4064$"). It's used to move his spot levels onto COMEX futures. For crude oil (or gold, when no call row quotes the price), write his quote and its time as `<price>@<UTC time>`, for example `96.13@2026-11-04T10:38:42Z` from "CrudeOil now at 96.13$"; a price shown on his chart in a video, with the chart's clock, works too.
    - `scorable`: `yes`, or `no` for options and chart-only levels.
    - `note`: a short quote and anything filled in. Start it with `[series]` for trades in his "Scale small capital" series.
    - Leave `exit_at` empty. Exits go in the updates file.
@@ -60,6 +60,8 @@ The code's own files are `data/akash/telegram_calls.csv`, `telegram_updates.csv`
    - **An instruction or claim the code couldn't tie to one signal**, for example "Closing my Nas100 trade" while two signals were open: add it to `claude_updates.csv` with the right `call_id`, using the actions above.
    - **Anything else:** `other`, with the reason.
 3. "TP done" or "SL hit" posts that the code marked `claim without signal` are about trades never posted in the channel. Leave them: they can't be checked.
+4. Check every new signal the code read (rows in `telegram_calls.csv` newer than your last review) against its post: market, direction, entry type and every level. If it's wrong, add a row to `data/akash/call_corrections.csv` (`id,added,source,note`; source is the post's link) saying what the post said and what it should have been. The signal and its score stay as read.
+5. A signal waits to be scored while a post inside its 24 hours is still `needs review`, so answer them every night.
 
 ## Hand over the files
 
