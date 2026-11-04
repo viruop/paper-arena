@@ -1,0 +1,11 @@
+id,call_id,posted_at,action,detail,price,trigger,verdict,note,added_by
+77777,77743,2026-10-29T17:27:07Z,exit,,,,,"Voice note: he exited the gold expiry option position ""cost to cost"" (no profit, no loss).",claude
+77821,77796,2026-10-30T13:57:45Z,exit,,,,,"""3910-3916$ was the area of interest! And I have just closed the trade right now.""",claude
+77710,77661,2026-10-27T10:05:01Z,claim,,,,matches,"""1st trade, exited with 30% premium loss due to theta decay.""",claude
+77711,77667,2026-10-27T10:05:55Z,claim,,,,doesn't match,"""2nd trade, I entered 22750 PE at 30₹ and exited at 121₹"". Posted after the close; no exit was posted during the day, so the record holds to the close.",claude
+77712,77687,2026-10-27T10:07:06Z,claim,,,,doesn't match,"""1:3.5RR on chart and 1:4RR in option trade"". Nifty's low after the entry was 22,637, short of his 22,622 target, before the stop.",claude
+77713,77704,2026-10-27T10:08:08Z,claim,,,,,"""3rd trade, For option sellers. Purely volatility based trade. 1:4RR""",claude
+77783,77779,2026-10-30T00:27:48Z,claim,,,,matches,"""BITCOIN FALLS 1500 points below the shared opportunity area.""",claude
+77786,77721,2026-10-30T08:10:40Z,claim,,,,,"""1Million+ Gains in GOLD shorts"" (a P&L screenshot of +₹10,58,750; still open).",claude
+77804,77796,2026-10-30T13:08:55Z,claim,,,,,"""All the options shown in the video gained more than 100% in value.""",claude
+77805,77796,2026-10-30T13:12:00Z,claim,,,,,"""It's OVER!!! Nearly 200% returns""",claude
