@@ -1,0 +1,120 @@
+id,posted_at,reviewed_at,decision,call_id,note
+77797,2026-10-30T12:52:38Z,2026-11-04T16:53:44Z,other,77796,caption of call 77796
+77798,2026-10-30T12:53:00Z,2026-11-04T16:53:44Z,other,77796,comment on call 77796 (1:4RR claimed before the move)
+77799,2026-10-30T12:53:25Z,2026-11-04T16:53:44Z,other,77796,comment on call 77796 (1:4RR claimed before the move)
+77800,2026-10-30T12:55:28Z,2026-11-04T16:53:44Z,other,77796,voice note about call 77796 (not transcribed)
+77801,2026-10-30T13:07:13Z,2026-11-04T16:53:44Z,claim,77796,"celebration of call 77796, no specific result"
+77802,2026-10-30T13:07:21Z,2026-11-04T16:53:44Z,claim,77796,"celebration of call 77796, no specific result"
+77803,2026-10-30T13:07:27Z,2026-11-04T16:53:44Z,claim,77796,"celebration of call 77796, no specific result"
+77804,2026-10-30T13:08:55Z,2026-11-04T16:53:44Z,claim,77796,already in telegram_updates.csv
+77805,2026-10-30T13:12:00Z,2026-11-04T16:53:44Z,claim,77796,already in telegram_updates.csv
+77806,2026-10-30T13:13:01Z,2026-11-04T16:53:44Z,claim,77796,"celebration of call 77796, no specific result"
+77807,2026-10-30T13:14:21Z,2026-11-04T16:53:44Z,claim,77796,"celebration of call 77796, no specific result"
+77808,2026-10-30T13:16:59Z,2026-11-04T16:53:44Z,other,,image only
+77810,2026-10-30T13:19:34Z,2026-11-04T16:53:44Z,other,,image only
+77811,2026-10-30T13:20:55Z,2026-11-04T16:53:44Z,claim,77779,"recap of call 77779 (""5AM BITCOIN"")"
+77812,2026-10-30T13:21:06Z,2026-11-04T16:53:44Z,claim,77796,"celebration of call 77796, no specific result"
+77813,2026-10-30T13:21:52Z,2026-11-04T16:53:44Z,other,,no trade
+77814,2026-10-30T13:23:28Z,2026-11-04T16:53:44Z,other,,"conditional idea (""if rise comes, look to short gold""), no level or position"
+77815,2026-10-30T13:29:21Z,2026-11-04T16:53:44Z,other,,voice note after a conditional idea (not transcribed)
+77816,2026-10-30T13:51:38Z,2026-11-04T16:53:44Z,other,77796,"holding call 77796, no change"
+77817,2026-10-30T13:52:28Z,2026-11-04T16:53:44Z,claim,77796,"celebration of call 77796, no specific result"
+77818,2026-10-30T13:55:04Z,2026-11-04T16:53:44Z,update,77796,"exit of call 77796 in the same 5-minute bar as his exit post 77821, which the score used"
+77819,2026-10-30T13:55:51Z,2026-11-04T16:53:44Z,update,77796,"exit of call 77796 in the same 5-minute bar as his exit post 77821, which the score used"
+77820,2026-10-30T13:56:28Z,2026-11-04T16:53:44Z,claim,77796,claim added to telegram_updates.csv
+77821,2026-10-30T13:57:45Z,2026-11-04T16:53:44Z,update,77796,"exit, already in telegram_updates.csv"
+77822,2026-10-30T14:01:56Z,2026-11-04T16:53:44Z,claim,77796,claim added to telegram_updates.csv
+77825,2026-10-30T14:06:33Z,2026-11-04T16:53:44Z,other,,link and comment
+77826,2026-10-30T14:08:41Z,2026-11-04T16:53:44Z,other,,link and comment
+77827,2026-10-30T14:13:35Z,2026-11-04T16:53:44Z,other,77721,"holding the gold positional short, no change"
+77828,2026-10-30T14:14:43Z,2026-11-04T16:53:44Z,claim,77721,claim added to telegram_updates.csv
+77829,2026-10-30T14:20:53Z,2026-11-04T16:53:44Z,other,,voice note (not transcribed)
+77830,2026-10-31T13:45:08Z,2026-11-04T16:53:44Z,other,,poll about publishing a live session
+77831,2026-10-31T13:46:16Z,2026-11-04T16:53:44Z,other,,poll about publishing a live session
+77832,2026-10-31T13:48:44Z,2026-11-04T16:53:44Z,other,,poll about publishing a live session
+77833,2026-10-31T15:39:11Z,2026-11-04T16:53:44Z,other,,poll about publishing a live session
+77834,2026-10-31T15:42:59Z,2026-11-04T16:53:44Z,other,,poll about publishing a live session
+77835,2026-11-01T08:32:34Z,2026-11-04T16:53:44Z,other,,poll about publishing a live session
+77836,2026-11-01T08:33:51Z,2026-11-04T16:53:44Z,other,,poll about publishing a live session
+77837,2026-11-01T08:35:45Z,2026-11-04T16:53:44Z,other,,poll about publishing a live session
+77838,2026-11-01T09:33:27Z,2026-11-04T16:53:44Z,other,,poll about publishing a live session
+77839,2026-11-01T10:15:02Z,2026-11-04T16:53:44Z,other,,poll about publishing a live session
+77840,2026-11-01T10:42:31Z,2026-11-04T16:53:44Z,other,,poll about publishing a live session
+77841,2026-11-01T12:48:13Z,2026-11-04T16:53:44Z,other,,poll about publishing a live session
+77842,2026-11-01T12:56:32Z,2026-11-04T16:53:44Z,other,,poll about publishing a live session
+77843,2026-11-01T12:57:32Z,2026-11-04T16:53:44Z,other,,poll about publishing a live session
+77844,2026-11-01T12:59:08Z,2026-11-04T16:53:44Z,other,,poll about publishing a live session
+77845,2026-11-01T12:59:50Z,2026-11-04T16:53:44Z,other,,poll about publishing a live session
+77846,2026-11-01T13:11:48Z,2026-11-04T16:53:44Z,other,,poll about publishing a live session
+77847,2026-11-01T13:12:44Z,2026-11-04T16:53:44Z,other,,poll about publishing a live session
+77848,2026-11-01T13:20:54Z,2026-11-04T16:53:44Z,other,,poll about publishing a live session
+77849,2026-11-01T13:22:52Z,2026-11-04T16:53:44Z,other,,poll about publishing a live session
+77850,2026-11-01T13:24:11Z,2026-11-04T16:53:44Z,other,,"joke about the poll's vote count as a market, not a trade"
+77851,2026-11-01T13:25:10Z,2026-11-04T16:53:44Z,other,,"joke about the poll's vote count as a market, not a trade"
+77852,2026-11-01T13:26:58Z,2026-11-04T16:53:44Z,other,,poll about publishing a live session
+77853,2026-11-01T13:28:34Z,2026-11-04T16:53:44Z,other,,poll about publishing a live session
+77854,2026-11-01T13:29:25Z,2026-11-04T16:53:44Z,other,,poll about publishing a live session
+77855,2026-11-01T13:29:49Z,2026-11-04T16:53:44Z,other,,poll about publishing a live session
+77856,2026-11-01T13:31:01Z,2026-11-04T16:53:44Z,other,,"joke about the poll's vote count as a market, not a trade"
+77857,2026-11-01T13:32:23Z,2026-11-04T16:53:44Z,claim,77779,claim added to telegram_updates.csv
+77858,2026-11-01T13:35:46Z,2026-11-04T16:53:44Z,other,,poll about publishing a live session
+77859,2026-11-02T16:58:10Z,2026-11-04T16:53:44Z,other,,no trade
+77860,2026-11-02T16:58:48Z,2026-11-04T16:53:44Z,other,,no trade
+77861,2026-11-02T17:12:36Z,2026-11-04T16:53:44Z,other,,voice note (not transcribed)
+77862,2026-11-02T17:19:18Z,2026-11-04T16:53:44Z,other,77865,"buy-zone forecast, part of call 77865"
+77863,2026-11-02T17:25:09Z,2026-11-04T16:53:44Z,other,77865,"buy-zone forecast, part of call 77865"
+77864,2026-11-02T17:26:20Z,2026-11-04T16:53:44Z,other,77865,voice note about the Bitcoin position (not transcribed)
+77865,2026-11-02T17:32:21Z,2026-11-04T16:53:44Z,call,77865,says he holds a small Bitcoin long with an exit level
+77866,2026-11-03T03:39:11Z,2026-11-04T16:53:44Z,other,,no trade
+77867,2026-11-03T04:26:44Z,2026-11-04T16:53:44Z,other,,no trade
+77868,2026-11-03T05:15:26Z,2026-11-04T16:53:44Z,other,77872,"setup, part of call 77872"
+77869,2026-11-03T05:16:31Z,2026-11-04T16:53:44Z,other,77872,"setup, part of call 77872"
+77870,2026-11-03T05:17:30Z,2026-11-04T16:53:44Z,other,77872,"setup, part of call 77872"
+77871,2026-11-03T05:27:20Z,2026-11-04T16:53:44Z,other,77872,voice note about the Nifty setup (not transcribed)
+77872,2026-11-03T05:44:35Z,2026-11-04T16:53:44Z,call,77872,firm break entry: his first trade of the day below the red line
+77873,2026-11-03T06:20:20Z,2026-11-04T16:53:44Z,update,77872,setup cancelled
+77874,2026-11-03T09:05:51Z,2026-11-04T16:53:44Z,call,77874,"firm break entry below 23,671"
+77875,2026-11-03T09:06:06Z,2026-11-04T16:53:44Z,other,77874,part of call 77874
+77876,2026-11-03T09:12:09Z,2026-11-04T16:53:44Z,other,,"comment on market cues, no trade"
+77877,2026-11-03T09:25:02Z,2026-11-04T16:53:44Z,other,,"comment on market cues, no trade"
+77878,2026-11-03T09:26:23Z,2026-11-04T16:53:44Z,other,77874,part of call 77874
+77879,2026-11-03T09:39:02Z,2026-11-04T16:53:44Z,update,77874,setup cancelled
+77880,2026-11-03T10:28:41Z,2026-11-04T16:53:44Z,claim,,"trades shown after the fact, never posted as calls"
+77881,2026-11-03T10:41:20Z,2026-11-04T16:53:44Z,claim,,"trades shown after the fact, never posted as calls"
+77882,2026-11-03T10:42:42Z,2026-11-04T16:53:44Z,claim,77721,claim added to telegram_updates.csv for both gold shorts
+77883,2026-11-04T09:06:02Z,2026-11-04T16:53:44Z,other,,caption of a gold update
+77884,2026-11-04T09:08:44Z,2026-11-04T16:53:44Z,update,77721,"stop at 4,047 for both open gold shorts (77721, 77750)"
+77885,2026-11-04T09:10:06Z,2026-11-04T16:53:44Z,other,,"plan to look for a crude oil short, no entry yet"
+77886,2026-11-04T09:14:58Z,2026-11-04T16:53:44Z,other,,caption of a gold update
+77887,2026-11-04T09:15:09Z,2026-11-04T16:53:44Z,other,,"plan to look for a crude oil short, no entry yet"
+77888,2026-11-04T09:15:55Z,2026-11-04T16:53:44Z,other,,"plan to look for a crude oil short, no entry yet"
+77889,2026-11-04T09:19:41Z,2026-11-04T16:53:44Z,other,,image only
+77890,2026-11-04T09:40:12Z,2026-11-04T16:53:44Z,other,77897,crude oil setup and notes before his entry (call 77897)
+77891,2026-11-04T09:40:31Z,2026-11-04T16:53:44Z,other,77897,crude oil setup and notes before his entry (call 77897)
+77892,2026-11-04T09:43:25Z,2026-11-04T16:53:44Z,other,77897,voice note before the crude oil entry (not transcribed)
+77893,2026-11-04T09:44:48Z,2026-11-04T16:53:44Z,other,77897,voice note before the crude oil entry (not transcribed)
+77894,2026-11-04T09:45:43Z,2026-11-04T16:53:44Z,other,77897,crude oil setup and notes before his entry (call 77897)
+77895,2026-11-04T09:48:44Z,2026-11-04T16:53:44Z,other,77897,crude oil setup and notes before his entry (call 77897)
+77896,2026-11-04T09:49:10Z,2026-11-04T16:53:44Z,other,77897,voice note before the crude oil entry (not transcribed)
+77897,2026-11-04T10:29:34Z,2026-11-04T16:53:44Z,call,77897,says he entered crude oil shorts
+77898,2026-11-04T10:29:44Z,2026-11-04T16:53:44Z,other,77897,"details of call 77897 (break of the lows, adding plan, 96.13$ quote, NSE puts for 10 Nov, RR above 1:5); exact levels came in the video 77909"
+77899,2026-11-04T10:30:55Z,2026-11-04T16:53:44Z,other,77897,"details of call 77897 (break of the lows, adding plan, 96.13$ quote, NSE puts for 10 Nov, RR above 1:5); exact levels came in the video 77909"
+77900,2026-11-04T10:36:55Z,2026-11-04T16:53:44Z,other,77897,"details of call 77897 (break of the lows, adding plan, 96.13$ quote, NSE puts for 10 Nov, RR above 1:5); exact levels came in the video 77909"
+77901,2026-11-04T10:38:42Z,2026-11-04T16:53:44Z,other,77897,"details of call 77897 (break of the lows, adding plan, 96.13$ quote, NSE puts for 10 Nov, RR above 1:5); exact levels came in the video 77909"
+77902,2026-11-04T10:40:39Z,2026-11-04T16:53:44Z,other,77897,"details of call 77897 (break of the lows, adding plan, 96.13$ quote, NSE puts for 10 Nov, RR above 1:5); exact levels came in the video 77909"
+77903,2026-11-04T10:41:03Z,2026-11-04T16:53:44Z,other,77897,"details of call 77897 (break of the lows, adding plan, 96.13$ quote, NSE puts for 10 Nov, RR above 1:5); exact levels came in the video 77909"
+77904,2026-11-04T10:43:36Z,2026-11-04T16:53:44Z,other,77897,"details of call 77897 (break of the lows, adding plan, 96.13$ quote, NSE puts for 10 Nov, RR above 1:5); exact levels came in the video 77909"
+77905,2026-11-04T10:49:33Z,2026-11-04T16:53:44Z,other,77897,"details of call 77897 (break of the lows, adding plan, 96.13$ quote, NSE puts for 10 Nov, RR above 1:5); exact levels came in the video 77909"
+77906,2026-11-04T10:49:57Z,2026-11-04T16:53:44Z,other,77897,"details of call 77897 (break of the lows, adding plan, 96.13$ quote, NSE puts for 10 Nov, RR above 1:5); exact levels came in the video 77909"
+77907,2026-11-04T10:51:05Z,2026-11-04T16:53:44Z,other,77897,"details of call 77897 (break of the lows, adding plan, 96.13$ quote, NSE puts for 10 Nov, RR above 1:5); exact levels came in the video 77909"
+77908,2026-11-04T10:51:39Z,2026-11-04T16:53:44Z,other,77897,"details of call 77897 (break of the lows, adding plan, 96.13$ quote, NSE puts for 10 Nov, RR above 1:5); exact levels came in the video 77909"
+77909,2026-11-04T12:09:19Z,2026-11-04T16:53:44Z,update,77897,"video read in chat: stop 96.960 and target 90.028 on WTI (entry 95.882, RR 5.43)"
+77910,2026-11-04T12:30:58Z,2026-11-04T16:53:44Z,other,,link and comment
+77911,2026-11-04T12:31:29Z,2026-11-04T16:53:44Z,other,,link and comment
+77912,2026-11-04T14:18:30Z,2026-11-04T16:53:44Z,claim,77897,claim added to telegram_updates.csv
+77913,2026-11-04T15:57:05Z,2026-11-04T16:53:44Z,other,,image only
+77914,2026-11-04T15:59:03Z,2026-11-04T16:53:44Z,claim,77897,"""CrudeOil down 5%"", market move, no specific result"
+77915,2026-11-04T16:02:33Z,2026-11-04T16:53:44Z,other,77897,voice note (not transcribed)
+77916,2026-11-04T16:05:39Z,2026-11-04T16:53:44Z,claim,77897,claim added to telegram_updates.csv
+77917,2026-11-04T16:28:42Z,2026-11-04T16:53:44Z,other,,image only
+77918,2026-11-04T16:29:20Z,2026-11-04T16:53:44Z,other,,image only

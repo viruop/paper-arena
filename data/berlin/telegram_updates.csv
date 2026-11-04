@@ -9,3 +9,17 @@ id,call_id,posted_at,action,detail,price,trigger,verdict,note,added_by
 77786,77721,2026-10-30T08:10:40Z,claim,,,,,"""1Million+ Gains in GOLD shorts"" (a P&L screenshot of +₹10,58,750; still open).",claude
 77804,77796,2026-10-30T13:08:55Z,claim,,,,,"""All the options shown in the video gained more than 100% in value.""",claude
 77805,77796,2026-10-30T13:12:00Z,claim,,,,,"""It's OVER!!! Nearly 200% returns""",claude
+77820,77796,2026-10-30T13:56:28Z,claim,,,,,"""Captured this opportunity 100%""",claude
+77822,77796,2026-10-30T14:01:56Z,claim,,,,,"""THEN VS NOW / In just one hour, everything happened as expected."" (with a chart image)",claude
+77828,77721,2026-10-30T14:14:43Z,claim,,,,,"""The FYERS account position is still open.. Holding 2Million profits there.!""",claude
+77857,77779,2026-11-01T13:32:23Z,claim,,,,,"""I DOUBLED MY CAPITAL IN THE BITCOIN CRASH"" (his live-session recording)",claude
+77873,77872,2026-11-03T06:20:20Z,exit,,,,,"""The breakdown didn't take place. No open positions at the moment.""",claude
+77879,77874,2026-11-03T09:39:02Z,exit,,,,,"""We are approaching towards CAS / Do not execute this setup now. Cancelling the orders.""",claude
+77882,77721,2026-11-03T10:42:42Z,claim,,,,,"""Gold positional shorts remains on hold, were marked as target achieved. 65% target is achieved, still 35% left."" (about his October predictions sheet)",claude
+77882,77750,2026-11-03T10:42:42Z,claim,,,,,"""Gold positional shorts remains on hold, were marked as target achieved. 65% target is achieved, still 35% left."" (about his October predictions sheet)",claude
+77884,77721,2026-11-04T09:08:44Z,stop,,4047,,,"""Following this price volatility, I'll cover my positional shorts at 4047$"". Gold was about 4,033-4,044 then, so 4,047 is above the price: a stop for the shorts.",claude
+77884,77750,2026-11-04T09:08:44Z,stop,,4047,,,"""Following this price volatility, I'll cover my positional shorts at 4047$"". Gold was about 4,033-4,044 then, so 4,047 is above the price: a stop for the shorts.",claude
+77909,77897,2026-11-04T12:09:19Z,stop,,96.96,,,"His video: a short position on WTI from 95.882 with the stop at 96.960 (1.078, 1.124%) and the target at 90.028 (5.854, 6.105%), ""Risk/reward ratio: 5.43"".",claude
+77909,77897,2026-11-04T12:09:19Z,target,,90.028,,,"His video: target 90.028 (6.105% below his 95.882 entry), ""for target 5% fall"" (post 77900).",claude
+77912,77897,2026-11-04T14:18:30Z,claim,,,,,"""Sitting tight, holding positions. 50% target has been achieved.""",claude
+77916,77897,2026-11-04T16:05:39Z,claim,,,,,"""MORE THAN 50% RETURNS IN OPTIONS""",claude
