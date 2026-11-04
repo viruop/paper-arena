@@ -10,6 +10,7 @@ FOR LEARNING ONLY. No real orders are placed. Not investment advice.
 import datetime as dt
 import html
 import os
+import re
 
 import matplotlib
 
@@ -23,11 +24,14 @@ import asset_arena  # noqa: E402
 import berlin  # noqa: E402
 import berlin_calls  # noqa: E402
 import berlin_study  # noqa: E402
+import channels  # noqa: E402
 import fno_arena  # noqa: E402
 import logbook  # noqa: E402
 import market_context as mc  # noqa: E402
 import nifty_backtest as bt  # noqa: E402
 import paper_arena as pa  # noqa: E402
+import scorecard  # noqa: E402
+import signal_calls  # noqa: E402
 
 SITE = "site"
 DATA_URL = "https://github.com/aswinv90/indian-market-historical-data"
@@ -288,6 +292,11 @@ details.more.solo>section{margin-top:0}
 details.mini summary{cursor:pointer;color:var(--muted);font-size:.95rem;margin-top:.4rem}
 .calls li .tl-what{white-space:normal}
 .tl-fix{display:block;margin-top:.4rem;padding:.35rem .6rem;border-left:3px solid var(--score);background:var(--bg);font-size:.92rem}
+.tl-what strong,.tl-claim strong{white-space:nowrap}
+.tl-claim{display:block;margin-top:.3rem;padding-left:.6rem;border-left:2px solid var(--rule);color:var(--muted);font-size:.92rem}
+.checks{margin:.8rem 0 1rem}.checks .verdict{margin:0 0 .35rem}.checklist{list-style:none;margin:0;padding:0}
+.checklist li{padding:.15rem 0 .15rem 1.2rem;text-indent:-1.2rem;font-size:.95rem}.checklist .mark{display:inline-block;width:1.2rem;text-indent:0;font-weight:700}
+.checklist .ok .mark{color:var(--up)}.checklist .no .mark{color:var(--down)}.checklist .wait .mark{color:var(--muted)}
 @media (max-width:40rem){.scoreboard{padding:.85rem .6rem .4rem}details.more>summary{flex-wrap:wrap}
 details.more>summary .hint{flex-basis:100%;order:3}}
 """
@@ -470,7 +479,24 @@ def logs_html():
                                                                           "saved the night it appeared"),
              ("data/berlin/telegram_calls.csv", "Tagged calls", False, "which posts count as trade calls, and their levels"),
              ("logs/berlin_calls.csv", "Call results", False, "how each call did when paper traded"),
+             ("data/berlin/telegram_updates.csv", "His later posts", False, "his exits, stop moves and claims about "
+                                                                            "each call, and whether the record agrees"),
+             ("logs/berlin_variants.csv", "Late and reversed checks", False, "each call taken 15 and 30 minutes late, "
+                                                                            "and reversed"),
+             ("data/berlin/call_corrections.csv", "Corrections", False, "calls we misread, noted without changing "
+                                                                        "their scores"),
+             ("data/berlin/telegram_reviewed.csv", "Decision log", False, "what Claude decided about each post, "
+                                                                          "and why"),
              ("logs/journal.md", "Your journal", False, "your evening notes, which you edit on GitHub")]
+    for ch in channels.CHANNELS.values():
+        if ch["tagging"] != "parser":
+            continue
+        f, name = ch["folder"], ch["name"]
+        items[-1:-1] = [(f, f"{name}: saved posts and signals", True, "every post as first seen, the decision "
+                                                                       "on each, the signals and his later posts"),
+                        (ch["results"], f"{name}: results", False, "how each signal did when paper traded"),
+                        (ch["results"].replace("_calls.csv", "_variants.csv"), f"{name}: late and reversed checks",
+                         False, "each signal taken 15 and 30 minutes late, and reversed")]
     links = "".join(f"<li>{link(p, t, f)}: {esc(d)}</li>" for p, t, f, d in items)
     return (f"<section aria-labelledby='log-h'><h2 id='log-h'>Permanent record</h2>{intro}"
             f"<ul class='links'>{links}</ul></section>")
@@ -657,7 +683,7 @@ def board_rows(res, names=None):
     return sorted(out, key=lambda x: -(x[1] or 0))
 
 
-def overview_html(res, fres, ares, tg):
+def overview_html(res, fres, ares, tg, sigs=()):
     """Every strategy on one board: the quickest answer to "is it making money?"."""
     berlin_names = [n for n, i in berlin.STRATEGIES.items() if i["kind"] == "agent"]
     nifty = board_rows(res) if res["started"] else [(n, None, None, f"Starts {day(pd.Timestamp(pa.START))}")
@@ -671,6 +697,12 @@ def overview_html(res, fres, ares, tg):
             note = (f"{done} {what}{'s' if done != 1 else ''} closed, {b['wins']} won" if done else
                     f"No {what}s closed yet") + (f"; {b['pending']} open" if b["pending"] else "")
             tl.append((title, b["value"], b["value"] / berlin_calls.CAPITAL - 1, note))
+        ob = tg["books"].get("options")
+        if ob and ob["scored"] + ob["pending"]:
+            done = ob["wins"] + ob["losses"]
+            note = (f"{done} closed, {ob['wins']} won" if done else "None closed yet") + (
+                f"; {ob['pending']} open" if ob["pending"] else "")
+            tl.append(("His options trades, on the market", ob["value"], ob["value"] / berlin_calls.CAPITAL - 1, note))
         for info in (i for i in berlin.STRATEGIES.values() if i["kind"] == "series"):
             trades, n, ours, _ = series_numbers(info, tg)
             tl.append(("Small-capital series", pa.CAPITAL + ours, ours / pa.CAPITAL,
@@ -678,6 +710,16 @@ def overview_html(res, fres, ares, tg):
     groups = [("Nifty 50 agents and Claude", nifty), ("Trade Like Berlin", tl),
               ("Gold and multi-asset", board_rows(ares, [n for n in asset_arena.AGENTS if n not in berlin.STRATEGIES])),
               ("F&amp;O (3x leverage)", board_rows(fres))]
+    for ch, sm in sigs or ():
+        if sm is None:
+            continue
+        b = sm["book"]
+        done = b["wins"] + b["losses"]
+        note = (f"{done} signal{'s' if done != 1 else ''} closed, {b['wins']} won" if done else
+                f"No signals closed yet") + (f"; {b['pending']} open" if b["pending"] else "")
+        row = (("His signals", b["value"], b["value"] / berlin_calls.CAPITAL - 1, note) if len(sm["calls"]) else
+               ("His signals", None, None, f"Saving posts since {day(pd.Timestamp(ch['since']))}; no signals yet"))
+        groups.insert(2, (esc(ch["name"]), [row]))
     rows = []
     for title, items in groups:
         if not items:
@@ -740,10 +782,56 @@ def correction_lines(fixes):
         for f in fixes)
 
 
+def money(x):
+    return f"{'+' if x >= 0 else '−'}₹{abs(x):,.0f}"
+
+
+def update_lines(ups):
+    """His later posts about one call: claims, with whether the record agrees, and exits or stop moves."""
+    out = []
+    if ups is None or not len(ups):
+        return ""
+    for _, u in ups.sort_values("posted_at").iterrows():
+        when = ist(u["posted_at"])
+        if u["action"] == "claim":
+            tag = {"matches": "<strong class='up'>matches the record</strong>",
+                   "doesn't match": "<strong class='down'>doesn’t match the record</strong>"}.get(u.get("verdict", ""), "")
+            out.append(f"<span class='tl-claim'>He said, {when}: {esc(u['note'])}" + (f" · {tag}" if tag else "") + "</span>")
+        elif u["action"] == "exit":
+            out.append(f"<span class='tl-claim'>His exit post, {when}, ends the trade: {esc(u['note'])}</span>")
+        else:
+            to = "the entry" if str(u.get("price", "")) in ("", "entry") else esc(u["price"])
+            once = (f" once the price reaches {level(u['trigger']) if re.fullmatch(r'[0-9.]+', str(u['trigger'])) else esc(u['trigger'])}"
+                    if u["action"] == "stop_when" and u.get("trigger") else "")
+            out.append(f"<span class='tl-claim'>Stop to {to}{once}, {when}: {esc(u['note'])}</span>")
+    return "".join(out)
+
+
+def scorecard_html(sc, what):
+    marks = {True: ("ok", "✓"), False: ("no", "✗"), None: ("wait", "·")}
+    items = "".join(f"<li class='{marks[ok][0]}'><span class='mark'>{marks[ok][1]}</span>{esc(label)}: "
+                    f"<span class='meta'>{esc(detail)}</span></li>" for label, ok, detail in sc["rows"])
+    started = any(ok is not None for _, ok, _ in sc["rows"])
+    return (f"<div class='checks'><p class='verdict'><strong>Worth following {esc(what)}?</strong> {esc(sc['verdict'])}"
+            f"</p>" + (f"<ul class='checklist'>{items}</ul>" if started else "") +
+            f"<p class='meta'>The same eight checks for every channel, written down on 4 Nov 2026 and never changed"
+            + ("" if started else ": enough calls, profit after costs, in both halves, not two lucky calls, a "
+               "15-minute delay, his direction, how many calls can be checked, and his claims against the record")
+            + ".</p></div>")
+
+
 def call_line(call, res):
     """One Telegram call for the page: what he said and what paper trading it did."""
     note = esc(call["note"])
     if call["scorable"] != "yes":
+        under = res[(res["id"].astype(str) == str(call["id"])) & (res["leg"] == "underlying")] if len(res) else res
+        if len(under):
+            pnl = pd.to_numeric(under["pnl_rs"]).sum()
+            return (f"{note} <span class='meta'>Option premiums can’t be scored; on the market itself:</span> "
+                    f"<strong class='{tone(pnl)}'>{money(pnl)}</strong> <span class='meta'>({esc(under['outcome'].iloc[0])})"
+                    f"</span>")
+        if berlin_calls.option_on_underlying(call):
+            return f"{note} <span class='meta'>Options trade: on the market itself it’s open, or waiting for prices.</span>"
         return f"{note} <span class='meta'>Not scored.</span>"
     mine = res[res["id"].astype(str) == str(call["id"])] if len(res) else res
     if not len(mine):
@@ -753,8 +841,7 @@ def call_line(call, res):
     pnl = pd.to_numeric(mine["pnl_rs"]).sum()
     legs = ", ".join(f"{r['leg']} {r['side']} {r['outcome']}" if call["kind"] == "event" else r["outcome"]
                      for _, r in mine.iterrows())
-    money = f"{'+' if pnl >= 0 else '−'}₹{abs(pnl):,.0f}"
-    return f"{note} <strong class='{tone(pnl)}'>{money}</strong> <span class='meta'>({esc(legs)})</span>"
+    return f"{note} <strong class='{tone(pnl)}'>{money(pnl)}</strong> <span class='meta'>({esc(legs)})</span>"
 
 
 def telegram_html(tg):
@@ -763,9 +850,11 @@ def telegram_html(tg):
     calls, res = tg["calls"], tg["results"]
     b = tg["books"]["calls"]
     fixes = read_corrections()
+    ups = tg.get("updates")
     def li(c):
+        mine = ups[ups["call_id"].astype(str) == str(c["id"])] if ups is not None and len(ups) else None
         return (f"<li><span class='meta'>{ist(c['posted_at'])} IST · {esc(c['instrument'])}</span>"
-                f"<span class='tl-what'>{call_line(c, res)}</span>"
+                f"<span class='tl-what'>{call_line(c, res)}</span>{update_lines(mine)}"
                 f"{correction_lines(fixes.get(str(c['id']), []))}</li>")
     ordered = [c for _, c in calls.sort_values("posted_at", ascending=False).iterrows()] if len(calls) else []
     items = [li(c) for c in ordered[:6]]
@@ -775,6 +864,12 @@ def telegram_html(tg):
     traded = set(calls.loc[(calls["kind"] == "level") & (calls["scorable"] == "yes"), "instrument"]) if len(calls) else set()
     markets = [names[k] for k in names if k in traded] + sorted(traded - set(names))
     book = (", ".join(markets[:-1]) + " and " + markets[-1] if len(markets) > 1 else "".join(markets)) or "market"
+    sc = scorecard.berlin_checks(tg)
+    ob = tg["books"].get("options")
+    options = (f"<p class='meta'>Options trades, scored on the market they’re on (in at the next 5-minute bar, the "
+               f"usual default stop, out at his exit or the window’s end), kept apart from the calls above: "
+               f"<strong>{inr(ob['value'])}</strong> from {ob['wins'] + ob['losses']} closed"
+               + (f", {ob['pending']} open" if ob["pending"] else "") + ".</p>") if ob and ob["scored"] + ob["pending"] else ""
     return (f"<h3>His Telegram calls, paper traded</h3>"
             f"<p>Every post on <a href='{berlin.TELEGRAM}'>his Telegram channel</a> since "
             f"{day(pd.Timestamp(berlin.TELEGRAM_FROM))} is saved within about half an hour ({tg['posts']} so far"
@@ -782,9 +877,10 @@ def telegram_html(tg):
             f"Of {len(calls)} trade calls, {scored} have levels free data can check; each risks ₹1,000. "
             f"{book[0].upper() + book[1:]} calls: <strong>{inr(b['value'])}</strong>, {b['wins']} won and "
             f"{b['losses']} lost" + (f", {b['pending']} still open" if b["pending"] else "") + ".</p>"
+            + scorecard_html(sc, "his calls") +
             f"<ul class='panel tlist calls'>{''.join(items)}</ul>"
             + (f"<details class='mini'><summary>Older calls ({len(ordered) - 6})</summary>"
-               f"<ul class='panel tlist calls'>{older}</ul></details>" if older else "") +
+               f"<ul class='panel tlist calls'>{older}</ul></details>" if older else "") + options +
             f"<p class='meta'>Market calls fill at the next 5-minute bar after the post, or when his level breaks. "
             f"A missing stop is added and said so (for example 0.2% for Nifty intraday, 1.5% for gold positional, "
             f"1% for Bitcoin intraday). A call is scored once its window ends: the close for Nifty intraday, "
@@ -878,6 +974,100 @@ def berlin_html(ares, abt, tg, st):
             f"New video? Send Claude the link.</p>{''.join(cards)}{telegram_html(tg)}</section>")
 
 
+SIGNAL_MARKETS = {"XAUUSD": "gold", "XAGUSD": "silver", "NAS100": "Nasdaq 100", "US30": "Dow Jones",
+                  "SPX500": "S&P 500", "BTCUSD": "Bitcoin", "ETHUSD": "Ether", "USOIL": "US oil"}
+
+
+def market_name(sym):
+    sym = str(sym)
+    return SIGNAL_MARKETS.get(sym, sym[:3] + "/" + sym[3:] if len(sym) == 6 and sym.isalpha() else sym)
+
+
+def level(x):
+    v = float(x)
+    return f"{int(v):,}" if v == int(v) else format(v, ",")
+
+
+def signal_text(call):
+    """His signal in words, with his levels exactly as posted."""
+    side, what = ("Buy" if call["side"] == "long" else "Sell"), market_name(call["instrument"])
+    entry = (f"{side} {what} now" if call["entry_type"] == "market" else
+             f"{side} {what} at {level(call['entry'])} ({esc(call['entry_type'])} order)")
+    aims = [level(t) for t in str(call["target"]).split("|") if t]
+    aim = f"target {aims[0]}" if len(aims) == 1 else "targets " + ", ".join(aims[:-1]) + " and " + aims[-1]
+    return f"{entry}, stop {level(call['stop'])}, {aim}."
+
+
+def signal_result(call, res, now):
+    mine = res[res["id"].astype(str) == str(call["id"])] if len(res) else res
+    if len(mine):
+        if (mine["outcome"] == "not filled").all():
+            return "<span class='meta'>His price was never reached, so no trade.</span>"
+        pnl = pd.to_numeric(mine["pnl_rs"]).sum()
+        outcomes = list(dict.fromkeys(mine["outcome"]))       # "stop, stop" reads as "stop"
+        return (f"<strong class='{tone(pnl)}'>{money(pnl)}</strong> "
+                f"<span class='meta'>({esc(', '.join(outcomes))})</span>")
+    if call["scorable"] != "yes":
+        return "<span class='meta'>No free one-minute prices for this market, so it isn’t scored.</span>"
+    if now < pd.Timestamp(call["posted_at"]) + signal_calls.WINDOW:
+        return "<span class='meta'>Open: scored after its 24-hour window ends.</span>"
+    return "<span class='meta'>Waiting for prices.</span>"
+
+
+def signal_html(ch, sm):
+    """One signal channel: what it posted, what paper trading its signals did, and whether its claims hold."""
+    key = re.sub(r"[^a-z0-9]", "", ch["handle"].lower())
+    head = f"<section aria-labelledby='sig-{key}-h'><h2 id='sig-{key}-h'>{esc(ch['name'])}</h2>"
+    if sm is None:
+        return head + "<p class='meta'>This channel’s record couldn’t be read tonight.</p></section>"
+    calls, res, b, now = sm["calls"], sm["results"], sm["book"], pd.Timestamp.now(tz="UTC")
+    ups = sm["updates"]                                     # claims already checked against the record
+    def li(c):
+        mine = ups[ups["call_id"].astype(str) == str(c["id"])] if len(ups) else None
+        return (f"<li><span class='meta'>{ist(c['posted_at'])} IST · {esc(market_name(c['instrument']))} · "
+                f"<a href='{esc(ch['url'])}/{esc(c['id'])}'>his post</a></span><span class='tl-what'>"
+                f"{signal_text(c)} {signal_result(c, res, now)}</span>{update_lines(mine)}</li>")
+    ordered = [c for _, c in calls.sort_values("posted_at", ascending=False).iterrows()] if len(calls) else []
+    counts = calls["instrument"].map(market_name).value_counts() if len(calls) else pd.Series(dtype=int)
+    markets = sorted(counts.index, key=lambda m: (-counts[m], m))      # most signalled first
+    sc = scorecard.signal_checks(sm)
+    done = b["wins"] + b["losses"]
+    intro = (f"<p><a href='{esc(ch['url'])}'>{esc(ch['name'])}</a> is a Telegram channel that posts trade signals "
+             f"with exact levels. Every post since {day(pd.Timestamp(ch['since']))} is saved within about half an hour "
+             f"({sm['posts']} so far" + (f", {sm['promo']} of them ads for his paid group, broker offers or live "
+                                         f"streams" if sm["promo"] else "") + "). "
+             f"Code reads the signals by fixed rules, with no judgement calls: "
+             + (f"{len(calls)} signal{'s' if len(calls) != 1 else ''} so far, on "
+                + (", ".join(markets[:-1]) + " and " + markets[-1] if len(markets) > 1 else markets[0]) if len(calls)
+                else "no signals yet") + ". Each risks ₹1,000.</p>")
+    book = (f"<p>Signals: <strong>{inr(b['value'])}</strong>, {b['wins']} won and {b['losses']} lost"
+            + (f", {b['pending']} still open" if b["pending"] else "") + ".</p>") if done or b["pending"] else ""
+    items = "".join(li(c) for c in ordered[:6])
+    older = "".join(li(c) for c in ordered[6:])
+    waiting = []
+    if len(sm["review"]):
+        n = len(sm["review"])
+        waiting.append(f"{n} post{'s' if n != 1 else ''} wait{'' if n != 1 else 's'} for Claude to read: trade posts "
+                       f"without a clear stop and target, or instructions that can’t be tied to one signal.")
+    if sm["unlinked"]:
+        n = sm["unlinked"]
+        waiting.append(f"{n} of his “TP done” or “SL hit” posts {'are' if n != 1 else 'is'} about signals never "
+                       f"posted here, so {'they' if n != 1 else 'it'} can’t be checked.")
+    return (head + intro + book + scorecard_html(sc, "its signals")
+            + (f"<ul class='panel tlist calls'>{items}</ul>" if items else "")
+            + (f"<details class='mini'><summary>Older signals ({len(ordered) - 6})</summary>"
+               f"<ul class='panel tlist calls'>{older}</ul></details>" if older else "")
+            + (f"<p class='meta'>{' '.join(waiting)}</p>" if waiting else "") +
+            f"<p class='meta'>How it’s scored: one-minute bid and ask prices from Dukascopy. A “now” signal fills at "
+            f"the next minute’s price (the ask for a buy, the bid for a sell); limit and stop orders fill when the "
+            f"price reaches his level. Each signal risks ₹1,000, split equally over his targets, and is followed "
+            f"for 24 hours or until he posts an exit. If one minute touches both his stop and a target, the stop "
+            f"counts. “Move to breakeven” puts the stop at the entry from the minute after he posts it. His “TP "
+            f"done” and “SL hit” posts are checked against the record, not taken as results. Each signal is also "
+            f"tested 15 minutes late and reversed. Trading forex or gold CFDs through offshore brokers isn’t "
+            f"permitted for Indian residents, so these signals are only ever paper traded here.</p></section>")
+
+
 def backtest_html(rows, curves, first, last):
     draw(curves, "backtest", log=True, split=bt.SPLIT, money_axis="lakh")
     split_head = ""
@@ -905,7 +1095,7 @@ def backtest_html(rows, curves, first, last):
             f"<p class='meta'>Past results don't predict future ones.</p></section>")
 
 
-def page(res, bt_parts, ctx, fres=None, fbt=None, view=None, ares=None, abt=None, tg=None, st=None):
+def page(res, bt_parts, ctx, fres=None, fbt=None, view=None, ares=None, abt=None, tg=None, st=None, sigs=()):
     built = dt.datetime.now(IST)
     if res["started"]:
         status = (f"Prices up to the close on {day(res['latest'])}. Day {res['days']} of paper trading, "
@@ -934,9 +1124,10 @@ def page(res, bt_parts, ctx, fres=None, fbt=None, view=None, ares=None, abt=None
 </header>
 <main>
 {drift_html(view)}
-{overview_html(res, fres, ares, tg)}
+{overview_html(res, fres, ares, tg, sigs)}
 {claude_latest_html(res)}
 {berlin_html(ares, abt, tg, st)}
+{''.join(signal_html(ch, sm) for ch, sm in sigs or ())}
 <section aria-labelledby='more-h'><h2 id='more-h'>Details</h2>
 {more("Nifty 50 agents", "Standings, the market, why each agent holds what it holds, trades",
       board_html(res) + market_html(res, ctx) + why_html(res) + arena_chart_html(res) + trades_html(res))}
@@ -950,7 +1141,7 @@ def page(res, bt_parts, ctx, fres=None, fbt=None, view=None, ares=None, abt=None
 </main>
 <footer>
 <p>For learning only. Not investment advice. No real orders are placed.</p>
-<p>Data: free daily index data from <a href="{DATA_URL}">indian-market-historical-data</a>, and ETF, gold, silver and S&amp;P 500 prices from Yahoo Finance’s public data, both for personal, non-commercial use.</p>
+<p>Data: free daily index data from <a href="{DATA_URL}">indian-market-historical-data</a>, ETF, gold, silver and S&amp;P 500 prices from Yahoo Finance’s public data, and one-minute forex, gold, index and Bitcoin prices from Dukascopy’s public data feed, all for personal, non-commercial use.</p>
 <p>Page built on {day(built)} at {built:%H:%M} IST.</p>
 </footer>
 </div>
@@ -986,9 +1177,18 @@ def main():
     except Exception as exc:  # no saved Fed rates yet
         print(f"  ! RBNZ study skipped: {exc}")
         st = None
+    sigs = []
+    for ch in channels.CHANNELS.values():
+        if ch["tagging"] != "parser":
+            continue
+        try:
+            sigs.append((ch, signal_calls.summary(ch)))
+        except Exception as exc:  # the page still builds; the section says it couldn't be read
+            print(f"  ! {ch['name']} skipped: {exc}")
+            sigs.append((ch, None))
     view = logbook.merged(res, fres, ares)
     with open(os.path.join(SITE, "index.html"), "w", encoding="utf-8") as f:
-        f.write(page(res, bt_parts, ctx, fres, fbt, view, ares, abt, tg, st))
+        f.write(page(res, bt_parts, ctx, fres, fbt, view, ares, abt, tg, st, sigs))
     if view:
         log = pd.concat([b["values"] for b in view], axis=1).round(2)
         log = log.loc[:, ~log.columns.duplicated()]
