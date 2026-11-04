@@ -1,6 +1,6 @@
 # Paper arena: notes for Claude
 
-A paper-trading arena for learning. Six rule-based agents and a Claude agent each manage ₹1 lakh of virtual money in Nifty 50; seven F&O agents and six gold and multi-asset agents (two of them the Trade Like Berlin channel's rules) trade in arenas of their own, and the channel's Telegram calls are paper traded too. GitHub Actions rebuilds the web page every weekday evening. No real orders are ever placed.
+A paper-trading arena for learning. Six rule-based agents and a Claude agent each manage ₹1 lakh of virtual money in Nifty 50; seven F&O agents and six gold and multi-asset agents (two of them the Trade Like Berlin channel's rules) trade in arenas of their own, and two Telegram channels' calls are paper traded too (Trade Like Berlin, tagged by Claude, and Trade with Akash Garg, read by code). GitHub Actions rebuilds the web page every weekday evening. No real orders are ever placed.
 
 ## Files
 
@@ -11,7 +11,10 @@ A paper-trading arena for learning. Six rule-based agents and a Claude agent eac
 - `fno_backtest.py`, `fno_arena.py`, `fno_prices.py` and `data/fno/`: the F&O backtest, the seven F&O paper agents and the NSE option prices they trade at.
 - `asset_arena.py`, `asset_backtest.py`, `market_data.py` and `data/market/`: the six gold and multi-asset agents (from the Trade Like Berlin research), their backtest, and the saved ETF, gold, silver and S&P 500 prices.
 - `berlin.py`: the Trade Like Berlin videos being tested, shown in their own section of the page. To add a new video, use the `berlin-new-video` skill.
-- `berlin_calls.py`, `data/berlin/` and `logs/berlin_calls.csv`: the nightly Telegram archive, the tagged calls and their paper-trading results. To tag new calls, use the `berlin-telegram-calls` skill.
+- `channels.py`: the Telegram channels. `.github/workflows/telegram.yml` runs it every 30 minutes to save each channel's new posts to `data/<channel>/telegram_posts.csv`. To add a channel, add an entry there, starting from the newest post on the day it's added.
+- `berlin_calls.py`, `data/berlin/` and `logs/berlin_calls.csv`: Trade Like Berlin's tagged calls (`telegram_calls.csv`), his later posts about them (`telegram_updates.csv`: exits, stop moves, claims), Claude's decision on each post (`telegram_reviewed.csv`), corrections (`call_corrections.csv`) and the results. `logs/berlin_variants.csv` holds each call 15 and 30 minutes late and reversed. To tag new posts, use the `berlin-telegram-calls` skill.
+- `signal_calls.py`, `dukascopy.py`, `data/akash/` and `logs/akash_calls.csv`: Trade with Akash Garg's signals, read by code every 30 minutes (decision log `telegram_reviewed.csv`) and scored nightly on Dukascopy one-minute bid and ask prices. Claude answers the posts marked "needs review" in `claude_calls.csv`, `claude_updates.csv` and `claude_reviewed.csv`, never in the code's own files (see the `berlin-telegram-calls` skill).
+- `scorecard.py`: "Worth following?", the same eight checks for every channel, written down on 4 Nov 2026. Never change its thresholds.
 - `berlin_study.py`: the forex video's claim checked on every RBNZ decision since 1999.
 - `starts.py` and `logs/starts.json`: the start date of every agent newer than the original Nifty ones, written once by the nightly run the first time it sees the agent.
 - `logbook.py` and `logs/`: the permanent daily and trade logs, added to automatically every night. `logs/journal.md` is the user's own notes.
@@ -21,7 +24,7 @@ A paper-trading arena for learning. Six rule-based agents and a Claude agent eac
 
 ## Rules
 
-- Never edit past decisions, snapshots, log rows, saved NSE price files, the Telegram archive or call results, and never backdate anything. Tagged calls are only added, never changed.
+- Never edit past decisions, snapshots, log rows, saved NSE price files, the Telegram archives or call results, and never backdate anything. Tagged calls, updates, decision logs and corrections are only added to, never changed. A correction is a note; it never changes a score.
 - Never move `START`, never edit `logs/starts.json`, and never change an F&O or gold and multi-asset agent's rule; add a new agent instead.
 - Never change an existing agent's rule; add a new agent instead.
 - For the daily decision, use the `claude-agent-decision` skill. For checking backtests, use the `backtest-review` skill.

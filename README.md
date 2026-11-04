@@ -1,6 +1,6 @@
 # Paper arena
 
-Rule-following agents, Claude, F&O strategies, gold and multi-asset agents and the Trade Like Berlin channel's strategies each trade ₹1 lakh of virtual money, and one web page shows which of them make money. GitHub runs everything every weekday evening.
+Rule-following agents, Claude, F&O strategies, gold and multi-asset agents, the Trade Like Berlin channel's strategies and the calls of two Telegram channels each trade ₹1 lakh of virtual money, and one web page shows which of them make money. GitHub runs everything every weekday evening.
 
 For learning only. Not investment advice. No real orders are placed.
 
@@ -19,9 +19,14 @@ For learning only. Not investment advice. No real orders are placed.
 | `data/fno/` | The NSE option prices the F&O agents traded at (added automatically) |
 | `asset_arena.py` | Six gold and multi-asset agents (two of them the Trade Like Berlin channel's rules): gold, silver and Nifty ETFs, and MCX gold futures |
 | `berlin.py` | The Trade Like Berlin videos being tested: claim, changes and the name each trades under |
-| `berlin_calls.py` | Saves every Trade Like Berlin Telegram post each night and paper trades his calls |
+| `berlin_calls.py` | Paper trades Trade Like Berlin's Telegram calls, his options trades on the market itself, and each call 15 and 30 minutes late and reversed |
+| `channels.py` | The Telegram channels: saves every channel's posts every 30 minutes (to add a channel, add it here) |
+| `signal_calls.py` | Reads a signal channel's posts into signals by fixed rules, and paper trades them on one-minute prices |
+| `dukascopy.py` | Downloads one-minute bid and ask prices for gold, forex, indices and Bitcoin from Dukascopy's free data feed |
+| `scorecard.py` | "Worth following?": the same eight checks for every channel, written down on 4 Nov 2026 |
 | `berlin_study.py` | Checks the forex video's claim on every RBNZ rate decision since 1999 |
-| `data/berlin/` | The Telegram archive and the tagged calls |
+| `data/berlin/` | Trade Like Berlin's Telegram archive, the tagged calls, his later posts about them, corrections and the decision log |
+| `data/akash/` | Trade with Akash Garg's Telegram archive, the signals read from it, his later posts and the decision log |
 | `asset_backtest.py` | Backtests the gold and multi-asset agents against their benchmarks |
 | `market_data.py` | Downloads and saves daily ETF, gold, silver and S&P 500 prices |
 | `data/market/` | The saved prices (added automatically) |
@@ -34,7 +39,7 @@ For learning only. Not investment advice. No real orders are placed.
 | `build_site.py` | Builds the web page into a `site` folder |
 | `requirements.txt` | The Python packages GitHub installs |
 | `.github/workflows/arena.yml` | Runs everything each weekday evening and publishes the page |
-| `.github/workflows/telegram.yml` | Saves new Trade Like Berlin Telegram posts every 30 minutes |
+| `.github/workflows/telegram.yml` | Saves new posts from every Telegram channel every 30 minutes, and reads the signal channel's new signals |
 
 ## Set it up once (about 10 minutes)
 
@@ -83,9 +88,41 @@ The page has a section for the [Trade Like Berlin](https://www.youtube.com/@trad
 - **3-day rule** ("BTST TRADE RULES", 26 Oct 2025), traded as "3-day rule + US filter (control)": buy NIFTYBEES when Nifty closes above the previous 3 days' high and its 10-day average while the S&P 500 is up over 3 sessions; sell when Nifty closes below the previous 3 days' low.
 - **Forex news-event plan** ("THE FOREX TRADE OPPORTUNITY", 25 Oct 2026): trade a rate decision in the direction of the last 4-5 days, with a two-sided hedge. Offshore forex isn't legal for Indian residents, so this is only ever paper traded: each event he announces is traded on 5-minute prices with the video's stops and targets. `berlin_study.py` also checks the direction claim ("6 out of 10") on 209 RBNZ decisions since 1999: the move followed the last 5 days 50% of the time, no better than ordinary days, though decision days do move about twice as much.
 
-**Telegram.** Every 30 minutes, day and night, a small workflow (`.github/workflows/telegram.yml`) saves every new post from his public channel to `data/berlin/telegram_posts.csv`, with the time Telegram shows. A post he edits later is saved again, so the record can't be rewritten. A scheduled Claude task reads the new posts at 11:07 pm on weekdays, tags any calls and sends you the updated call list to upload. Posts that tell followers to take a position, or say he has taken one, are tagged as calls in `data/berlin/telegram_calls.csv` (ask Claude: "Berlin Telegram update"). Every call is paper traded by fixed rules: it risks ₹1,000, fills at the next 5-minute bar after the post (or when price crosses his level), and uses his stop and target. A missing stop is set at 0.2% for Nifty or 1.5% for gold, and said so. Results go to `logs/berlin_calls.csv` and are never rewritten. Option-premium trades and levels drawn only on chart images can't be checked with free data and are listed as not scored.
+**Telegram.** Every 30 minutes, day and night, a small workflow (`.github/workflows/telegram.yml`) saves every new post from his public channel to `data/berlin/telegram_posts.csv`, with the time Telegram shows. A post he edits later is saved again, so the record can't be rewritten. A scheduled Claude task reads the new posts at 11:07 pm on weekdays and sends you the files to upload (ask Claude any time: "Berlin Telegram update"):
+
+- `telegram_calls.csv`: posts that tell followers to take a position, or say he has taken one, tagged as calls.
+- `telegram_updates.csv`: his later posts about a call. An exit post ends the call, and a stop move ("cover my shorts at 4047$", "move to cost") applies from the post's time. "Target achieved" or "SL hit" claims are checked against the record and marked as matching it or not. Claims never change a score.
+- `telegram_reviewed.csv`: the decision log, one line per post Claude read: call, update, claim or other, and why.
+
+Every call is paper traded by fixed rules: it risks ₹1,000, fills at the next 5-minute bar after the post (or when price crosses his level), and uses his stop and target. A missing stop is set at 0.2% for Nifty or 1.5% for gold, and said so. Results go to `logs/berlin_calls.csv` and are never rewritten. Each call is also traded 15 and 30 minutes late (aiming at the same target) and reversed, in `logs/berlin_variants.csv`: if a call only works for someone who acts the same minute, or works just as well the other way, its levels carry no edge. Option-premium trades can't be priced with free data, so when he gives a direction, they're scored on the market itself (Nifty or gold) in a separate book. Levels drawn only on chart images aren't scored. If we misread a call, a note goes in `data/berlin/call_corrections.csv`, and the page shows it under the call; the score stays as tagged.
 
 **New strategy video?** Send Claude the link. The steps are in `.claude/skills/berlin-new-video/SKILL.md`: a new agent with a new name and an entry in `berlin.py`. Existing agents never change.
+
+## Trade with Akash Garg (a signal channel)
+
+[Trade with Akash Garg](https://t.me/tradewithakashgarg) posts gold, Nasdaq 100 and Bitcoin signals with exact levels, such as "GOLD BUY NOW / STOPS :- 3990.6 / TARGET :- 3997.209". Because the format is regular, plain code reads them, so no AI and no uploads are needed for the normal case:
+
+1. Every 30 minutes the Telegram workflow saves his new posts to `data/akash/telegram_posts.csv`, starting with the newest post on 4 Nov 2026. Older posts are never added: he could have deleted his losing calls before then.
+2. `signal_calls.py` reads each post once it is 10 minutes old (so a stop and target posted a minute after the signal belong to it) and writes one line per post to the decision log `data/akash/telegram_reviewed.csv`. Signals go to `telegram_calls.csv`, his later instructions ("move to breakeven", "closing full") and claims ("TP done", "SL HIT") to `telegram_updates.csv`. A trade post without a clear stop and target, or an instruction that can't be tied to one signal, is marked "needs review" and never guessed.
+3. Each night, once a signal's 24 hours are over, it is paper traded on Dukascopy's one-minute bid and ask prices. A "now" signal fills at the next minute's price (the ask for a buy, the bid for a sell); limit and stop orders fill when the price reaches his level. Each signal risks ₹1,000, split equally over his targets. If one minute touches both his stop and a target, the stop counts. A breakeven move puts the stop at the entry from the minute after he posts it; an exit closes what's left. Results go to `logs/akash_calls.csv`, and the late and reversed checks to `logs/akash_variants.csv`.
+4. The nightly Claude task reads the posts marked "needs review" and sends its answers as `claude_calls.csv`, `claude_updates.csv` and `claude_reviewed.csv` for `data/akash/`. These are separate files because the 30-minute workflow keeps adding to the others: uploading over them could wipe rows it added in the meantime.
+
+His "TP done" and "SL HIT" posts are checked against the record. His results posts about trades that were never posted in the channel ("Inner circle report", "VIP profits") can't be checked and are only counted. Trading forex or gold CFDs through offshore brokers isn't permitted for Indian residents, so these signals are only ever paper traded here.
+
+## Worth following?
+
+Each channel is judged by the same eight checks, written down on 4 Nov 2026 (`scorecard.py`) and never changed, so the bar can't move to fit the results:
+
+1. **Enough calls:** at least 40 scored. Until then the page says "too early to judge".
+2. **Makes money after costs**, at ₹1,000 risk per call.
+3. **In both halves:** the first and second half of its calls each make money.
+4. **Not two lucky calls:** still in profit without its two best calls.
+5. **Survives a 15-minute delay:** still in profit when every call is taken 15 minutes late.
+6. **His direction matters:** the same trades reversed do worse.
+7. **Enough calls can be checked:** at least 60% of his trade calls have levels free data can score.
+8. **His claims match the record:** at least 80% of his checkable "target hit" or "SL hit" posts agree with it.
+
+A scheduled Claude task sends you each channel's checks every Saturday morning.
 
 ## Gold and multi-asset arena
 
@@ -183,4 +220,4 @@ Never add a call with a past date, and never change an agent's rule after the st
 - **Keep it active.** If the repository has no activity for 60 days, GitHub pauses the daily run. The nightly log commits count as activity, and you can turn the run back on from the **Actions** tab if it ever stops.
 - **Keep `START` fixed** once paper trading begins.
 - **Running it yourself:** `pip install -r requirements.txt`, then `python build_site.py`, and open `site/index.html`. You can also run `paper_arena.py` or `nifty_backtest.py` on their own, or paste them into Google Colab.
-- **Data:** free daily index data from [indian-market-historical-data](https://github.com/aswinv90/indian-market-historical-data), licensed for personal, non-commercial use.
+- **Data:** free daily index data from [indian-market-historical-data](https://github.com/aswinv90/indian-market-historical-data), licensed for personal, non-commercial use. ETF, gold, silver, S&P 500 and 5-minute prices come from Yahoo Finance's public data, and the signal channel's one-minute prices from Dukascopy's free data feed, both for personal use.
