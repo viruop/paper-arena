@@ -113,3 +113,23 @@ date,agent,holding,value,since_start,trade,nifty_close
 2026-11-03,Weekly iron condor,"Short 24,300 CE + Short 23,300 PE + Long 24,800 CE + Long 22,850 PE, expiry 9 Nov",100067.13,0.000671,"Sold 24,300 CE at 30.1, sold 23,300 PE at 59.0, bought 24,800 CE at 5.8, bought 22,850 PE at 20.9 (expiry 9 Nov)",23810.85
 2026-11-03,Weekly option buying,"Long 23,800 CE, expiry 9 Nov",100074.92,0.000749,"Bought 23,800 CE at 149.9 (expiry 9 Nov)",23810.85
 2026-11-03,Weekly short strangle,"Short 24,300 CE + Short 23,300 PE, expiry 9 Nov",100077.86,0.000779,"Sold 24,300 CE at 30.1, sold 23,300 PE at 59.0 (expiry 9 Nov)",23810.85
+2026-11-04,200-day trend,Cash,100186.63,0.001866,,23960.60
+2026-11-04,3-day rule + US filter (control),NIFTYBEES,105040.56,0.050406,,23960.60
+2026-11-04,Buy & hold,NIFTY 50,105915.05,0.059150,,23960.60
+2026-11-04,Cash only,Cash,100186.63,0.001866,,23960.60
+2026-11-04,Claude,NIFTY 50,102942.74,0.029427,,23960.60
+2026-11-04,Futures trend (long/short),Short futures (3x),83252.60,-0.167474,,23960.60
+2026-11-04,Gold breakdown short (control),Short gold (Gold Petal),100623.80,0.006238,,23960.60
+2026-11-04,Gold breakout,Cash,100116.61,0.001166,,23960.60
+2026-11-04,Gold/silver reversion,SILVERBEES,95991.49,-0.040085,,23960.60
+2026-11-04,Gold/silver trend,GOLDBEES,99335.28,-0.006647,,23960.60
+2026-11-04,Golden cross,Cash,100186.63,0.001866,,23960.60
+2026-11-04,Intraday futures,Nothing overnight,107557.84,0.075578,"Bought at the open 23,742, closed at 23,961: +Rs 2,672",23960.60
+2026-11-04,Intraday short straddle,Nothing overnight,99131.90,-0.008681,"Sold the 23,750 straddle at 354.5, bought back at 378.1: -Rs 354",23960.60
+2026-11-04,Low-VIX long straddle,Cash,100115.68,0.001157,,23960.60
+2026-11-04,Momentum rotation,NIFTY PHARMA,107805.69,0.078057,,23960.60
+2026-11-04,Nifty-gold switch,NIFTYBEES,105040.56,0.050406,,23960.60
+2026-11-04,RSI(2) dip-buy,Cash,100186.63,0.001866,,23960.60
+2026-11-04,Weekly iron condor,Cash,100115.68,0.001157,,23960.60
+2026-11-04,Weekly option buying,Cash,100115.68,0.001157,,23960.60
+2026-11-04,Weekly short strangle,Cash,100115.68,0.001157,,23960.60

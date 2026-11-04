@@ -20,3 +20,5 @@ date,agent,trade,nifty_close
 2026-11-03,Weekly iron condor,"Sold 24,300 CE at 30.1, sold 23,300 PE at 59.0, bought 24,800 CE at 5.8, bought 22,850 PE at 20.9 (expiry 9 Nov)",23810.85
 2026-11-03,Weekly option buying,"Bought 23,800 CE at 149.9 (expiry 9 Nov)",23810.85
 2026-11-03,Weekly short strangle,"Sold 24,300 CE at 30.1, sold 23,300 PE at 59.0 (expiry 9 Nov)",23810.85
+2026-11-04,Intraday futures,"Bought at the open 23,742, closed at 23,961: +Rs 2,672",23960.60
+2026-11-04,Intraday short straddle,"Sold the 23,750 straddle at 354.5, bought back at 378.1: -Rs 354",23960.60
