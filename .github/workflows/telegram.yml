@@ -27,15 +27,16 @@ jobs:
           python-version: "3.12"
       - run: pip install pandas numpy
 
-      - name: Save new and changed posts from the Trade Like Berlin channel
-        run: python -c "import berlin_calls as bc; print(f'Saved {bc.archive()} new or changed posts.')"
+      - name: Save new and changed posts from every channel, and read the signal channels' signals
+        run: python channels.py
 
       - name: Commit them, if any
         run: |
-          if [ -n "$(git status --porcelain data/berlin)" ]; then
+          if [ -n "$(git status --porcelain data/berlin data/akash)" ]; then
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add data/berlin
+            if [ -d data/akash ]; then git add data/akash; fi
             git commit -m "Telegram posts, $(date -u +%Y-%m-%dT%H:%MZ)"
             for i in 1 2 3; do
               git pull --rebase origin main && git push origin HEAD:main && break
