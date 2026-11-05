@@ -1,0 +1,2 @@
+id,posted_at,kind,instrument,side,entry_type,entry,stop,target,rr,horizon,event_at,exit_at,price_ref,scorable,note
+19013,2026-11-05T06:28:58Z,signal,XAUUSD,long,market,,4111.7,4142.4|4158,,scalp,,,,yes,"Posts 19013+19014: ""GOLD BUY NOW / Stops:- 4111.7 / Target 1:- 4142.4 / Target 2 :- 4158"" (read automatically)"
