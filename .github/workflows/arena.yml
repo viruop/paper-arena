@@ -44,6 +44,10 @@ jobs:
         continue-on-error: true   # if Yahoo can't be reached, the saved copies in data/market are used
         run: python market_data.py
 
+      - name: Save today's breadth and FII/DII flows (used when their source is down)
+        continue-on-error: true   # the page and Claude fall back to the saved copies
+        run: python market_context.py
+
       - name: Download NSE option prices for the F&O agents
         continue-on-error: true   # if NSE can't be reached, the F&O agents use estimated prices
         run: python fno_prices.py
