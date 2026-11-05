@@ -1,6 +1,6 @@
 {
- "checked_at": "2026-11-05T18:24:25Z",
+ "checked_at": "2026-11-05T18:30:42Z",
  "hour": "2026-11-04T12:00Z",
  "ok": false,
- "error": "Dukascopy XAUUSD 2026-11-04 12h: <urlopen error [Errno 104] Connection reset by peer>"
+ "error": "Dukascopy XAUUSD 2026-11-04 13h: The read operation timed out"
 }
