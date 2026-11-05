@@ -1,0 +1,3 @@
+id,known_at,country,kind,headline,detail,calendar_id,source,added_at,added_by
+fed-2026-10-28,2026-10-28T18:00:00Z,US,central_bank,US Fed held its rate at 3.75 to 4.00%,Two members voted for a hike.,,https://note.com/factful_keizai/n/n09e5774c78bf?hl=en,2026-11-05T17:18:00Z,claude
+us-midterms-2026,2026-11-04T03:23:00Z,US,election,Democrats won control of the US House and were set to take the Senate in the midterm elections,"Time is the first report found (Variety, about 03:23 UTC, 8:53 am IST); by 4 Nov they had also taken the Senate, gaining five seats.",,https://www.yahoo.com/news/politics/articles/democrats-win-house-poised-senate-032322528.html,2026-11-05T17:18:00Z,claude

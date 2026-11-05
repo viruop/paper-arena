@@ -1,1 +1,12 @@
-
+id,date,time_ist,end_ist,country,kind,market,event,importance,status,source,added_at,added_by
+us-jobs-2026-11-06,2026-11-06,19:00,,US,data,,US jobs report for October (nonfarm payrolls),high,scheduled,https://fedratecalc.com/us-economic-calendar/,2026-11-05T17:18:00Z,claude
+nse-muhurat-2026-11-08,2026-11-08,14:05,15:30,IN,session,NSE,"Diwali Muhurat trading (pre-open 2:05 pm, trading 2:20 to 3:30 pm)",high,scheduled,https://www.cnbctv18.com/market/stock-market-holidays-november-2026-nse-bse-mcx-holiday-list-muhurat-trading-date-and-timings-20019524.htm,2026-11-05T17:18:00Z,claude
+nse-holiday-2026-11-10,2026-11-10,,,IN,holiday,NSE,NSE closed for Diwali-Balipratipada,,scheduled,https://www.cnbctv18.com/market/stock-market-holidays-november-2026-nse-bse-mcx-holiday-list-muhurat-trading-date-and-timings-20019524.htm,2026-11-05T17:18:00Z,claude
+us-cpi-2026-11-10,2026-11-10,19:00,,US,data,,US inflation (CPI) for October,high,scheduled,https://www.nypresswire.com/calendar/cpi-release-schedule-2026,2026-11-05T17:18:00Z,claude
+in-cpi-2026-11-12,2026-11-12,16:00,,IN,data,,India inflation (CPI) for October,high,scheduled,https://indiainflation.com/release-calendar,2026-11-05T17:18:00Z,claude
+in-wpi-2026-11-16,2026-11-16,12:00,,IN,data,,India wholesale inflation (WPI) for October,medium,scheduled,https://indiainflation.com/release-calendar,2026-11-05T17:18:00Z,claude
+nse-holiday-2026-11-24,2026-11-24,,,IN,holiday,NSE,NSE closed for Guru Nanak Jayanti,,scheduled,https://www.cnbctv18.com/market/stock-market-holidays-november-2026-nse-bse-mcx-holiday-list-muhurat-trading-date-and-timings-20019524.htm,2026-11-05T17:18:00Z,claude
+in-gdp-2026-11-30,2026-11-30,,,IN,data,,India GDP for July to September,high,scheduled,https://sylphcorpsmedia.com/news/business/india-economic-calendar-2026-rbi-mpc-gdp-budget-cpi-dates,2026-11-05T17:18:00Z,claude
+rbi-2026-12-04,2026-12-04,10:00,,IN,central_bank,,RBI rate decision (the MPC meets 2 to 4 Dec),high,scheduled,https://www.genvest.ai/events/rbi-monetary-policy-december-2026,2026-11-05T17:18:00Z,claude
+fed-2026-12-09,2026-12-10,00:30,,US,central_bank,,US Fed rate decision (meeting 8 to 9 Dec; 2 pm Washington time on 9 Dec),high,scheduled,https://www.federalreserve.gov/newsevents/2026-december.htm,2026-11-05T17:18:00Z,claude
+in-cpi-2026-12-12,2026-12-12,16:00,,IN,data,,India inflation (CPI) for November,high,scheduled,https://indiainflation.com/release-calendar,2026-11-05T17:18:00Z,claude
