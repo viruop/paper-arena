@@ -32,6 +32,10 @@ import urllib.request
 
 import pandas as pd
 
+try:
+    import events
+except ImportError:          # events.py not uploaded yet
+    events = None
 import logbook
 import market_context as mc
 import paper_arena as pa
@@ -81,8 +85,9 @@ def save_log(log):
         f.write("\n")
 
 
-def snapshot(closes, res, log, ctx=None):
-    """Everything Claude sees: data, indicators, breadth, flows, the rule agents and its past decisions."""
+def snapshot(closes, res, log, ctx=None, as_of=None):
+    """Everything Claude sees: data, indicators, breadth, flows, market events, the rule agents and its past
+    decisions. Events come only from rows that had been added by as_of (now if None)."""
     n, m, latest = closes["NIFTY 50"], res["market"], res["latest"]
     year = n.loc[str(latest.year)]
     lines = [
@@ -94,6 +99,8 @@ def snapshot(closes, res, log, ctx=None):
         f"{year.idxmin():%d %b}.",
     ]
     lines += mc.describe(ctx or {})
+    if events:
+        lines += events.describe(as_of if as_of is not None else dt.datetime.now(IST))
     lines.append("Index returns over 1 month / 3 months / 6 months:")
     for name in closes.columns:
         s = closes[name].dropna()
@@ -155,7 +162,9 @@ def status(latest, log, now):
     market open, so it can never use information from the session in which its decision is filled."""
     if any(d["date"] == latest.date().isoformat() for d in log):
         return False, f"Claude already decided after the close of {latest.date()}."
-    next_open = dt.datetime.combine((latest + pd.offsets.BDay(1)).date(), dt.time(9, 0), IST)
+    next_open = events.next_open(latest) if events else None   # holidays and special sessions (Muhurat) count
+    if next_open is None:
+        next_open = dt.datetime.combine((latest + pd.offsets.BDay(1)).date(), dt.time(9, 0), IST)
     if now >= next_open:
         return False, (f"The newest close in the data is {latest.date()} and the next session has already "
                        "opened. Wait until the latest close reaches the data (usually after 7:30 pm IST).")
@@ -201,7 +210,7 @@ def run_api(now=None):
         return
 
     system = RULES.format(news=NEWS_ON.format(n=MAX_SEARCHES) if MAX_SEARCHES > 0 else NEWS_OFF)
-    user_text = snapshot(closes, res, log, mc.context())
+    user_text = snapshot(closes, res, log, mc.context(), as_of=now)
     try:
         data = ask_claude(system, user_text, key)
     except urllib.error.HTTPError as err:
@@ -235,7 +244,7 @@ def run_snapshot(now=None):
     print(f"DECISION NEEDED: {'yes' if due else 'no'}. {why}\n")
     print(RULES.split("{news}")[0].strip())
     print("\n" + NEWS_ON.format(n=MAX_SEARCHES) + "\n")
-    print(snapshot(closes, res, log, mc.context()))
+    print(snapshot(closes, res, log, mc.context(), as_of=now))
 
 
 def run_record(args, now=None):
@@ -251,10 +260,10 @@ def run_record(args, now=None):
     decision = {"position": args.position, "summary": args.summary or "", "reasons": args.reason or [],
                 "go_to_cash_if": args.cash_if or "", "go_fully_in_if": args.in_if or ""}
     try:
-        record = make_record(latest, decision, args.model, now)
+        record = make_record(latest, decision, args.model, now, args.searches)
     except ValueError as err:
         raise SystemExit(f"Not saved: {err}")
-    text = snapshot(closes, res, log, mc.context())
+    text = snapshot(closes, res, log, mc.context(), as_of=now)
     log.append(record)
     save_log(log)
     logbook.save_snapshot(record["date"], text, f"What {args.model} decided from on {record['made_at']}. "
@@ -274,6 +283,7 @@ def main():
     parser.add_argument("--cash-if", dest="cash_if", help="what would make Claude go to cash")
     parser.add_argument("--in-if", dest="in_if", help="what would make Claude go fully in")
     parser.add_argument("--model", default="Claude (routine)", help="who made the decision")
+    parser.add_argument("--searches", type=int, default=0, help="how many web searches were made before deciding")
     args = parser.parse_args()
     if args.snapshot:
         run_snapshot()

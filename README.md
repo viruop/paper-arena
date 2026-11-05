@@ -30,13 +30,16 @@ For learning only. Not investment advice. No real orders are placed.
 | `data/akash/` | Trade with Akash Garg's Telegram archive, the signals read from it, his later posts, the decision log, corrections, the posts he deleted and his voice notes as text |
 | `data/dukascopy_check.json` | Whether last night's check could read Dukascopy's one-minute prices (added automatically) |
 | `asset_backtest.py` | Backtests the gold and multi-asset agents against their benchmarks |
-| `market_data.py` | Downloads and saves daily ETF, gold, silver and S&P 500 prices |
+| `market_data.py` | Downloads and saves daily ETF, gold, silver, S&P 500, Brent crude and dollar-rupee prices |
 | `data/market/` | The saved prices (added automatically) |
 | `starts.py` | Gives each newer agent its start date the first night it's seen |
 | `logs/` | `daily.csv`, `trades.csv` and `starts.json` (added automatically) and your `journal.md` |
 | `market_context.py` | Nifty 50 breadth and FII/DII flows, for the page and for Claude |
+| `events.py` | Market events: what's scheduled, what happened and how markets moved around it, for the page and for Claude |
+| `data/events/` | The event calendar (`calendar.csv`) and the log of what happened (`log.csv`), added to by Claude each night |
 | `nifty50.txt` | The current Nifty 50 list, used for breadth |
 | `CLAUDE.md` and `.claude/skills/` | Notes and skills that Claude Code and routines read |
+| `REAL_MONEY.md` | The gap register: everything that is fine for paper trading but not for real money, and the order to fix it in |
 | `nifty_backtest.py` | The backtest of the same rules from 2010 to today |
 | `build_site.py` | Builds the web page into a `site` folder |
 | `requirements.txt` | The Python packages GitHub installs |
@@ -60,7 +63,7 @@ The first run starts by itself when you upload the files in step 3. It fails bec
 
 Nothing, apart from Claude's decision if you make it in chat (say "Claude agent update"). The page updates on weekdays at about 8:45 pm IST, with a backup run at about 10:15 pm. The runs are set a few minutes off the hour because GitHub often starts runs set for the hour hours late.
 
-The page starts with **Every strategy**: one board with each strategy's value and return since it started, grouped by arena. Below it are Claude's latest call and the Trade Like Berlin section; everything else (rules, charts, trades, backtests, logs) is folded under **Details**.
+The page starts with **Every strategy**: one board with each strategy's value and return since it started, grouped by arena. Below it are Claude's latest call, **Market events** and the Trade Like Berlin section; everything else (rules, charts, trades, backtests, logs) is folded under **Details**.
 
 ## F&O arena
 
@@ -168,6 +171,15 @@ Each Claude decision also gets a file in `decisions/snapshots/` with the data it
 The page also shows how many Nifty 50 stocks are above their 200-day and 50-day averages, with a one-year chart, plus the day's net FII and DII cash-market flows. Claude sees the same numbers before each decision.
 
 Update `nifty50.txt` after each Nifty 50 rebalance (changes take effect on the last working day of March and September). NSE Indices publishes the list on niftyindices.com.
+
+## Market events
+
+Markets move on events: a rate decision, a jobs report, or a surprise such as the US midterm result that sent Brent down about 9% and Nifty up 2.4% in early November 2026. Two files keep track of them, and both are only ever added to:
+
+- `data/events/calendar.csv`: what's scheduled, with the time in IST and a link to the source. It covers RBI and Fed decisions, US jobs and inflation reports, India's inflation and GDP figures, the Budget, elections, and NSE holidays and special sessions such as Diwali's Muhurat trading.
+- `data/events/log.csv`: what happened, scheduled or not, with the time it first became public and a link. A correction is a new row with the same id; nothing is edited or deleted.
+
+The Telegram scheduled task adds to both every weekday night, using Claude's web search (the `market-events` skill). The page's **Market events** section lists the next two weeks and the last 45 days, with how Nifty, gold, Brent, the rupee and the S&P 500 moved from their last close before each event to their first close after it. One event proves little, since other news on the same day is mixed in; over months, the log shows which kinds of events really move Nifty. Claude sees the same list before each decision, but only the rows that existed when it decided, and the exchange holidays and special sessions in the calendar decide when its decision window closes. Check the files with `python events.py --check`.
 
 ## Let Claude decide automatically (optional)
 

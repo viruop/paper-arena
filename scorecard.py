@@ -25,6 +25,20 @@ import math
 import pandas as pd
 
 MIN_CALLS = 40
+MIN_DAYS = 60      # an agent's luck test needs this many trading days (written down on 5 Nov 2026)
+
+
+def agent_luck(values, cash_daily):
+    """Skill or luck for one agent: its daily returns over cash from the saved daily log.
+    Returns (days, excess return so far, t statistic, one-sided p) or None with fewer than 2 days.
+    One agent with no edge gets p < 0.05 one time in 20; with 20 agents running, the best of them
+    will look good by chance, so the test is for one agent chosen in advance, never the best of many."""
+    v = pd.to_numeric(values, errors="coerce").dropna()
+    if len(v) < 3:
+        return None
+    r = v.pct_change().dropna() - cash_daily
+    t, p = luck(r)
+    return {"days": len(r), "excess": float((1 + r).prod() - 1), "t": t, "p": p, "enough": len(r) >= MIN_DAYS}
 
 
 def rupees(x):

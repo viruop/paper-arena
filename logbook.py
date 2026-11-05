@@ -172,7 +172,15 @@ def drift(view, tolerance=1.0):
     if not diffs:
         return None
     gap, day, agent = max(diffs)
-    return {"rows": len(diffs), "largest": gap, "date": day, "agent": agent}
+    agents = sorted({a for _, _, a in diffs})
+    try:
+        import fno_arena
+        fno = set(fno_arena.RULES)
+    except Exception:
+        fno = set()
+    return {"rows": len(diffs), "largest": gap, "date": day, "agent": agent,
+            "first": min(d for _, d, _ in diffs), "last": max(d for _, d, _ in diffs), "agents": agents,
+            "fno_only": bool(fno) and set(agents) <= fno}
 
 
 def summary():
@@ -212,7 +220,10 @@ def ensure_snapshot(closes, res):
     if any(d["date"] > latest for d in log):   # the data is behind a later decision (e.g. a run after midnight)
         return False
     earlier = [d for d in log if d["date"] != latest]
-    text = ca.snapshot(closes, res, earlier, mc.context())
+    made = next((d.get("made_at") for d in log if d["date"] == latest), None)
+    # Market events only as known when the decision was made (or, without a time, at that close).
+    as_of = pd.Timestamp(made) if made else pd.Timestamp(f"{latest} 15:30").tz_localize("Asia/Kolkata")
+    text = ca.snapshot(closes, res, earlier, mc.context(), as_of=as_of)
     return save_snapshot(latest, text, f"Data as of the close of {latest}, recorded by the nightly run "
                                        "after this decision was saved. News searches aren't included.")
 

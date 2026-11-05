@@ -26,6 +26,10 @@ import berlin  # noqa: E402
 import berlin_calls  # noqa: E402
 import berlin_study  # noqa: E402
 import channels  # noqa: E402
+try:
+    import events  # noqa: E402
+except ImportError:          # events.py not uploaded yet
+    events = None
 import fno_arena  # noqa: E402
 import logbook  # noqa: E402
 import market_context as mc  # noqa: E402
@@ -212,6 +216,8 @@ table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
 th,td{padding:.6rem .55rem;text-align:left;vertical-align:baseline;white-space:nowrap}
 th{font-weight:500;color:var(--muted);font-size:.9rem;border-bottom:1px solid var(--rule)}
 td{border-bottom:1px solid var(--rule)}
+td.ev-what{white-space:normal;min-width:13rem}
+@media (max-width:600px){td.ev-what{min-width:9.5rem}td.ev-when{white-space:normal;min-width:5.5rem}}
 .board th{color:var(--board-muted);border-bottom-color:var(--board-rule)}
 .board td{border-bottom-color:var(--board-rule)}
 .board tr:last-child td{border-bottom:0}
@@ -449,11 +455,15 @@ def drift_html(view):
     found = logbook.drift(view)
     if not found:
         return ""
+    span = (day(found['first']) if found['first'] == found['last']
+            else f"{day(found['first'])} to {day(found['last'])}")
     return (f"<p class='meta'>Note: tonight’s replay differs from the saved log on {found['rows']} "
-            f"{'row' if found['rows'] == 1 else 'rows'} (largest {inr(found['largest'])}, {esc(found['agent'])} on "
-            f"{day(found['date'])}), usually because a data source corrected an old price or NSE’s option prices "
-            f"arrived after the day was saved. The saved log stays "
-            f"the official record.</p>")
+            f"{'row' if found['rows'] == 1 else 'rows'}, all on {span} and all "
+            f"{'F&amp;O agents' if found['fno_only'] else 'in ' + esc(', '.join(found['agents']))} "
+            f"(largest {inr(found['largest'])}, {esc(found['agent'])} on {day(found['date'])}). Those rows were saved "
+            f"the night they happened, before NSE’s option prices for the day had arrived, so they used estimated "
+            f"prices; the replay uses the real ones. Saved rows are never rewritten, so the saved log stays the "
+            f"official record and this note stays with it. Rows after {day(found['last'])} match.</p>")
 
 
 def logs_html():
@@ -475,7 +485,9 @@ def logs_html():
              ("decisions/snapshots", "Claude's snapshots", True, "the data behind each Claude decision"),
              ("data/fno", "NSE option prices", True, "the daily option prices the F&O agents traded at"),
              ("data/market", "Saved market prices", True, "daily ETF, gold, silver and S&P 500 prices for the gold "
-                                                         "and multi-asset agents"),
+                                                         "and multi-asset agents, and Brent and the rupee for events"),
+             ("data/events", "Market events", True, "the calendar of scheduled events and the log of what happened, "
+                                                     "each with its source"),
              ("logs/starts.json", "Start dates", False, "when each newer agent started paper trading"),
              ("data/berlin/telegram_posts.csv", "Telegram archive", False, "every Trade Like Berlin Telegram post, "
                                                                           "saved the night it appeared"),
@@ -734,9 +746,76 @@ def overview_html(res, fres, ares, tg, sigs=()):
                         f"<td class='r num-big'>{val}</td><td class='r'>{chg}</td></tr>")
     return (f"<section class='scoreboard' aria-labelledby='sb-h'><h2 id='sb-h'>Every strategy</h2>"
             f"<p class='meta'>Each started with {inr(pa.CAPITAL)} of virtual money on its own start date. "
-            f"Tap a section below for details.</p><div class='scroll'><table><thead><tr><th>Strategy</th>"
+            f"Tap a section below for details. A high value here is not proof of skill: see “Skill or luck?” "
+            f"under Details.</p><div class='scroll'><table><thead><tr><th>Strategy</th>"
             f"<th class='r'>Value</th><th class='r'>Since start</th></tr></thead><tbody>{''.join(rows)}"
             f"</tbody></table></div></section>")
+
+
+INDIA_NOTES = {
+    "NIFTY": "scored on the Nifty 50 index itself; from India that is NIFTYBEES (an ETF) or Nifty futures (lots of 65, margin)",
+    "GOLD": "scored on COMEX gold futures (GC=F); from India the nearest instrument is MCX gold, a different contract in rupees",
+    "CRUDE": "scored on NYMEX WTI futures (CL=F); from India the nearest instrument is MCX crude oil",
+    "BTC": "scored on BTC-USD; from India that is an Indian exchange, with 30% tax on gains and 1% TDS per trade",
+    "XAUUSD": "scored on spot gold at an offshore CFD broker; from India the nearest instrument is MCX gold",
+    "XAGUSD": "spot silver at an offshore CFD broker; from India, MCX silver",
+    "NAS100": "an index CFD at an offshore broker; not tradable from India",
+    "US30": "an index CFD at an offshore broker; not tradable from India",
+    "SPX500": "an index CFD at an offshore broker; not tradable from India",
+    "BTCUSD": "Bitcoin at an offshore CFD broker; from India that is an Indian exchange, with 30% tax and 1% TDS",
+    "ETHUSD": "Ether at an offshore CFD broker; from India that is an Indian exchange, with 30% tax and 1% TDS",
+    "USOIL": "oil at an offshore CFD broker; from India, MCX crude oil",
+}
+
+
+def india_note_html(instruments):
+    """Where each market a channel trades is scored, and what it would be from India. Currency pairs are
+    offshore forex, which isn't permitted for Indian residents."""
+    seen, parts = [], []
+    for sym in instruments:
+        sym = str(sym)
+        if sym in seen or not sym:
+            continue
+        seen.append(sym)
+        if sym in INDIA_NOTES:
+            parts.append(f"<b>{esc(market_name(sym))}</b>: {esc(INDIA_NOTES[sym])}")
+        elif len(sym) == 6 and sym.isalpha():
+            parts.append(f"<b>{esc(market_name(sym))}</b>: offshore forex, not permitted for Indian residents")
+    if not parts:
+        return ""
+    return ("<details class='mini'><summary>Where these are scored, and what they would be from India</summary>"
+            "<p class='meta'>Scores answer whether the calls have an edge on the market he quotes. From India the "
+            "same trade would use a different instrument, with its own prices, lots, margin and tax, so the numbers "
+            "here are not what following him from India would make. " + "; ".join(parts) + ".</p></details>")
+
+
+def luck_html(view):
+    """Each agent's daily returns over cash, tested for luck (scorecard.agent_luck). Written down on 5 Nov 2026."""
+    if not view:
+        return ""
+    rows, n_agents = [], 0
+    for block in view:
+        for agent in block["values"].columns:
+            n_agents += 1
+            lk = scorecard.agent_luck(block["values"][agent], pa.CASH_DAILY)
+            if not lk or lk["t"] is None:
+                rows.append((agent, "–", "–", "not enough days yet"))
+                continue
+            verdict = ("passes" if lk["enough"] and lk["excess"] > 0 and lk["p"] < 0.05 else
+                       "fails: no better than luck" if lk["enough"] else f"needs {scorecard.MIN_DAYS} days ({lk['days']} so far)")
+            rows.append((agent, pct(lk["excess"], True), f"{lk['p']:.2f}" if lk["p"] is not None else "–", verdict))
+    body = "".join(f"<tr><td class='agent'>{esc(a)}</td><td class='r'>{e}</td><td class='r'>{p}</td><td>{esc(v)}</td></tr>"
+                   for a, e, p, v in rows)
+    return (f"<section aria-labelledby='luck-h'><h2 id='luck-h'>Skill or luck?</h2>"
+            f"<p>{n_agents} strategies are running. With that many, the best one will look good by chance: twenty "
+            f"strategies with no edge at Nifty-like volatility show a best-of-twenty return of about +35% in a "
+            f"typical year. So no strategy is judged by being the best of the lot. Each is tested on its own daily "
+            f"returns over cash, one-sided, after at least {scorecard.MIN_DAYS} trading days: it passes if a strategy "
+            f"with no edge would do this well less than one time in twenty. The test and its bar were written down "
+            f"on 5 Nov 2026 and don't change. Passing once isn't proof either; it has to keep passing.</p>"
+            f"<div class='panel scroll'><table><thead><tr><th>Strategy</th><th class='r'>Over cash</th>"
+            f"<th class='r'>Chance it's luck</th><th>Verdict</th></tr></thead><tbody>{body}</tbody></table></div>"
+            f"</section>")
 
 
 def claude_latest_html(res):
@@ -752,6 +831,67 @@ def claude_latest_html(res):
     return (f"<section aria-labelledby='cl-h'><h2 id='cl-h'>Claude’s latest call</h2>"
             f"<article class='decision'><h3>{day(pd.Timestamp(d['date']))}: {float(d['position']):.0%} in Nifty 50"
             f"</h3><p>{esc(d.get('summary', ''))}</p><ul>{conds}</ul></article></section>")
+
+
+# --------------------------------- market events ----------------------------------
+KIND_NAMES = {"central_bank": "Central bank", "data": "Economic data", "election": "Election", "budget": "Budget",
+              "policy": "Policy", "geopolitics": "Geopolitics", "oil": "Oil", "earnings": "Earnings",
+              "holiday": "Market holiday", "session": "Special session", "other": "Other"}
+
+
+def event_when(t, timed=True, end=""):
+    t = pd.Timestamp(t).tz_convert(events.IST)
+    return f"{t:%a} {t.day} {t:%b}" + (f", {t:%H:%M}" if timed else "") + (f"\u2013{end}" if timed and end else "")
+
+
+def move_cell(v):
+    return "<td class='r'>\u2013</td>" if v is None else f"<td class='r {tone(v)}'>{pct(v, True)}</td>"
+
+
+def events_html(now=None):
+    """What's scheduled and what moved the market, from data/events (events.py)."""
+    if events is None or not (os.path.exists(events.CALENDAR) or os.path.exists(events.LOG)):
+        return ""
+    try:
+        now = now or pd.Timestamp.now(tz="UTC")
+        up = events.upcoming(now, 14)
+        rec = events.recent(now, 45).iloc[::-1]
+        moves = [events.reaction(t) for t in rec["at"]]
+    except Exception as exc:  # the page still builds without this section
+        print(f"  ! Market events skipped: {exc}")
+        return ""
+    if len(up):
+        rows = "".join(
+            f"<tr><td class='ev-when'>{esc(event_when(r['at'], bool(r['time_ist']), r['end_ist']))}</td><td class='ev-what'>{esc(r['event'])}</td>"
+            f"<td>{esc(KIND_NAMES.get(r['kind'], r['kind']))}"
+            f"{', ' + esc(r['market'] or r['country']) if r['market'] or r['country'] else ''}</td></tr>"
+            for _, r in up.iterrows())
+        coming = (f"<div class='panel scroll'><table><thead><tr><th>When (IST)</th><th>Event</th><th>Kind</th></tr>"
+                  f"</thead><tbody>{rows}</tbody></table></div>")
+    else:
+        coming = "<p class='meta'>Nothing scheduled in the next 14 days.</p>"
+    if len(rec):
+        rows = ""
+        for (_, r), m in zip(rec.iterrows(), moves):
+            link = (f"<a href='{esc(r['source'])}'>{esc(r['headline'])}</a>" if r["source"].startswith("http")
+                    else esc(r["headline"]))
+            detail = f"<br><span class='meta'>{esc(r['detail'])}</span>" if r["detail"] else ""
+            rows += (f"<tr><td class='ev-when'>{esc(event_when(r['at']))}</td><td class='ev-what'>{link}{detail}</td>"
+                     + "".join(move_cell(m.get(k)) for k in ("Nifty 50", events.NIFTY3, "Gold", "Brent",
+                                                              "USD/INR", "S&P 500")) + "</tr>")
+        happened = (f"<div class='panel scroll'><table><thead><tr><th>Became public (IST)</th><th>What happened</th>"
+                    f"<th class='r'>Nifty, next close</th><th class='r'>Nifty, 3 closes</th><th class='r'>Gold</th>"
+                    f"<th class='r'>Brent</th><th class='r'>USD/INR</th><th class='r'>S&amp;P 500</th></tr></thead>"
+                    f"<tbody>{rows}</tbody></table></div>"
+                    "<p class='meta'>Each move runs from that market's last close before the news became public to its "
+                    "first close after it, so other news on the same day is mixed in: one event proves little, many of "
+                    "the same kind show a pattern. USD/INR going up means a weaker rupee.</p>")
+    else:
+        happened = "<p class='meta'>Nothing logged in the last 45 days.</p>"
+    return ("<section aria-labelledby='ev-h'><h2 id='ev-h'>Market events</h2>"
+            "<p class='meta'>Scheduled events, and what happened with the time it first became public. Claude adds "
+            "them every weekday night; rows are only ever added. The Claude agent sees them before deciding.</p>"
+            f"<h3 class='sub-h'>Coming up</h3>{coming}<h3 class='sub-h'>What moved the market</h3>{happened}</section>")
 
 
 def more(title, hint, inner, solo=False):
@@ -992,7 +1132,9 @@ def berlin_html(ares, abt, tg, st):
     return (f"<section aria-labelledby='berlin-h'><h2 id='berlin-h'>Trade Like Berlin</h2>"
             f"<p>Strategies from the <a href='{berlin.CHANNEL}'>Trade Like Berlin</a> YouTube channel and its "
             f"Telegram calls, all paper traded by fixed rules. Gaps such as a missing stop are filled and stated. "
-            f"New video? Send Claude the link.</p>{''.join(cards)}{telegram_html(tg)}</section>")
+            f"New video? Send Claude the link.</p>"
+            + india_note_html(list(tg["calls"]["instrument"]) if tg and len(tg.get("calls", [])) else [])
+            + f"{''.join(cards)}{telegram_html(tg)}</section>")
 
 
 SIGNAL_MARKETS = {"XAUUSD": "gold", "XAGUSD": "silver", "NAS100": "Nasdaq 100", "US30": "Dow Jones",
@@ -1079,7 +1221,9 @@ def signal_html(ch, sm):
              f"Code reads the signals by fixed rules, with no judgement calls: "
              + (f"{len(calls)} signal{'s' if len(calls) != 1 else ''} so far, on "
                 + (", ".join(markets[:-1]) + " and " + markets[-1] if len(markets) > 1 else markets[0]) if len(calls)
-                else "no signals yet") + ". Each risks ₹1,000.</p>")
+                else "no signals yet") + ". Each risks ₹1,000.</p>"
+             + (f"<p class='meta'>{esc(ch['scope'])}</p>" if ch.get("scope") else "")
+             + india_note_html(list(calls["instrument"]) if len(calls) else []))
     book = (f"<p>Signals: <strong>{inr(b['value'])}</strong>, {b['wins']} won and {b['losses']} lost"
             + (f", {b['pending']} still open" if b["pending"] else "") + ".</p>") if done or b["pending"] else ""
     items = "".join(li(c) for c in ordered[:6])
@@ -1167,12 +1311,14 @@ def page(res, bt_parts, ctx, fres=None, fbt=None, view=None, ares=None, abt=None
 {drift_html(view)}
 {overview_html(res, fres, ares, tg, sigs)}
 {claude_latest_html(res)}
+{events_html()}
 {berlin_html(ares, abt, tg, st)}
 {''.join(signal_html(ch, sm) for ch, sm in sigs or ())}
 <section aria-labelledby='more-h'><h2 id='more-h'>Details</h2>
 {more("Nifty 50 agents", "Standings, the market, why each agent holds what it holds, trades",
       board_html(res) + market_html(res, ctx) + why_html(res) + arena_chart_html(res) + trades_html(res))}
 {more("Claude’s decisions", "Every decision with its reasons", claude_html(res), solo=True)}
+{more("Skill or luck?", "Each strategy’s returns tested against chance", luck_html(view), solo=True)}
 {more("Gold and multi-asset arena", "Four ETF agents, their rules and backtests", asset_html(ares, abt), solo=True)}
 {more("F&amp;O arena", "Seven futures and options agents, 3x leverage", fno_html(fres, fbt), solo=True)}
 {more("Backtest since 2010", "How the Nifty rules did before paper trading", backtest_html(*bt_parts), solo=True)}

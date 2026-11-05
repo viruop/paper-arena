@@ -70,7 +70,57 @@ HURDLE = (1 + CASH_RATE) ** (LOOKBACK / TRADING_DAYS) - 1
 
 
 # ----------------------------------- data ---------------------------------------
+SAVED_DIR = os.path.join("data", "market", "indices")   # a copy of each index's closes, kept by the nightly run
+REVISABLE_DAYS = 10                                     # only this many latest saved days can be revised by a download
+
+
+def saved_path(name):
+    return os.path.join(SAVED_DIR, f"{INDICES[name][0]}.csv")
+
+
+def read_saved(name):
+    """The saved copy of one index's closes (empty if there is none)."""
+    p = saved_path(name)
+    if not os.path.exists(p):
+        return pd.Series(dtype=float)
+    df = pd.read_csv(p, parse_dates=["Date"], index_col="Date")
+    s = pd.Series(df["Close"].astype(float).values, index=pd.DatetimeIndex(df.index)).sort_index()
+    return s[s > 0]
+
+
+def save_closes(name, s):
+    """Keep the saved copy up to date: old rows stay as they are, a download may add days and revise
+    the last REVISABLE_DAYS. Never fails the run."""
+    try:
+        old = read_saved(name)
+        if len(old):
+            cutoff = old.index[-1] - pd.Timedelta(days=REVISABLE_DAYS)
+            kept = old[(old.index <= cutoff) | ~old.index.isin(s.index)]
+            s = pd.concat([kept, s[(s.index > cutoff) | ~s.index.isin(old.index)]]).sort_index()
+            s = s[~s.index.duplicated(keep="last")]
+        os.makedirs(SAVED_DIR, exist_ok=True)
+        out = s.round(4).to_frame("Close")
+        out.index.name = "Date"
+        out.to_csv(saved_path(name))
+    except Exception as exc:
+        print(f"  ! {name}: couldn't update the saved copy ({exc})")
+
+
 def load_close(name):
+    try:
+        s = _download_close(name)
+    except Exception as exc:
+        saved = read_saved(name)
+        if saved.empty:
+            raise
+        print(f"  ! {name}: source unavailable ({exc}); using the saved copy to {saved.index[-1].date()}")
+        return saved.loc[DATA_FROM:]
+    if DATA_SOURCE == "github":
+        save_closes(name, s)
+    return s
+
+
+def _download_close(name):
     file, ticker = INDICES[name]
     if DATA_SOURCE == "github":
         with urllib.request.urlopen(GITHUB_URL.format(file), timeout=60) as resp:

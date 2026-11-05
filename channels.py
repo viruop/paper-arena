@@ -35,6 +35,9 @@ CHANNELS = {
         "name": "Trade with Akash Garg", "handle": "tradewithakashgarg", "url": "https://t.me/tradewithakashgarg",
         "since": "2026-11-04", "start_id": 18992, "folder": "data/akash", "results": "logs/akash_calls.csv",
         "tagging": "parser",
+        "scope": "This record covers only the signals he posts on this public Telegram channel. He also trades "
+                 "live on his YouTube streams and in a paid group (\"Inner Circle\"), and says the live trades "
+                 "aren't posted anywhere else, so his Telegram signals are one slice of his trading, not all of it.",
     },
 }
 

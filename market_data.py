@@ -1,5 +1,6 @@
 """
-market_data.py - daily prices for the gold and multi-asset agents (asset_arena.py).
+market_data.py - daily prices for the gold and multi-asset agents (asset_arena.py), and Brent crude and the
+dollar-rupee rate for the market reactions in events.py.
 
 Where the prices come from, in order:
   1. data/market/<NAME>.csv, a saved copy that the nightly run keeps up to date, so a failed
@@ -42,6 +43,8 @@ SERIES = {
     "GOLD": ("GC=F", "America/New_York", "17:30", (), None),       # COMEX gold futures, US dollars
     "SILVER": ("SI=F", "America/New_York", "17:30", (), None),     # COMEX silver futures, US dollars
     "SP500": ("^GSPC", "America/New_York", "16:30", (148381,), None),  # NAV fallback: an S&P 500 index fund in rupees
+    "BRENT": ("BZ=F", "America/New_York", "17:30", (), None),      # Brent crude futures, US dollars (events.py)
+    "USDINR": ("INR=X", "Europe/London", "23:59", (), None),       # rupees per US dollar (events.py)
 }
 US_SERIES = {"GOLD", "SILVER", "SP500"}
 

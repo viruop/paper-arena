@@ -21,12 +21,14 @@ A paper-trading arena for learning. Six rule-based agents and a Claude agent eac
 - `starts.py` and `logs/starts.json`: the start date of every agent newer than the original Nifty ones, written once by the nightly run the first time it sees the agent.
 - `logbook.py` and `logs/`: the permanent daily and trade logs, added to automatically every night. `logs/journal.md` is the user's own notes.
 - `market_context.py`: Nifty 50 breadth and FII/DII flows. `nifty50.txt` holds the current Nifty 50 list.
+- `events.py` and `data/events/`: the event calendar (`calendar.csv`) and the log of what happened (`log.csv`), shown on the page and in the Claude agent's snapshot, with each market's move around each event. The calendar's NSE holidays and special sessions set when a Claude decision is still allowed. To add events, use the `market-events` skill; check the files with `python events.py --check`.
 - `nifty_backtest.py`: the 2010-to-today backtest, used for learning.
 - `build_site.py`: builds `site/index.html`.
+- `REAL_MONEY.md`: the gap register for real money (blockers, majors, minors, the go/no-go order). Add to it or date items resolved; never delete.
 
 ## Rules
 
-- Never edit past decisions, snapshots, log rows, saved NSE price files, the Telegram archives or call results, and never backdate anything. Tagged calls, updates, decision logs, corrections and the deleted-posts lists are only added to, never changed. A correction is a note; it never changes a score.
+- Never edit past decisions, snapshots, log rows, saved NSE price files, the Telegram archives, call results or event rows, and never backdate anything. Tagged calls, updates, decision logs, corrections and the deleted-posts lists are only added to, never changed. A correction is a note; it never changes a score.
 - A Berlin call is scored only after the decision log covers every post he made before it ended, and a signal only after no post in its 24 hours is still "needs review": review new posts every night.
 - Never move `START`, never edit `logs/starts.json`, and never change an F&O or gold and multi-asset agent's rule; add a new agent instead.
 - Never change an existing agent's rule; add a new agent instead.

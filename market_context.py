@@ -27,6 +27,9 @@ FLOWS_URL = ("https://raw.githubusercontent.com/aswinv90/indian-market-historica
              "main/data/FLOWS/fii_dii_cash.parquet")
 NIFTY50_FILE = "nifty50.txt"
 HISTORY_DAYS = 260   # about a year of breadth history for the chart
+SAVED_BREADTH = os.path.join("data", "market", "breadth.csv")   # kept by the nightly run; used when the source is down
+SAVED_FLOWS = os.path.join("data", "market", "fii_dii.csv")
+REVISABLE_DAYS = 10
 
 
 def nifty50_symbols():
@@ -76,22 +79,72 @@ def breadth():
         counted = valid.sum(axis=1).astype(float)
         out[f"above_{n}"] = above / counted.where(counted > 0)
     out = out.dropna().tail(HISTORY_DAYS)
+    out["count"] = prices.loc[out.index].notna().sum(axis=1).astype(int)
+    _save(SAVED_BREADTH, out)
+    return _breadth_dict(out, missing)
+
+
+def _breadth_dict(out, missing, saved=False):
     latest = out.index[-1]
     return {
         "date": latest,
         "above_200": float(out["above_200"].iloc[-1]),
         "above_50": float(out["above_50"].iloc[-1]),
-        "count": int(prices.loc[latest].notna().sum()),
+        "count": int(out["count"].iloc[-1]),
         "missing": missing,
-        "series": out,
+        "series": out[["above_200", "above_50"]],
+        "saved": saved,
     }
+
+
+def _save(path, df):
+    """Keep a saved copy: old rows stay, new days are added and only the last REVISABLE_DAYS revised.
+    Never fails the run."""
+    try:
+        old = _read_saved(path)
+        if len(old):
+            cutoff = old.index[-1] - pd.Timedelta(days=REVISABLE_DAYS)
+            kept = old[(old.index <= cutoff) | ~old.index.isin(df.index)]
+            df = pd.concat([kept, df[(df.index > cutoff) | ~df.index.isin(old.index)]]).sort_index()
+            df = df[~df.index.duplicated(keep="last")]
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        out = df.copy()
+        out.index.name = "Date"
+        out.round(6).to_csv(path)
+    except Exception as exc:
+        print(f"  ! couldn't update {path} ({exc})")
+
+
+def _read_saved(path):
+    if not os.path.exists(path):
+        return pd.DataFrame()
+    df = pd.read_csv(path, parse_dates=["Date"], index_col="Date").sort_index()
+    return df[~df.index.duplicated(keep="last")]
+
+
+def saved_breadth():
+    out = _read_saved(SAVED_BREADTH)
+    if out.empty:
+        raise RuntimeError("no saved breadth either")
+    return _breadth_dict(out.tail(HISTORY_DAYS), [], saved=True)
 
 
 def flows(days=10):
     """Daily FII and DII net cash-market buying (+) or selling (-), in rupees crore."""
     df = _read_parquet(FLOWS_URL)
     df["Date"] = pd.to_datetime(df["Date"])
-    return df.set_index("Date").sort_index()[["FII_Net_Cr", "DII_Net_Cr"]].tail(days)
+    df = df.set_index("Date").sort_index()[["FII_Net_Cr", "DII_Net_Cr"]]
+    _save(SAVED_FLOWS, df.tail(HISTORY_DAYS))
+    return df.tail(days)
+
+
+def saved_flows(days=10):
+    df = _read_saved(SAVED_FLOWS)
+    if df.empty:
+        raise RuntimeError("no saved flows either")
+    df = df[["FII_Net_Cr", "DII_Net_Cr"]].tail(days)
+    df.attrs["saved"] = True
+    return df
 
 
 def context():
@@ -101,10 +154,20 @@ def context():
         out["breadth"] = breadth()
     except Exception as err:
         print(f"  ! breadth unavailable: {err}")
+        try:
+            out["breadth"] = saved_breadth()
+            print(f"    using the saved copy to {out['breadth']['date']:%d %b %Y}")
+        except Exception as err2:
+            print(f"    {err2}")
     try:
         out["flows"] = flows()
     except Exception as err:
         print(f"  ! FII/DII flows unavailable: {err}")
+        try:
+            out["flows"] = saved_flows()
+            print(f"    using the saved copy to {out['flows'].index[-1]:%d %b %Y}")
+        except Exception as err2:
+            print(f"    {err2}")
     return out
 
 
