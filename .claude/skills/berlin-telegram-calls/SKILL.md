@@ -15,11 +15,14 @@ Decide from what was known when he posted (the post, the posts before it, the pr
 ## Trade Like Berlin
 
 1. **Read the new posts.** Use the archive `data/berlin/telegram_posts.csv` (times in UTC, text as first saved). Review every post with an id greater than the largest id in `data/berlin/telegram_reviewed.csv`, or in `telegram_calls.csv` if the log doesn't exist yet. For posts newer than the archive, read https://t.me/s/tradelikeberlin with the user's Research Tools (`scrape_url`; add `?before=<id>` for older pages).
+   - **Voice notes** (`media` is `voice`) are turned into English text by the 30-minute job, newest first, usually within the hour: read the post's row in `data/berlin/voice_notes.csv` (columns `id`, `posted_at`, `transcribed_at`, `seconds`, `model`, `text`). The speech is machine-translated from Hindi and can mishear a number, so take a level, exit or stop from it only when it's clear and fits the price at that moment, and say in the note that it came from a voice note. If there's no row yet, or a number is unclear, transcribe it yourself with the Research Tools (`transcribe_media` on the `.ogg` link from the post's `?embed=1&mode=tme` page). Rows saved before 30 Oct 2026 say `no` even for voice notes, so open a blank post from then.
+   - If neither works, decide `needs levels` when the voice note falls inside an open call (it could be an exit or a stop move), otherwise `other` with "voice note, not transcribed yet". If voice notes more than two hours old have no row, say so when you hand over the files: the job's transcription may be failing.
 
 2. **Decide what each post is**, and add one line per post to `data/berlin/telegram_reviewed.csv`. The columns are `id,posted_at,reviewed_at,decision,call_id,note`. Review every new post each night: a call is scored only once this log covers every post he made before it ended, and a post left as `needs levels` holds the scores of the calls it falls inside.
    - `decision` is one of `call`, `update`, `claim`, `other` or `needs levels`.
    - `note` is a few words on why, for example "forecast, no position", "promotion" or "caption of call 77796".
    - A later line for the same post settles it, for example once the user sends the levels for a `needs levels` post.
+   - Each night, also look again at older posts whose latest line is `needs levels` or "voice note, not transcribed yet": once the transcript is in `voice_notes.csv`, settle them with a new line.
 
 3. **Calls.** A call tells followers to take a position, or says he has taken one, in a named market. Forecasts ("gold might fall"), recaps and claims made after a move ("BINGO", "worked beautifully") are not calls. Add one row per call to `data/berlin/telegram_calls.csv` with these columns:
    - `id` and `posted_at`: from the post, in UTC.
@@ -36,7 +39,7 @@ Decide from what was known when he posted (the post, the posts before it, the pr
    - `scorable`: `yes`, or `no` for options and chart-only levels.
    - `note`: a short quote and anything filled in. Start it with `[series]` for trades in his "Scale small capital" series.
    - Leave `exit_at` empty. Exits go in the updates file.
-   - Levels only in a voice note: transcribe it with the Research Tools (`transcribe_media` on the `.ogg` link from the post's `?embed=1&mode=tme` page). In the archive, `media` is `voice` for a voice note; rows saved before 30 Oct 2026 say `no`, so open a blank post from then.
+   - Levels only in a voice note: use its transcript (step 1), and only levels that are clear.
    - Videos Telegram marks "Media is too big" can't be read: mark the post `needs levels` and ask the user for the levels or a screenshot. Calls can't be changed once added.
 
 4. **Updates** are his later posts about a call already tagged. Add one row per call they apply to in `data/berlin/telegram_updates.csv`, with these columns: `id,call_id,posted_at,action,detail,price,trigger,verdict,note,added_by`. Set `added_by` to `claude`.
@@ -52,9 +55,9 @@ Decide from what was known when he posted (the post, the posts before it, the pr
 
 ## Trade with Akash Garg (and any other signal channel)
 
-The code's own files are `data/akash/telegram_calls.csv`, `telegram_updates.csv` and `telegram_reviewed.csv`. Never edit them: the 30-minute workflow keeps adding to them. Claude's answers go in three files of their own in the same folder, with the same columns. Start each with its header if it doesn't exist yet.
+The code's own files are `data/akash/telegram_calls.csv`, `telegram_updates.csv`, `telegram_reviewed.csv` and `voice_notes.csv`. Never edit them: the 30-minute workflow keeps adding to them. Claude's answers go in three files of their own in the same folder, with the same columns. Start each with its header if it doesn't exist yet.
 
-1. Find the posts whose latest line in `telegram_reviewed.csv` plus `claude_reviewed.csv` says `needs review`. Read each one with the posts around it in `telegram_posts.csv`.
+1. Find the posts whose latest line in `telegram_reviewed.csv` plus `claude_reviewed.csv` says `needs review`. Read each one with the posts around it in `telegram_posts.csv`. The code marks every voice note `needs review`. Read its English transcript in `data/akash/voice_notes.csv`; it's machine-translated, so use a level only when it's clear, and if a number is unclear, transcribe it with the Research Tools as for Trade Like Berlin. If there's no transcript yet, leave the post for the next night: signals with it inside their 24 hours wait.
 2. Decide, and add a line to `claude_reviewed.csv` with the same post `id` and `posted_at`, the decision (`signal`, `update`, `claim` or `other`), the `call_id` it belongs to, and a note starting "Read by Claude:".
    - **A signal the code couldn't read**, for example a stop or target posted more than 3 minutes later: add the call to `claude_calls.csv` with the code's columns (`kind` `signal`, `horizon` `scalp`, targets separated by `|`, levels exactly as written, `scorable` `yes` for gold, Nasdaq, Bitcoin and forex). Use only levels posted before the trade could have filled.
    - **An instruction or claim the code couldn't tie to one signal**, for example "Closing my Nas100 trade" while two signals were open: add it to `claude_updates.csv` with the right `call_id`, using the actions above.
@@ -69,6 +72,6 @@ You can't push. Send each changed file with SendUserFile, one file per card. Eac
 
 ## Rules
 
-- Never edit or delete existing rows in any of these files, or in `telegram_posts.csv` or `logs/`. Only add rows.
+- Never edit or delete existing rows in any of these files, or in `telegram_posts.csv` or `logs/`. Only add rows. Never write to `voice_notes.csv`: only the 30-minute job does.
 - Use the post's own time, never a later one, and only levels written in the post or the post it replies to.
 - This is paper trading for learning. Don't present his calls or the results as advice.
