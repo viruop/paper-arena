@@ -118,3 +118,7 @@ id,posted_at,reviewed_at,decision,call_id,note
 77916,2026-11-04T16:05:39Z,2026-11-04T16:53:44Z,claim,77897,claim added to telegram_updates.csv
 77917,2026-11-04T16:28:42Z,2026-11-04T16:53:44Z,other,,image only
 77918,2026-11-04T16:29:20Z,2026-11-04T16:53:44Z,other,,image only
+77892,2026-11-04T09:43:25Z,2026-11-05T09:11:17Z,other,77897,"voice note transcribed: plan to short crude below the red line on the 15-minute chart, aiming for a 5-6% move; no level spoken. Part of call 77897"
+77893,2026-11-04T09:44:48Z,2026-11-05T09:11:17Z,other,,voice note transcribed: why he isn't trading Nifty or Sensex (avoiding FOMO after a 600-700 point rally). No trade
+77896,2026-11-04T09:49:10Z,2026-11-05T09:11:17Z,other,77897,voice note transcribed: he'll trade crude through NSE options while they're cheap. Detail of call 77897
+77915,2026-11-04T16:02:33Z,2026-11-05T09:11:17Z,claim,77897,"voice note transcribed: ""65% target achieved, still holding""; claim added to telegram_updates.csv"
