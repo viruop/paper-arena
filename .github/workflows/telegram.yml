@@ -18,7 +18,7 @@ concurrency:
 jobs:
   save:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20             # the first voice-note run downloads the speech model
     steps:
       - uses: actions/checkout@v6
 
@@ -29,6 +29,35 @@ jobs:
 
       - name: Save new and changed posts from every channel, and read the signal channels' signals
         run: python channels.py
+
+      - name: Any voice notes to transcribe?
+        id: voice
+        continue-on-error: true           # never stops the posts from being saved; if the count fails, the next step runs anyway
+        run: echo "pending=$(python voice_notes.py --pending || echo unknown)" >> "$GITHUB_OUTPUT"
+
+      - name: Restore the speech model (Whisper small, about 360 MB)
+        id: model
+        if: steps.voice.outputs.pending != '0'
+        uses: actions/cache/restore@v6
+        with:
+          path: models/sherpa-onnx-whisper-small   # must be the same path as the save step below
+          key: whisper-small-sherpa-onnx-v1
+
+      - name: Transcribe new voice notes into English text
+        if: steps.voice.outputs.pending != '0'
+        continue-on-error: true           # the posts are saved either way; it tries again next run
+        timeout-minutes: 15               # the script itself stops starting new ones after 8 minutes
+        run: |
+          pip install sherpa-onnx==2.0.1 av==19.0.2
+          python voice_notes.py
+
+      - name: Keep the speech model for later runs (only once it downloaded completely)
+        if: steps.voice.outputs.pending != '0' && steps.model.outputs.cache-hit != 'true' && hashFiles('models/sherpa-onnx-whisper-small/small-tokens.txt') != ''
+        continue-on-error: true
+        uses: actions/cache/save@v6
+        with:
+          path: models/sherpa-onnx-whisper-small
+          key: whisper-small-sherpa-onnx-v1
 
       - name: Commit them, if any
         run: |
