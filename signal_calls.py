@@ -15,8 +15,8 @@ Because the format is regular, plain code reads them; no AI and no uploads are n
      claim about one, needs review, or other. Signals go to telegram_calls.csv, his later
      instructions and claims to telegram_updates.csv. Posts are only read once they are 10 minutes
      old, so a signal split over two posts is read whole. All three files are only ever added to.
-     A signal missing its stop or target, or an update that can't be tied to one signal, is marked
-     "needs review" and never guessed. Claude answers those each night (berlin-telegram-calls skill)
+     A signal missing its stop or target, an update that can't be tied to one signal, or a voice
+     note (its English transcript is in voice_notes.csv) is marked "needs review" and never guessed. Claude answers those each night (berlin-telegram-calls skill)
      in claude_calls.csv, claude_updates.csv and claude_reviewed.csv, which the user uploads; the
      code reads them together with its own files, and a later line in claude_reviewed.csv settles
      a post. The 30-minute job never writes the claude_ files, so an upload can't overwrite its rows.
@@ -203,12 +203,16 @@ def parse_new(ch, now=None):
         if post["id"] in used:
             continue
         text = post["text"]
+        if post["media"] == "voice":            # spoken: code can't read it, so Claude reads its transcript
+            decide(post, "needs review", "", "Voice note: read its transcript in voice_notes.csv"
+                   + (f". Caption: {text[:150]}" if text else ""))
+            continue
         order = order_of(text)
         if order and not re.search(r"\b(?:will|plan|wait|agar|jab\s+tak|look\s+for|ban\s+sakt)", text.lower()):
             side, kind, level = order
             group = posts[(posts["t"] >= post["t"]) & (posts["t"] <= post["t"] + GROUP) & (posts["n"] > post["n"])
                           & (~posts["id"].isin(done)) & (~posts["id"].isin(used))]
-            parts = [post] + [g for _, g in group.iterrows() if not order_of(g["text"])
+            parts = [post] + [g for _, g in group.iterrows() if not order_of(g["text"]) and g["media"] != "voice"
                               and (g["reply_to"] in ("", post["id"]))]
             instrument = instrument_of(text) or next((instrument_of(g["text"]) for g in parts[1:] if instrument_of(g["text"])), None)
             stop = next((stop_of(g["text"]) for g in parts if stop_of(g["text"]) is not None), None)
