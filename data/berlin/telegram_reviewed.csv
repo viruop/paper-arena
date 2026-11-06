@@ -154,3 +154,14 @@ id,posted_at,reviewed_at,decision,call_id,note
 77944,2026-11-05T10:25:56Z,2026-11-05T17:38:41Z,other,,"voice note transcribed: on risk-reward, no trade"
 77945,2026-11-05T10:27:10Z,2026-11-05T17:38:41Z,other,,"voice note transcribed: trading psychology, no trade"
 77946,2026-11-05T10:32:23Z,2026-11-05T17:38:41Z,other,,asks followers to listen to the audios
+77947,2026-11-06T09:19:04Z,2026-11-06T17:00:53Z,other,,says a 1:5 setup was recorded at 3:30 am with price below the entry zone; no levels yet
+77948,2026-11-06T12:47:29Z,2026-11-06T17:00:53Z,other,77949,"the recorded gold video: shorts planned at 4105/4110/4115, stop about 4132, 110-point target; levels used in call 77949"
+77949,2026-11-06T12:54:29Z,2026-11-06T17:00:53Z,call,77949,"NFP views: gold short to 4000 (call 77949, with the video's stop and target) and USD/JPY short (call 77950)"
+77950,2026-11-06T12:55:19Z,2026-11-06T17:00:53Z,call,77950,"USD/JPY chart for the NFP trade; event call, traded with the prep video's plan"
+77951,2026-11-06T12:55:46Z,2026-11-06T17:00:53Z,other,77949,"gold chart of call 77949, zones only"
+77952,2026-11-06T12:58:24Z,2026-11-06T17:00:53Z,other,77949,"voice note transcribed: explains the 3:30 am video, no new level"
+77953,2026-11-06T12:59:42Z,2026-11-06T17:00:53Z,other,77949,"voice note transcribed: restates both views (liquidity sweep near 4080 then a fall; USD/JPY down 0.5-0.6%), no new level"
+77954,2026-11-06T13:00:16Z,2026-11-06T17:00:53Z,other,,news time reminder
+77955,2026-11-06T13:03:18Z,2026-11-06T17:00:53Z,other,,"voice note transcribed: won't use MCX options, too expensive far from expiry"
+77956,2026-11-06T13:09:44Z,2026-11-06T17:00:53Z,other,,"voice note transcribed: mindset, 12 NFP trades a year at 1:5"
+77957,2026-11-06T14:06:31Z,2026-11-06T17:00:53Z,claim,77949,"gold 50% of target and holding; USD/JPY stopped out (claims added to telegram_updates.csv). The USD/JPY re-entry has no levels (chart zone only), so no call; ask the user for the zone from the chart image if wanted"
