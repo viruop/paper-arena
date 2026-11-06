@@ -1,6 +1,7 @@
 {
- "checked_at": "2026-11-06T20:56:21Z",
+ "checked_at": "2026-11-06T21:45:48Z",
  "hour": "2026-11-05T12:00Z",
- "ok": false,
- "error": "Dukascopy XAUUSD 2026-11-05 12h: <urlopen error timed out>"
+ "ok": true,
+ "minutes": 60,
+ "last_bid": 4119.575
 }
