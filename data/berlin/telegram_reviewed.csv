@@ -122,3 +122,35 @@ id,posted_at,reviewed_at,decision,call_id,note
 77893,2026-11-04T09:44:48Z,2026-11-05T09:11:17Z,other,,voice note transcribed: why he isn't trading Nifty or Sensex (avoiding FOMO after a 600-700 point rally). No trade
 77896,2026-11-04T09:49:10Z,2026-11-05T09:11:17Z,other,77897,voice note transcribed: he'll trade crude through NSE options while they're cheap. Detail of call 77897
 77915,2026-11-04T16:02:33Z,2026-11-05T09:11:17Z,claim,77897,"voice note transcribed: ""65% target achieved, still holding""; claim added to telegram_updates.csv"
+77800,2026-10-30T12:55:28Z,2026-11-05T17:38:41Z,other,77796,"voice note transcribed: explains the video of call 77796, no new level"
+77815,2026-10-30T13:29:21Z,2026-11-05T17:38:41Z,other,,"voice note transcribed: general message, no trade"
+77829,2026-10-30T14:20:53Z,2026-11-05T17:38:41Z,other,,"voice note transcribed: warns against FOMO entries, no trade"
+77861,2026-11-02T17:12:36Z,2026-11-05T17:38:41Z,other,,"voice note transcribed: Bitcoin area for a 500-600 point move, no level or position"
+77864,2026-11-02T17:26:20Z,2026-11-05T17:38:41Z,other,77865,"voice note transcribed: on following price, no level or exit"
+77871,2026-11-03T05:27:20Z,2026-11-05T17:38:41Z,other,77872,"voice note transcribed: explains the red line of call 77872, no new level"
+77920,2026-11-04T16:33:17Z,2026-11-05T17:38:41Z,claim,77897,"celebration of call 77897, no specific result"
+77921,2026-11-04T16:38:47Z,2026-11-05T17:38:41Z,claim,77897,"celebration of call 77897, no specific result"
+77922,2026-11-04T16:39:41Z,2026-11-05T17:38:41Z,other,77897,tells followers they can book profits if they want; not his own exit
+77923,2026-11-04T16:40:25Z,2026-11-05T17:38:41Z,claim,77897,"""From 1.50% to 7%""; claim added to telegram_updates.csv"
+77924,2026-11-04T16:42:10Z,2026-11-05T17:38:41Z,claim,77897,"voice note transcribed: target being achieved, options doubled; claim added to telegram_updates.csv"
+77925,2026-11-04T16:43:49Z,2026-11-05T17:38:41Z,claim,77897,"""100% achieved""; claim added to telegram_updates.csv"
+77926,2026-11-04T16:51:54Z,2026-11-05T17:38:41Z,other,,link to his X post
+77927,2026-11-04T16:52:02Z,2026-11-05T17:38:41Z,claim,77897,P&L screenshot (image); claim added to telegram_updates.csv
+77928,2026-11-04T16:54:03Z,2026-11-05T17:38:41Z,other,,asks followers to comment
+77929,2026-11-04T16:59:37Z,2026-11-05T17:38:41Z,other,,chat
+77930,2026-11-04T17:03:40Z,2026-11-05T17:38:41Z,claim,77897,"""Still holding, 1.1Million""; claim added to telegram_updates.csv"
+77931,2026-11-04T17:03:46Z,2026-11-05T17:38:41Z,other,,link to his X post
+77932,2026-11-04T17:08:28Z,2026-11-05T17:38:41Z,other,77897,"voice note transcribed: still holding, will cover soon; no level, not an exit"
+77933,2026-11-04T17:10:59Z,2026-11-05T17:38:41Z,other,,motivation
+77934,2026-11-04T17:11:31Z,2026-11-05T17:38:41Z,other,,image only
+77935,2026-11-04T17:23:26Z,2026-11-05T17:38:41Z,other,,personal message
+77936,2026-11-04T17:39:24Z,2026-11-05T17:38:41Z,claim,77897,"""1.3Million! Booked 50% gains""; partial booking, position not closed; claim added to telegram_updates.csv"
+77937,2026-11-04T17:41:36Z,2026-11-05T17:38:41Z,other,,link to his X post
+77939,2026-11-05T04:51:57Z,2026-11-05T17:38:41Z,other,,"watching Sensex expiry, no trade"
+77940,2026-11-05T09:38:03Z,2026-11-05T17:38:41Z,other,,"forecast, no position (Nifty/Sensex closing-session view)"
+77941,2026-11-05T09:45:15Z,2026-11-05T17:38:41Z,other,,"voice note transcribed: explains view 77940, no position"
+77942,2026-11-05T10:02:12Z,2026-11-05T17:38:41Z,other,,"recap of view 77940, no position"
+77943,2026-11-05T10:23:50Z,2026-11-05T17:38:41Z,claim,,"voice note transcribed: why no Nifty position; says he sold Sensex 79000 calls at 200 and covered at 150, never posted as a call"
+77944,2026-11-05T10:25:56Z,2026-11-05T17:38:41Z,other,,"voice note transcribed: on risk-reward, no trade"
+77945,2026-11-05T10:27:10Z,2026-11-05T17:38:41Z,other,,"voice note transcribed: trading psychology, no trade"
+77946,2026-11-05T10:32:23Z,2026-11-05T17:38:41Z,other,,asks followers to listen to the audios
