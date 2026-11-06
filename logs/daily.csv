@@ -153,3 +153,23 @@ date,agent,holding,value,since_start,trade,nifty_close
 2026-11-05,Weekly iron condor,"Short 24,300 CE + Short 23,300 PE + Long 24,800 CE + Long 22,850 PE, expiry 9 Nov",97875.90,-0.021241,,24536.60
 2026-11-05,Weekly option buying,"Long 23,800 CE, expiry 9 Nov",112156.44,0.121564,,24536.60
 2026-11-05,Weekly short strangle,"Short 24,300 CE + Short 23,300 PE, expiry 9 Nov",97303.32,-0.026967,,24536.60
+2026-11-06,200-day trend,NIFTY 50,100233.35,0.002333,Bought NIFTY 50,25030.35
+2026-11-06,3-day rule + US filter (control),NIFTYBEES,109433.77,0.094338,,25030.35
+2026-11-06,Buy & hold,NIFTY 50,110643.75,0.106438,,25030.35
+2026-11-06,Cash only,Cash,100233.35,0.002333,,25030.35
+2026-11-06,Claude,NIFTY 50,107538.74,0.075387,,25030.35
+2026-11-06,Futures trend (long/short),Short futures (3x),69257.33,-0.307427,,25030.35
+2026-11-06,Gold breakdown short (control),Short gold (Gold Petal),100850.66,0.008507,,25030.35
+2026-11-06,Gold breakout,Cash,100163.29,0.001633,,25030.35
+2026-11-06,Gold/silver reversion,SILVERBEES,95087.86,-0.049121,,25030.35
+2026-11-06,Gold/silver trend,GOLDBEES,99156.08,-0.008439,,25030.35
+2026-11-06,Golden cross,Cash,100233.35,0.002333,,25030.35
+2026-11-06,Intraday futures,Nothing overnight,108472.38,0.084724,"Bought at the open 24,538, stopped out at 24,416: -Rs 2,037",25030.35
+2026-11-06,Intraday short straddle,Nothing overnight,97538.15,-0.024618,"Sold the 24,550 straddle at 321.9, stopped out at 418.5: -Rs 1,307",25030.35
+2026-11-06,Low-VIX long straddle,Cash,100161.99,0.001620,,25030.35
+2026-11-06,Momentum rotation,NIFTY PHARMA,110199.56,0.101996,,25030.35
+2026-11-06,Nifty-gold switch,NIFTYBEES,109433.77,0.094338,,25030.35
+2026-11-06,RSI(2) dip-buy,Cash,100233.35,0.002333,,25030.35
+2026-11-06,Weekly iron condor,"Short 24,300 CE + Short 23,300 PE + Long 24,800 CE + Long 22,850 PE, expiry 9 Nov",95437.00,-0.045630,,25030.35
+2026-11-06,Weekly option buying,"Long 23,800 CE, expiry 9 Nov",121294.50,0.212945,,25030.35
+2026-11-06,Weekly short strangle,"Short 24,300 CE + Short 23,300 PE, expiry 9 Nov",92173.97,-0.078260,,25030.35
