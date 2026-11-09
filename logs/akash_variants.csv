@@ -1,0 +1,4 @@
+id,variant,fill_at,fill,exit_at,exit,outcome,r,pnl_rs,scored_at
+19013,late15,2026-11-05T06:44:00Z,4123.663,2026-11-05T12:29:00Z,,"moved stop, moved stop",0.0,0.0,2026-11-09T14:20:21Z
+19013,late30,2026-11-05T06:59:00Z,4127.655,2026-11-05T12:01:00Z,,"moved stop, moved stop",0.0,0.0,2026-11-09T14:20:21Z
+19013,flip,2026-11-05T06:29:00Z,4127.644,2026-11-05T14:44:00Z,,"target 1, target 2",1.415,1414.7,2026-11-09T14:20:21Z

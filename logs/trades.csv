@@ -27,3 +27,13 @@ date,agent,trade,nifty_close
 2026-11-06,200-day trend,Bought NIFTY 50,25030.35
 2026-11-06,Intraday futures,"Bought at the open 24,538, stopped out at 24,416: -Rs 2,037",25030.35
 2026-11-06,Intraday short straddle,"Sold the 24,550 straddle at 321.9, stopped out at 418.5: -Rs 1,307",25030.35
+2026-11-08,Intraday futures,"Bought at the open 25,070, closed at 24,986: -Rs 1,341",24986.40
+2026-11-08,Intraday short straddle,"Sold the 25,050 straddle at 315.1, bought back at 289.4: +Rs 254",24986.40
+2026-11-09,Intraday futures,"Bought at the open 25,076, stopped out at 24,951: -Rs 2,011",25044.65
+2026-11-09,Intraday short straddle,"Sold the 25,100 straddle at 236.7, stopped out at 307.6: -Rs 935",25044.65
+2026-11-09,Weekly iron condor,"Expired with Nifty at 25,045: -Rs 5,436 on the week",25044.65
+2026-11-09,Weekly iron condor,"Sold 25,550 CE at 75.9, sold 24,500 PE at 70.5, bought 26,050 CE at 20.6, bought 24,000 PE at 19.4 (expiry 17 Nov)",25044.65
+2026-11-09,Weekly option buying,"Expired with Nifty at 25,045: +Rs 21,992 on the week",25044.65
+2026-11-09,Weekly option buying,"Bought 25,050 CE at 232.7 (expiry 17 Nov)",25044.65
+2026-11-09,Weekly short strangle,"Expired with Nifty at 25,045: -Rs 8,168 on the week",25044.65
+2026-11-09,Weekly short strangle,"Sold 25,550 CE at 75.9, sold 24,500 PE at 70.5 (expiry 17 Nov)",25044.65

@@ -173,3 +173,37 @@ date,agent,holding,value,since_start,trade,nifty_close
 2026-11-06,Weekly iron condor,"Short 24,300 CE + Short 23,300 PE + Long 24,800 CE + Long 22,850 PE, expiry 9 Nov",95437.00,-0.045630,,25030.35
 2026-11-06,Weekly option buying,"Long 23,800 CE, expiry 9 Nov",121294.50,0.212945,,25030.35
 2026-11-06,Weekly short strangle,"Short 24,300 CE + Short 23,300 PE, expiry 9 Nov",92173.97,-0.078260,,25030.35
+2026-11-08,200-day trend,NIFTY 50,99957.12,-0.000429,,24986.40
+2026-11-08,Buy & hold,NIFTY 50,110449.48,0.104495,,24986.40
+2026-11-08,Cash only,Cash,100256.71,0.002567,,24986.40
+2026-11-08,Claude,NIFTY 50,107349.92,0.073499,,24986.40
+2026-11-08,Futures trend (long/short),Long futures (3x),79808.49,-0.201915,,24986.40
+2026-11-08,Golden cross,Cash,100256.71,0.002567,,24986.40
+2026-11-08,Intraday futures,Nothing overnight,109070.10,0.090701,"Bought at the open 25,070, closed at 24,986: -Rs 1,341",24986.40
+2026-11-08,Intraday short straddle,Nothing overnight,97794.87,-0.022051,"Sold the 25,050 straddle at 315.1, bought back at 289.4: +Rs 254",24986.40
+2026-11-08,Low-VIX long straddle,Cash,100208.32,0.002083,,24986.40
+2026-11-08,Momentum rotation,NIFTY PHARMA,112121.71,0.121217,,24986.40
+2026-11-08,RSI(2) dip-buy,Cash,100256.71,0.002567,,24986.40
+2026-11-08,Weekly iron condor,"Short 24,300 CE + Short 23,300 PE + Long 24,800 CE + Long 22,850 PE, expiry 9 Nov",95097.93,-0.049021,,24986.40
+2026-11-08,Weekly option buying,"Long 23,800 CE, expiry 9 Nov",121045.45,0.210454,,24986.40
+2026-11-08,Weekly short strangle,"Short 24,300 CE + Short 23,300 PE, expiry 9 Nov",92594.96,-0.074050,,24986.40
+2026-11-09,200-day trend,NIFTY 50,100190.15,0.001901,,25044.65
+2026-11-09,3-day rule + US filter (control),NIFTYBEES,109737.95,0.097379,,25044.65
+2026-11-09,Buy & hold,NIFTY 50,110706.97,0.107070,,25044.65
+2026-11-09,Cash only,Cash,100280.08,0.002801,,25044.65
+2026-11-09,Claude,NIFTY 50,107600.18,0.076002,,25044.65
+2026-11-09,Futures trend (long/short),Long futures (3x),80322.34,-0.196777,,25044.65
+2026-11-09,Gold breakdown short (control),Short gold (Gold Petal),100226.87,0.002269,,25044.65
+2026-11-09,Gold breakout,Cash,100186.63,0.001866,,25044.65
+2026-11-09,Gold/silver reversion,SILVERBEES,95980.60,-0.040194,,25044.65
+2026-11-09,Gold/silver trend,GOLDBEES,99719.28,-0.002807,,25044.65
+2026-11-09,Golden cross,Cash,100280.08,0.002801,,25044.65
+2026-11-09,Intraday futures,Nothing overnight,107084.79,0.070848,"Bought at the open 25,076, stopped out at 24,951: -Rs 2,011",25044.65
+2026-11-09,Intraday short straddle,Nothing overnight,96882.47,-0.031175,"Sold the 25,100 straddle at 236.7, stopped out at 307.6: -Rs 935",25044.65
+2026-11-09,Low-VIX long straddle,Cash,100231.49,0.002315,,25044.65
+2026-11-09,Momentum rotation,NIFTY PHARMA,113968.93,0.139689,,25044.65
+2026-11-09,Nifty-gold switch,NIFTYBEES,109737.95,0.097379,,25044.65
+2026-11-09,RSI(2) dip-buy,Cash,100280.08,0.002801,,25044.65
+2026-11-09,Weekly iron condor,"Short 25,550 CE + Short 24,500 PE + Long 26,050 CE + Long 24,000 PE, expiry 17 Nov",94653.79,-0.053462,"Expired with Nifty at 25,045: -Rs 5,436 on the week; Sold 25,550 CE at 75.9, sold 24,500 PE at 70.5, bought 26,050 CE at 20.6, bought 24,000 PE at 19.4 (expiry 17 Nov)",25044.65
+2026-11-09,Weekly option buying,"Long 25,050 CE, expiry 17 Nov",122089.60,0.220896,"Expired with Nifty at 25,045: +Rs 21,992 on the week; Bought 25,050 CE at 232.7 (expiry 17 Nov)",25044.65
+2026-11-09,Weekly short strangle,"Short 25,550 CE + Short 24,500 PE, expiry 17 Nov",91931.89,-0.080681,"Expired with Nifty at 25,045: -Rs 8,168 on the week; Sold 25,550 CE at 75.9, sold 24,500 PE at 70.5 (expiry 17 Nov)",25044.65
