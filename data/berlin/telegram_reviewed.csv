@@ -165,3 +165,24 @@ id,posted_at,reviewed_at,decision,call_id,note
 77955,2026-11-06T13:03:18Z,2026-11-06T17:00:53Z,other,,"voice note transcribed: won't use MCX options, too expensive far from expiry"
 77956,2026-11-06T13:09:44Z,2026-11-06T17:00:53Z,other,,"voice note transcribed: mindset, 12 NFP trades a year at 1:5"
 77957,2026-11-06T14:06:31Z,2026-11-06T17:00:53Z,claim,77949,"gold 50% of target and holding; USD/JPY stopped out (claims added to telegram_updates.csv). The USD/JPY re-entry has no levels (chart zone only), so no call; ask the user for the zone from the chart image if wanted"
+77958,2026-11-08T16:16:39Z,2026-11-09T17:39:28Z,other,,Diwali greeting
+77959,2026-11-08T19:49:25Z,2026-11-09T17:39:28Z,other,,"Instagram link, no trade"
+77960,2026-11-08T19:49:33Z,2026-11-09T17:39:28Z,other,,"caption of the Instagram link, no trade"
+77961,2026-11-09T06:01:31Z,2026-11-09T17:39:28Z,other,,"plan only: looking for Nifty intraday trades after 1 pm, no position"
+77962,2026-11-09T08:07:51Z,2026-11-09T17:39:28Z,other,,"Nifty 15-minute chart, no position"
+77963,2026-11-09T08:10:27Z,2026-11-09T17:39:28Z,other,,"Nifty 5-minute chart, no position"
+77964,2026-11-09T08:11:05Z,2026-11-09T17:39:28Z,other,,"plan: first day trade at the first sell-off zone, no level written"
+77965,2026-11-09T08:11:20Z,2026-11-09T17:39:28Z,other,,forecast: Nifty to attempt the grey supply area
+77966,2026-11-09T08:26:16Z,2026-11-09T17:39:28Z,other,,"vague plan: will short once price shows selling, RR 1:3, no entry yet"
+77967,2026-11-09T08:29:28Z,2026-11-09T17:39:28Z,other,,no entry until price shows selling
+77968,2026-11-09T08:49:43Z,2026-11-09T17:39:28Z,other,,"a dot, no content"
+77969,2026-11-09T08:51:39Z,2026-11-09T17:39:28Z,other,,"chart, still no entry"
+77970,2026-11-09T08:52:55Z,2026-11-09T17:39:28Z,other,,explains the hourly chart behind the short idea
+77971,2026-11-09T09:08:24Z,2026-11-09T17:39:28Z,call,77971,"Nifty short entered at market, RR 1:2 (options 1:3); stop and target only on the chart image"
+77972,2026-11-09T09:11:56Z,2026-11-09T17:39:28Z,other,77971,chart of call 77971: target comes fast if the dashed line breaks; no new level
+77973,2026-11-09T09:12:06Z,2026-11-09T17:39:28Z,other,77971,commentary on call 77971
+77974,2026-11-09T09:14:42Z,2026-11-09T17:39:28Z,other,77971,"voice note transcribed: restates call 77971 (short from supply zone, RR 1:2 on chart, 1:3 in options), no new level"
+77975,2026-11-09T09:28:00Z,2026-11-09T17:39:28Z,other,77971,"chart, ""make or break"", no new level"
+77976,2026-11-09T09:28:15Z,2026-11-09T17:39:28Z,other,77971,"""Let's see."""
+77977,2026-11-09T09:33:50Z,2026-11-09T17:39:28Z,update,77971,"exit of call 77971: option stop hit by decay, chart still at the entry area"
+77978,2026-11-09T09:34:03Z,2026-11-09T17:39:28Z,other,77971,"image after the exit, no text"

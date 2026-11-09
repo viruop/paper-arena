@@ -32,3 +32,4 @@ id,call_id,posted_at,action,detail,price,trigger,verdict,note,added_by
 77936,77897,2026-11-04T17:39:24Z,claim,,,,,"""1.3Million! Booked 50% gains.."" Reads as booking part of the position; no full exit posted.",claude
 77957,77949,2026-11-06T14:06:31Z,claim,,,,,"""Gold hits 50% of the target, but not 100%. Holding position in GOLD.""",claude
 77957,77950,2026-11-06T14:06:31Z,claim,sl,,,,"""USD/JPY took stop loss, it made an attempt to the bigger selling zone and now falling from there."" Re-entry announced ""at previous entry zone with sl above event candle high""; no levels, so not added.",claude
+77977,77971,2026-11-09T09:33:50Z,exit,,,,,"""Decay killed the position! My stop in option was hit though chart is still at the entry area.!""",claude
