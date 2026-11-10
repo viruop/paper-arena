@@ -1,3 +1,4 @@
 id,posted_at,kind,instrument,side,entry_type,entry,stop,target,rr,horizon,event_at,exit_at,price_ref,scorable,note
 19013,2026-11-05T06:28:58Z,signal,XAUUSD,long,market,,4111.7,4142.4|4158,,scalp,,,,yes,"Posts 19013+19014: ""GOLD BUY NOW / Stops:- 4111.7 / Target 1:- 4142.4 / Target 2 :- 4158"" (read automatically)"
 19075,2026-11-09T11:57:01Z,signal,XAUUSD,short,market,,4113.204,4105.13|4100.9,,scalp,,,,yes,"Posts 19075+19076: ""GOLD SELL NOW  /  / Stops :- 4113.204 / Target 1 :- 4105.13 / Target 2 :- 4100.9"" (read automatically)"
+19088,2026-11-10T09:42:02Z,signal,XAUUSD,long,market,,4082.066,4091.817,,scalp,,,,yes,"Posts 19088+19089+19090: ""GOLD Buy now / Stops :- 4082.066 / Target :- 4091.817 / This trade is Before CPi so Risk 0.5% only"" (read automatically)"
