@@ -33,3 +33,8 @@ id,call_id,posted_at,action,detail,price,trigger,verdict,note,added_by
 77957,77949,2026-11-06T14:06:31Z,claim,,,,,"""Gold hits 50% of the target, but not 100%. Holding position in GOLD.""",claude
 77957,77950,2026-11-06T14:06:31Z,claim,sl,,,,"""USD/JPY took stop loss, it made an attempt to the bigger selling zone and now falling from there."" Re-entry announced ""at previous entry zone with sl above event candle high""; no levels, so not added.",claude
 77977,77971,2026-11-09T09:33:50Z,exit,,,,,"""Decay killed the position! My stop in option was hit though chart is still at the entry area.!""",claude
+77993,77897,2026-11-10T13:38:29Z,claim,tp,,,,"In his video about the new crude short (translated from Hindi by Whisper) he says they ""captured another trade"" in crude around 4 November; his chart shows that short closed at its target (""Closed PnL: 5.854"", ""Risk/reward ratio: 5.43"").",claude
+77995,77985,2026-11-10T15:50:59Z,exit,,,,,"""Crude gave 1:1 and reversed! Exited now at SL.""",claude
+77995,77985,2026-11-10T15:50:59Z,claim,sl,,,,"""Exited now at SL."", after it ""gave 1:1"" (moved one risk his way first).",claude
+77996,77988,2026-11-10T15:52:26Z,exit,,,,,"""Same goes for bitcoin, Covered at sl.""",claude
+77996,77988,2026-11-10T15:52:26Z,claim,sl,,,,"""Same goes for bitcoin, Covered at sl."", after ""Crude gave 1:1 and reversed! Exited now at SL."" (post 77995).",claude

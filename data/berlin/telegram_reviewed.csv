@@ -186,3 +186,21 @@ id,posted_at,reviewed_at,decision,call_id,note
 77976,2026-11-09T09:28:15Z,2026-11-09T17:39:28Z,other,77971,"""Let's see."""
 77977,2026-11-09T09:33:50Z,2026-11-09T17:39:28Z,update,77971,"exit of call 77971: option stop hit by decay, chart still at the entry area"
 77978,2026-11-09T09:34:03Z,2026-11-09T17:39:28Z,other,77971,"image after the exit, no text"
+77979,2026-11-10T10:40:24Z,2026-11-10T16:17:26Z,other,77985,"crude oil 15-minute chart, ""a decent trend following zone""; no position yet"
+77980,2026-11-10T10:40:37Z,2026-11-10T16:17:26Z,other,,NSE crude oil expiry reminder
+77981,2026-11-10T10:40:43Z,2026-11-10T16:17:26Z,other,77985,"""Opportunity."" on the crude chart; no position yet"
+77982,2026-11-10T10:42:27Z,2026-11-10T16:17:26Z,other,77985,says he'll post if he takes a crude position; no position yet
+77983,2026-11-10T10:42:36Z,2026-11-10T16:17:26Z,other,,market opens at 5 pm (holiday evening session)
+77984,2026-11-10T12:17:21Z,2026-11-10T16:17:26Z,other,77985,"introduces two trades, crude oil at 1:6 (call 77985) and Bitcoin at 1:8 (call 77988); no levels in this post"
+77985,2026-11-10T12:21:06Z,2026-11-10T16:17:26Z,call,77985,crude oil short shared as his positioning: 1% stop for a 6% fall; stop and target read from his video (post 77993)
+77986,2026-11-10T12:24:34Z,2026-11-10T16:17:26Z,other,77988,"Bitcoin daily chart for call 77988: looking to buy at the structure's lower line, 1% stop for 8% upside"
+77987,2026-11-10T12:25:06Z,2026-11-10T16:17:26Z,other,77988,"second chart of the structure for call 77988, no level"
+77988,2026-11-10T12:25:44Z,2026-11-10T16:17:26Z,call,77988,"""this will be the position"": Bitcoin long; stop and target read from his video (post 77994)"
+77989,2026-11-10T12:26:45Z,2026-11-10T16:17:26Z,other,,asks followers to listen to the audio
+77990,2026-11-10T12:38:27Z,2026-11-10T16:17:26Z,other,77985,"voice note transcribed: restates call 77985 (trend-following short, positional, a 6% fall for a 1% stop), no new level"
+77991,2026-11-10T12:41:02Z,2026-11-10T16:17:26Z,other,77988,"voice note transcribed: restates call 77988 (buy near the structure's lower line); may add a second entry if price dips first, no level"
+77992,2026-11-10T12:41:43Z,2026-11-10T16:17:26Z,other,,says a video on both trades is coming
+77993,2026-11-10T13:38:29Z,2026-11-10T16:17:26Z,claim,77897,"video read in chat: explains call 77985 (short from 85.631, stop 86.503, target 80.795 on WTI; says he is short, lightly in that day's NSE expiry and mainly in MCX's 17 Nov expiry) and says the 4 Nov crude short captured its target (claim added for call 77897)"
+77994,2026-11-10T14:07:40Z,2026-11-10T16:17:26Z,other,77988,"video read in chat: explains call 77988 (long from 74,181.87, stop 73,417.75, target 79,957.18; says he has made some entries and plans three in total, no levels for the later ones)"
+77995,2026-11-10T15:50:59Z,2026-11-10T16:17:26Z,update,77985,"exit of call 77985: ""Exited now at SL""; exit and claim added to telegram_updates.csv"
+77996,2026-11-10T15:52:26Z,2026-11-10T16:17:26Z,update,77988,"exit of call 77988: ""Covered at sl""; exit and claim added to telegram_updates.csv"
