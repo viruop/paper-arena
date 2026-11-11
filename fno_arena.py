@@ -1,8 +1,10 @@
 """
 fno_arena.py - the paper arena's F&O agents.
 
-Seven futures and options strategies from fno_backtest.py trade Nifty with virtual money, each
-from the start date logs/starts.json gives it (the first trading day after it was added).
+Thirteen futures and options strategies from fno_backtest.py trade Nifty with virtual money, each
+from the start date logs/starts.json gives it (the first trading day after it was added). Nine hold
+a fraction of a lot on Rs 1 lakh, as a test of the rule; the four "whole lots" agents trade real lots
+of 65 on Rs 5 lakh each with margin checked, and their value is recorded per Rs 1 lakh to compare.
 Option trades use NSE's real opening and closing prices saved by fno_prices.py when that night's
 download worked, and estimated prices (from India VIX) for days or contracts NSE's file doesn't cover. Futures trades use the
 Nifty 50 index itself. Intraday stop-losses are judged from the day's high and low.
@@ -32,7 +34,27 @@ RULES = {
     "Low-VIX long straddle": "When India VIX is in the bottom quarter of its last 60 and 120 sessions, buy one "
                              "lot of the at-the-money call and put (monthly expiry with at least 20 sessions "
                              "left). Sell at 1.5x or 0.5x the cost, or with 5 sessions left.",
+    "Weekly ITM option buying": "Weekly option buying with a strike about 2% in the money (a call below Nifty, "
+                                "a put above). Each option costs more, so 3% of capital buys fewer.",
+    "Weekly OTM option buying": "Weekly option buying with a strike about 2% out of the money. Each option is "
+                                "cheap, so 3% of capital buys many, and they expire worthless unless Nifty moves "
+                                "about 2% the right way.",
+    "Futures trend (whole lots)": "The futures trend rule in whole lots of 65 on ₹5 lakh: as many lots as 3x the "
+                                  "account covers, at least one, if the margin (12% of the lot's Nifty value) is no "
+                                  "more than half the account. Forced out if the account falls below the margin.",
+    "Weekly short strangle (whole lots)": "The weekly strangle in whole lots on ₹5 lakh, sized the same way. A week "
+                                          "is skipped when one lot's margin is more than half the account, and the "
+                                          "position is forced out if the account falls below the margin.",
+    "Weekly iron condor (whole lots)": "The iron condor in whole lots on ₹5 lakh. Its margin is the most one side "
+                                       "can lose: the gap between its sold and bought strikes.",
+    "Weekly option buying (whole lots)": "Weekly option buying in whole lots on ₹5 lakh: lots worth about 3% of the "
+                                         "account, at least one unless a lot costs more than 6% of it.",
 }
+# Each whole-lot agent and the fractional agent whose rule it follows (the page draws them in one colour).
+TWINS = {"Futures trend (whole lots)": "Futures trend (long/short)",
+         "Weekly short strangle (whole lots)": "Weekly short strangle",
+         "Weekly iron condor (whole lots)": "Weekly iron condor",
+         "Weekly option buying (whole lots)": "Weekly option buying"}
 
 
 def first_start():

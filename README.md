@@ -2,7 +2,7 @@
 
 Rule-following agents, Claude, F&O strategies, gold and multi-asset agents, the Trade Like Berlin channel's strategies and the calls of two Telegram channels each trade ₹1 lakh of virtual money, and one web page shows which of them make money. GitHub runs everything every weekday evening.
 
-For learning only. Not investment advice. No real orders are placed.
+For learning only. Not investment advice. Nothing here places an order.
 
 ## What's in this folder
 
@@ -13,13 +13,18 @@ For learning only. Not investment advice. No real orders are placed.
 | `decisions/claude.json` | Claude's saved decisions, with its reasons |
 | `decisions/snapshots/` | The data behind each Claude decision (added automatically) |
 | `logbook.py` | Adds each new day to the permanent logs |
-| `fno_backtest.py` | Backtests seven Nifty futures and options strategies after costs |
-| `fno_arena.py` | Paper-trades the same seven strategies |
+| `fno_backtest.py` | Backtests thirteen Nifty futures and options strategies after costs |
+| `fno_arena.py` | Paper-trades the same thirteen strategies |
 | `fno_prices.py` | Downloads NSE's daily option prices for the F&O agents |
 | `data/fno/` | The NSE option prices the F&O agents traded at (added automatically) |
 | `asset_arena.py` | Six gold and multi-asset agents (two of them the Trade Like Berlin channel's rules): gold, silver and Nifty ETFs, and MCX gold futures |
 | `berlin.py` | The Trade Like Berlin videos being tested: claim, changes and the name each trades under |
 | `berlin_calls.py` | Paper trades Trade Like Berlin's Telegram calls, his options trades on the market itself, and each call 15 and 30 minutes late and reversed |
+| `berlin_etf.py` | Copies his Nifty calls onto NIFTYBEES, the ETF a small account can trade, at Zerodha's charges, on time and 15 and 30 minutes late |
+| `zerodha.py` | What an order costs at Zerodha: its charges and rounding, checked against its own calculator on 11 Nov 2026 |
+| `real_money.py` | The real-money ledger: checks it, values the account and compares it with the paper agent given the same money |
+| `data/real/orders.csv` | Orders you placed yourself at Zerodha, written down afterwards. Empty until you start |
+| `ticket.py` | The order ticket: a phone page that turns a call into a NIFTYBEES or MCX order with quantity, charges and rule checks |
 | `channels.py` | The Telegram channels: saves every channel's posts every 30 minutes (to add a channel, add it here) |
 | `voice_notes.py` | Turns the channels' voice notes into English text every 30 minutes, with Whisper, a free open-source speech model |
 | `signal_calls.py` | Reads a signal channel's posts into signals by fixed rules, and paper trades them on one-minute prices |
@@ -34,14 +39,15 @@ For learning only. Not investment advice. No real orders are placed.
 | `data/market/` | The saved prices (added automatically) |
 | `starts.py` | Gives each newer agent its start date the first night it's seen |
 | `logs/` | `daily.csv`, `trades.csv` and `starts.json` (added automatically) and your `journal.md` |
-| `market_context.py` | Nifty 50 breadth and FII/DII flows, for the page and for Claude |
+| `market_context.py` | Nifty 50 breadth and FII/DII flows, for the page and for Claude. The latest session's flows come from NSE's own site when it answers |
+| `research_tests.py` | Two ideas from other people's write-ups, tested before anything is built on them: a 52-week-high breakout and an opening-range breakout |
 | `events.py` | Market events: what's scheduled, what happened and how markets moved around it, for the page and for Claude |
 | `data/events/` | The event calendar (`calendar.csv`) and the log of what happened (`log.csv`), added to by Claude each night |
 | `nifty50.txt` | The current Nifty 50 list, used for breadth |
 | `CLAUDE.md` and `.claude/skills/` | Notes and skills that Claude Code and routines read |
 | `REAL_MONEY.md` | The gap register: everything that is fine for paper trading but not for real money, and the order to fix it in |
 | `nifty_backtest.py` | The backtest of the same rules from 2010 to today |
-| `build_site.py` | Builds the web page into a `site` folder |
+| `build_site.py` | Builds the site into a `site` folder: the home page, a page for Trade Like Berlin, one for each signal channel, and the order ticket |
 | `requirements.txt` | The Python packages GitHub installs |
 | `.github/workflows/arena.yml` | Runs everything each weekday evening and publishes the page |
 | `.github/workflows/telegram.yml` | Saves new posts from every Telegram channel every 30 minutes, reads the signal channel's new signals and transcribes new voice notes |
@@ -63,11 +69,11 @@ The first run starts by itself when you upload the files in step 3. It fails bec
 
 Nothing, apart from Claude's decision if you make it in chat (say "Claude agent update"). The page updates on weekdays at about 8:45 pm IST, with a backup run at about 10:15 pm. The runs are set a few minutes off the hour because GitHub often starts runs set for the hour hours late.
 
-The page starts with **Every strategy**: one board with each strategy's value and return since it started, grouped by arena. Below it are Claude's latest call, **Market events** and the Trade Like Berlin section; everything else (rules, charts, trades, backtests, logs) is folded under **Details**.
+The home page starts with **Every strategy**: one board with each strategy's value and return since it started, grouped by arena. Below it are Claude's latest call and **Market events**; everything else (rules, charts, trades, backtests, logs) is folded under **Details**. A bar at the top of every page leads to the others: **Home**, **Berlin** (Trade Like Berlin's strategies and Telegram calls), **Akash** (the signal channel) and **Ticket** (the order ticket, see Real money below).
 
 ## F&O arena
 
-Seven futures and options strategies trade Nifty in a separate arena, each with ₹1 lakh of virtual money from the first trading day after its files reach the repository:
+Thirteen futures and options strategies trade Nifty in a separate arena, each from the first trading day after its files reach the repository. Nine trade ₹1 lakh of virtual money in fractions of a lot, as a test of the rule; four trade whole lots on ₹5 lakh each:
 
 - **Futures trend:** long Nifty futures above the 200-day average, short below.
 - **Intraday futures:** each morning, buy if Nifty closed above its 20-day average, else sell; 0.5% stop-loss; out by the close.
@@ -75,9 +81,11 @@ Seven futures and options strategies trade Nifty in a separate arena, each with 
 - **Weekly short strangle:** at each expiry, sell a call and a put about 2% away and hold to the next expiry.
 - **Weekly iron condor:** the strangle plus protection about 4% away.
 - **Weekly option buying:** at each expiry, buy the at-the-money call in an uptrend or the put in a downtrend, spending 3% of capital.
+- **Weekly ITM option buying** and **Weekly OTM option buying** (added 11 Nov 2026): the same weekly trade with a strike about 2% in the money (a call below Nifty, a put above) or about 2% out of the money, still spending 3% of capital. In the money, each option costs more and less of its price is time value; out of the money, each is cheap and worthless at expiry unless Nifty moves about 2% the right way. In the backtest from February 2019 to 9 Nov 2026 the in-the-money version made about what cash did (+5.7% a year, worst fall 37%). The out-of-the-money version made +7.0% a year with a worst fall of 90%: it won 14% of its weeks, once lost 25 weeks in a row, and its result runs from +72% to −31% a year across the three option-price estimates, so the backtest can't say whether it works.
+- **Four whole-lot agents** (added 11 Nov 2026): Futures trend, Weekly short strangle, Weekly iron condor and Weekly option buying again, in real lots of 65 on ₹5 lakh each. A lot of Nifty is about ₹16 lakh, so ₹5 lakh holds one. Futures and the strangle take as many lots as 3x the account covers, at least one, provided the margin (12% of the lot's Nifty value; Zerodha asked 11.4% on 11 Nov 2026) is no more than half the account; the condor's margin is the gap between its sold and bought strikes; option buying takes lots worth about 3% of the account, at least one unless a lot costs more than 6%. A week where nothing fits is skipped, and a position is closed if the account falls below its margin. Their values are shown per ₹1 lakh so they compare with the rest; the rupees in their trade notes are the ₹5 lakh account's. In the backtest from February 2019 to 9 Nov 2026 (today's lot size throughout): futures +8.3% a year with a worst fall of 52%, option buying +6.4% and 47%, the condor +0.3% and 18%, and the strangle −5.0% and 56%, skipping 148 weeks because after its losses one lot's margin was more than half of what was left.
 - **Low-VIX long straddle:** when India VIX is in the bottom quarter of its last 60 and 120 sessions, buy one lot of the at-the-money call and put (the nearest monthly expiry with at least 20 sessions left); sell at 1.5x or 0.5x the cost, or with 5 sessions left. One lot ties up 40–60% of the agent's money, so its swings are large.
 
-Futures and option selling use 3x the agent's capital. Costs include brokerage, exchange charges, GST, stamp duty, slippage and STT at the rates in force on each date.
+Futures and option selling use 3x the agent's capital (the whole-lot agents: the nearest whole lots). Costs include brokerage, exchange charges, GST, stamp duty, slippage and STT at the rates in force on each date.
 
 Each night `fno_prices.py` tries to download NSE's daily F&O price file and save the Nifty options the agents need to `data/fno/`, so option trades use real opening and closing prices. If NSE can't be reached (it often blocks cloud servers), that day uses prices estimated from India VIX, and it's logged only after 10 pm, so a run started by an upload during the day can't lock in estimates before NSE has published its file. Either way the agents log every night, like the other agents, and a logged day never changes. The page says how many days used real prices. Futures trades use the Nifty 50 index itself, and intraday stop-losses are judged from the day's high and low.
 
@@ -100,6 +108,8 @@ The page has a section for the [Trade Like Berlin](https://www.youtube.com/@trad
 - `telegram_reviewed.csv`: the decision log, one line per post Claude read: call, update, claim or other, and why.
 
 Every call is paper traded by fixed rules: it risks ₹1,000, fills at the next 5-minute bar after the post (or when price crosses his level), and uses his stop and target. Markets: Nifty, gold (COMEX futures), Bitcoin, crude oil (NYMEX WTI futures) and currency pairs; his gold and crude levels are quoted on spot or CFD charts, so they're moved onto futures by the gap at a price he quoted. A call is scored only once Claude has reviewed every post he made before it ended (the decision log), so a later exit or stop move can't be missed: a score is never redone. A missing stop is set at 0.2% for Nifty or 1.5% for gold, and said so. Results go to `logs/berlin_calls.csv` and are never rewritten. Each call is also traded 15 and 30 minutes late (aiming at the same target) and reversed, in `logs/berlin_variants.csv`: if a call only works for someone who acts the same minute, or works just as well the other way, its levels carry no edge. Option-premium trades can't be priced with free data, so when he gives a direction, they're scored on the market itself (Nifty or gold) in a separate book. Levels drawn only on chart images aren't scored. If we misread a call, a note goes in `data/berlin/call_corrections.csv`, and the page shows it under the call; the score stays as tagged.
+
+**On NIFTYBEES.** The record scores his Nifty calls on the index itself, which nobody can buy. `berlin_etf.py` copies each scored Nifty call onto NIFTYBEES at Zerodha with ₹10,000 a call: his levels become NIFTYBEES prices at the ratio of the two when he posts, the stop and target then sit on NIFTYBEES's own 5-minute prices, an intraday trade is closed at 3:10 pm, every fill except a target loses 0.015% to the spread, and the charges are Zerodha's (`zerodha.py`). A short is only possible for the day. Each call is also copied 15 and 30 minutes late. Results go to `logs/berlin_etf.csv`, once per call, and the page shows them under his calls with the costs as a share of the money risked. It is a check on top of the record and never changes it.
 
 **New strategy video?** Send Claude the link. The steps are in `.claude/skills/berlin-new-video/SKILL.md`: a new agent with a new name and an entry in `berlin.py`. Existing agents never change.
 
@@ -147,6 +157,18 @@ Every rule acts at the close after its signal, like the other agents. Signals th
 
 `market_data.py` downloads the prices from Yahoo Finance's public data each night and saves them in `data/market/`, so a failed download never loses history. `python asset_backtest.py` backtests every agent against the benchmark the research set for it, in both halves of the period, at double costs and with its variant settings; add `--nav` to fall back to daily ETF NAVs where no saved prices exist. On Yahoo's daily prices from 2009, none of the six passes its bar: the gold breakout trailed simply holding gold (10.6% a year against 13.0%), the Nifty-gold switch lost to a 50/50 mix in the first half, and both channel rules did worse than cash. They paper-trade anyway, so you can watch whether that holds.
 
+## Real money (when you start)
+
+Nothing in this repository places an order, and Claude doesn't either. If you trade for real at Zerodha, three things here help you do it with open eyes:
+
+- **The order ticket** (`ticket.py`, at `ticket.html` on your page). Type what the call says (Nifty, gold or crude oil; buy or sell; his price now, stop and target) and the price of what you would trade (NIFTYBEES, or an MCX contract such as Gold Petal). It gives the stop and target in that instrument's prices, the largest quantity whose loss at the stop stays inside your limit, the charges, and a pass or fail on your own rules: the loss limit, charges as a share of the risk, reward against risk after costs, the time left before 3:10 pm, and a stop for the day after a set number of losses. Your rules and the day's count stay in your browser.
+- **The ledger** (`data/real/orders.csv`). After you place an order, tell Claude what you bought or sold, how many, the price and the charges from the contract note ("bought 40 GOLDBEES at 121.35, charges 1.87"). Claude adds the row with the `real-money-log` skill and sends you the file to upload. Rows are only ever added: a wrong row is corrected by a later row with the same id.
+- **The Real money section** of the page (`real_money.py`). It shows what you put in, what the account is worth at the latest saved prices, the charges paid, and what the same money would be worth in the paper agent you follow, deposit by deposit. The gap is what real trading costs over the paper model: whole units, real charges, idle cash, a worse price, an order placed late or not at all.
+
+`python real_money.py --check` checks the ledger, and `python zerodha.py` prints what a few typical orders cost. The charges in `zerodha.py` are Zerodha's as read on 11 Nov 2026; check [its list](https://zerodha.com/charges/) before relying on them. `REAL_MONEY.md` lists everything that still stands between paper results and real ones.
+
+The ledger is public, like the rest of the repository: it shows what you bought and sold and for how much, though not who you are. Never put a client id, PAN, bank detail or phone number in it. If you'd rather not publish your trades, leave the file empty; everything else works without it.
+
 ## Start dates
 
 The original Nifty agents started on 23 Oct 2026. Newer agents get their start date from `logs/starts.json`, which the nightly run writes the first time it sees each agent: the next weekday. It is written once and never changed, so a late upload can never backdate an agent.
@@ -168,7 +190,7 @@ Each Claude decision also gets a file in `decisions/snapshots/` with the data it
 
 ## Breadth and institutional flows
 
-The page also shows how many Nifty 50 stocks are above their 200-day and 50-day averages, with a one-year chart, plus the day's net FII and DII cash-market flows. Claude sees the same numbers before each decision.
+The page also shows how many Nifty 50 stocks are above their 200-day and 50-day averages, with a one-year chart, plus the day's net FII and DII cash-market flows. Claude sees the same numbers before each decision. The free dataset publishes flows a day late, so each night the arena also asks NSE's own site for the latest session's provisional figures and adds them when it answers; NSE often refuses cloud servers, and then the dataset's figures are used as before. The page says when the latest figure is NSE's.
 
 Update `nifty50.txt` after each Nifty 50 rebalance (changes take effect on the last working day of March and September). NSE Indices publishes the list on niftyindices.com.
 
@@ -203,15 +225,26 @@ Routine runs count toward your plan's usage, and the Pro plan allows a limited n
 
 ### Option B: the Claude API (paid per use)
 
-1. Create an account with your personal email at console.anthropic.com, add a payment method, and create an API key.
-2. In the Console's privacy settings, turn on web search so Claude can read the news. If you'd rather skip news, set `MAX_SEARCHES = 0` in `claude_agent.py`.
-3. In your GitHub repository, go to **Settings → Secrets and variables → Actions → New repository secret**. Name it `ANTHROPIC_API_KEY`, paste the key, and click **Add secret**.
+1. Sign up at platform.claude.com (the Claude Console) with your **personal** email, not a work one.
+2. Under **Settings → Billing**, buy credits. $10 is plenty to start; credits expire a year after you buy them. Leave auto-reload off: when the credits run out the API stops, so spending can't go past what you bought. An Indian card needs international payments turned on.
+3. Under **API keys**, create a key and copy it.
+4. In your GitHub repository, go to **Settings → Secrets and variables → Actions → New repository secret**. Name it `ANTHROPIC_API_KEY`, paste the key, and click **Add secret**. Don't paste the key anywhere else, chats included.
+5. Web search is on unless someone turned it off under **Settings → Capabilities** in the Console. To decide from the data only, set `MAX_SEARCHES = 0` in `claude_agent.py`.
 
-That's all. The next evening run makes the first automatic decision.
+That's all. The next weekday evening run makes the decision. Its log on the **Actions** tab, in the step "Claude agent decides", says what Claude decided, or why it didn't.
 
-- **Cost:** one Claude call and up to 3 web searches per evening. At current prices (Claude Sonnet 5.5 at $2 per million input tokens and $10 per million output tokens, and web search at $10 per 1,000 searches) that's roughly $2–3 a month. You can see your usage in the Console.
-- **Guardrails:** Claude only decides between a close and the next market open, can only choose 0, 0.5 or 1, and never touches real money. If the call fails, Claude keeps its last position.
+- **Model:** Claude Opus 5.5 (`claude-opus-5-5`), set by `MODEL` in `claude_agent.py`. Its decisions are saved with the model `claude-opus-5-5 (API)`. The decisions made in chat were by Claude Opus 5.5 up to 9 Nov 2026 and by Claude Fable 5.2 from 11 Nov 2026; each decision records its model.
+- **Cost:** one Claude call and up to 3 web searches per evening. At current prices (Claude Opus 5.5 at $4 per million input tokens and $20 per million output tokens, and web search at $10 per 1,000 searches) that's roughly $3–8 a month. Usage is on the Console's Usage page.
+- **One decider:** once the key is set, the GitHub run makes every decision. Don't also use Option A, and don't upload `decisions/claude.json` from a chat: an older copy would erase the decisions the run saved.
+- **Guardrails:** Claude only decides between a close and the next market open (a reply that arrives after the open isn't saved), can only choose 0, 0.5 or 1, and never touches real money. If the call fails or the credits run out, Claude keeps its last position.
 - **To stop:** delete the secret.
+
+## Research tests
+
+`python research_tests.py` tests two ideas that keep coming up in other people's trading write-ups. Each rule is written at the top of the file, was fixed before its result was looked at, and is compared with something simpler. Neither is an agent. Results on 11 Nov 2026:
+
+- **52-week-high breakout** on today's Nifty 50 stocks, 2010 to 2026 (buy a stock the day after it closes at a 252-session high, sell after it closes below its 50-day average, up to 10 stocks): +15.1% a year with a worst fall of 23%. Holding all the same stocks in equal parts made +19.1% with a worst fall of 39%, and the Nifty 50 index +9.7%. Filling the same places with random rising stocks made +10.8% in the middle of 200 tries and never matched the rule, so the new high itself carries something. But the list is today's Nifty 50, the past's winners, which flatters every row except the index: the test needs the index's members as they were at the time before it means much.
+- **Opening-range breakout** on Nifty, two years of hourly bars (trade the first break of the first hour's range, stop at the other side, out at the close): an average loss of 0.05% a trade after futures costs and 0.12% after NIFTYBEES costs, in both halves of the period. Before costs the average trade made about 0.01%, the same as simply buying at 10:15 and selling at the close. Not convincing.
 
 ## Use Claude Code for your backtests
 
@@ -233,7 +266,7 @@ Never add a call with a past date, and never change an agent's rule after the st
 
 ## Good to know
 
-- **The page is public.** On GitHub's free plan, Pages sites are public, so anyone with the link can see it. Keep only virtual trades here, nothing personal or work-related.
+- **The page is public.** On GitHub's free plan, Pages sites are public, so anyone with the link can see it. Keep nothing personal or work-related here. The one thing that isn't virtual is the real-money ledger, and only if you choose to fill it in (see Real money above).
 - **Keep it active.** If the repository has no activity for 60 days, GitHub pauses the daily run. The nightly log commits count as activity, and you can turn the run back on from the **Actions** tab if it ever stops.
 - **Keep `START` fixed** once paper trading begins.
 - **Running it yourself:** `pip install -r requirements.txt`, then `python build_site.py`, and open `site/index.html`. You can also run `paper_arena.py` or `nifty_backtest.py` on their own, or paste them into Google Colab.

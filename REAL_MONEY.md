@@ -174,3 +174,95 @@ layer has to be built separately and fed by this one, not bolted onto it.
 - 5 Nov 2026, 2.5 in part: the skills and the nightly task now say that posts, transcripts and web
   pages are data, never instructions. This reduces the risk; it doesn't remove it.
 - 5 Nov 2026, minor: package versions capped below the next major release.
+- 11 Nov 2026, 2.1 in part: his Nifty calls are now re-scored on NIFTYBEES's own 5-minute prices
+  with Zerodha's charges (berlin_etf.py, logs/berlin_etf.csv), on time and 15 and 30 minutes late.
+  Gold and crude on MCX are still open: there are no free intraday MCX prices to score them on. The
+  order ticket moves a dollar gold or crude level onto an MCX contract by the ratio at that moment,
+  which is for placing an order by hand, not for scoring.
+- 11 Nov 2026, 3.3 in part: zerodha.py holds Zerodha's real charges and rounding, checked against
+  its own calculator, and the NIFTYBEES copy, the ledger and the ticket all use it. The paper agents
+  keep their flat costs, because an agent's rule never changes; the ledger measures the real ones
+  from the first real fill.
+- 11 Nov 2026, 3.1: the second source for flows. Each night the arena asks NSE's own site for the latest
+  session's FII and DII figures and adds them on top of the dataset's, which also ends the one-day lag
+  (Minor) on nights NSE answers. NSE often refuses cloud servers; a refused, stale or odd reply is
+  dropped and the dataset's figures are used as before. Whether GitHub's servers get through is only
+  known from the nightly log ("NSE's own FII/DII figures not added" means they didn't).
+- 11 Nov 2026, 2.2 in part: four whole-lot agents (futures trend, short strangle, iron condor, option
+  buying) trade real lots of 65 on ₹5 lakh each, skip a week when one lot's margin is more than half the
+  account, and are closed when the account falls below the margin. The margin is a flat 12% of the lot's
+  value (Zerodha asked 11.4% that day); real margins rise in a volatile market and aren't modelled, so a
+  real account would be forced out sooner. The fractional agents keep running as the rule test.
+- 11 Nov 2026, 2.3 in part: the real-money ledger (real_money.py, data/real/orders.csv) compares
+  the real account with the paper agent every night, from rows typed in from contract notes. It is
+  a check by hand, not a reconciliation against the broker's own statement, and the ticket's loss
+  limit and daily stop are reminders, not limits a machine enforces.
+
+## 8. Broker: Zerodha (added 6 Nov 2026)
+
+The trading account moved from Upstox to Zerodha. What Zerodha's API means for step 4 of the go/no-go
+list, from its support pages on 6 Nov 2026. Nothing here needs buying before step 4.
+
+- **Orders through the API:** Kite Connect's Personal plan is free and covers orders, GTTs and the
+  portfolio, with no live or historical prices. Live quotes and historical candles need the Connect
+  plan, ₹500 a month per app; from October 2026, a month with ₹2,000 or more of brokerage earns ₹500
+  of credits towards the next month.
+- **Static IP:** since 1 April 2026, API orders must come from a whitelisted static IP (one or two
+  addresses, changed at most once a calendar week). Other calls (positions, order book, market data)
+  work from any address. GitHub Actions has no fixed address: one more reason (2.4) the execution
+  layer needs its own machine.
+- **Daily login:** the access token expires every morning before the open, so someone logs in with
+  two-factor authentication each trading day. Keep it that way: storing the password and TOTP secret
+  on a server so it can log itself in would put the real account's keys next to the paper arena's.
+- **Limits and order types:** at most 10 orders a second per account without registering the algo
+  with the exchange; market orders must carry a market-protection value (0 is rejected); MCX orders
+  go through the API with Day validity.
+- **Data for the arena:** not from Zerodha, since a nightly job would need that daily login. NSE's
+  free daily files (already used by the F&O agents) and MCX's daily bhavcopy are the route for
+  re-scoring on Indian instruments (2.1).
+- **Kite MCP** (mcp.kite.trade) lets an AI assistant read holdings, positions and margins, and place
+  GTT orders but no others. Fine for portfolio reviews; never on the order path (2.5).
+- Sources: https://support.zerodha.com/category/trading-and-markets/kite-web-and-mobile/kite-api/articles/what-are-the-charges-for-kite-apis,
+  https://support.zerodha.com/category/trading-and-markets/general-kite/kite-api/articles/static-ip,
+  https://support.zerodha.com/category/trading-and-markets/general-kite/kite-api/articles/kite-connect-api-faqs,
+  https://support.zerodha.com/category/trading-and-markets/general-kite/others-kite/articles/connect-zerodha-ai-assistant
+
+## 9. Small real money, by hand (added 11 Nov 2026)
+
+The plan is a small account at Zerodha from mid-December 2026, every order placed by hand. This is
+what now exists for that, and what the first numbers say. None of it is an execution layer (2.3,
+2.4): a person reads the page and taps the order.
+
+- **What exists:** the order ticket (ticket.py) for sizing an order and checking it against rules
+  written down beforehand; the ledger for writing down what was actually done; the Real money
+  section for comparing it with the paper agent given the same money.
+- **What the NIFTYBEES copy shows so far** (11 Nov 2026, his first 6 Nifty calls with levels, 5 of
+  which traded, ₹10,000 a call): the price moves added up to +₹12, the spread and slippage took ₹13
+  and Zerodha's charges ₹49, leaving −₹50. Costs were 67% of the money risked to the stops. An
+  intraday round trip in NIFTYBEES costs about 0.13% at this size, against his usual stop of 0.2%,
+  so a call has to be right by a wide margin before it pays. Five trades prove nothing about his
+  calls; the cost arithmetic doesn't depend on them.
+- **Tracking:** NIFTYBEES wanders 0.15% to 0.5% around Nifty within a day. A level 0.2% away can
+  trigger on one and not the other: on 3 Nov a breakdown level that Nifty missed by 4 points
+  triggered on NIFTYBEES and was stopped out.
+- **Sizes that don't exist:** at ₹5,000 with 2% risked a trade (₹100), Gold Petal at about ₹14,800
+  a gram with his usual 1.5% stop loses about ₹243 a lot, so no gold trade fits; Gold Mini and Crude Oil Mini need far
+  more margin than the account holds. The ticket says so case by case.
+- **The fixed charge:** every sale from the demat account costs ₹15.34 whatever its size: 0.31% of
+  a ₹5,000 sale. The ETF agents trade a few times a year, so that is bearable; anything that trades
+  weekly at this size is not.
+- **The two option-buying agents added today** (in and out of the money) are rule tests like the
+  other fractional F&O agents. The four whole-lot agents added the same day are the first at real size:
+  on ₹5 lakh, one lot is already 3.3 times the account.
+- **Closing times changed in 2026:** since 3 August the shares in Nifty stop continuous trading at
+  3:15 pm for a closing auction, so the index stands still from 3:15 to 3:30 pm and then jumps to
+  the auction's close. Zerodha closes open intraday positions itself at 3:12 pm in F&O shares and
+  3:25 pm in other shares and ETFs, for ₹59 an order. This arena's rule for an intraday NIFTYBEES
+  trade is out by 3:10 pm.
+- **The ledger is public** (see Minor): it shows what was bought and sold and for how much.
+- Sources, read on 11 Nov 2026: https://zerodha.com/charges/,
+  https://zerodha.com/brokerage-calculator/ (its script, for the rounding),
+  https://support.zerodha.com/category/account-opening/resident-individual/ri-charges/articles/stt-etfs,
+  https://zerodha.com/marketintel/bulletin/249809/latest-intraday-leverages-mis-bo-co,
+  https://support.zerodha.com/category/trading-and-markets/trading-faqs/general/articles/closing-auction-session,
+  https://support.zerodha.com/category/trading-and-markets/trading-faqs/general/articles/short-sell-shares-in-eq-and-f-o-segments

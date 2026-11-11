@@ -6,13 +6,18 @@ market_context.py - extra market context for the page and for Claude's decisions
     breadth shows how many stocks are actually taking part in a move.
   * Institutional flows: daily net buying or selling by FIIs and DIIs in the cash market.
 
-Data: the same free dataset as the arena (personal, non-commercial use).
+Data: the same free dataset as the arena (personal, non-commercial use). The dataset publishes
+flows a day late, so the latest session's figures are added from NSE's own site when it answers
+(it often refuses cloud servers; then the dataset's figures are used as before).
 The Nifty 50 list lives in nifty50.txt. Update it after each March and September rebalance.
 
 FOR LEARNING ONLY. Not investment advice.
 """
 
+import datetime as dt
+import http.cookiejar
 import io
+import json
 import os
 import urllib.parse
 import urllib.request
@@ -30,6 +35,13 @@ HISTORY_DAYS = 260   # about a year of breadth history for the chart
 SAVED_BREADTH = os.path.join("data", "market", "breadth.csv")   # kept by the nightly run; used when the source is down
 SAVED_FLOWS = os.path.join("data", "market", "fii_dii.csv")
 REVISABLE_DAYS = 10
+NSE_PAGE = "https://www.nseindia.com/reports/fii-dii"            # NSE's own figures for its latest session
+NSE_FLOWS = "https://www.nseindia.com/api/fiidiiTradeReact"
+NSE_HEADERS = {"User-Agent": ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                              "(KHTML, like Gecko) Chrome/126.0 Safari/537.36"),
+               "Accept": "application/json, text/plain, */*", "Accept-Language": "en-US,en;q=0.9",
+               "Referer": NSE_PAGE}
+FLOW_COLS = ["FII_Net_Cr", "DII_Net_Cr"]
 
 
 def nifty50_symbols():
@@ -129,22 +141,80 @@ def saved_breadth():
     return _breadth_dict(out.tail(HISTORY_DAYS), [], saved=True)
 
 
-def flows(days=10):
-    """Daily FII and DII net cash-market buying (+) or selling (-), in rupees crore."""
+def _nse_json(timeout=15):
+    """NSE's reply, parsed. Its site wants a browser-like visit to a page first, for the cookies."""
+    opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
+    try:
+        opener.open(urllib.request.Request(NSE_PAGE, headers=NSE_HEADERS), timeout=timeout).read()
+    except Exception:
+        pass                                   # the figures sometimes come without the first visit
+    with opener.open(urllib.request.Request(NSE_FLOWS, headers=NSE_HEADERS), timeout=timeout) as resp:
+        return json.load(resp)
+
+
+def nse_flows(fetch=_nse_json, today=None):
+    """NSE's provisional FII and DII net figures for its latest session, as one row like flows()'s rows.
+    Raises if NSE can't be reached or the reply isn't what's expected: nothing is ever guessed."""
+    rows = fetch()
+    pick = lambda word: [r for r in rows if word in str(r.get("category", "")).upper()]
+    fii, dii = pick("FII"), pick("DII")
+    if len(fii) != 1 or len(dii) != 1 or fii[0].get("date") != dii[0].get("date"):
+        raise ValueError("NSE's reply isn't one FII row and one DII row for the same day")
+    day = pd.Timestamp(dt.datetime.strptime(str(fii[0]["date"]).strip(), "%d-%b-%Y"))
+    today = today or pd.Timestamp.now(tz="Asia/Kolkata").tz_localize(None).normalize()
+    if day > today or day < today - pd.Timedelta(days=10):
+        raise ValueError(f"NSE's figures are dated {day:%d %b %Y}")
+    values = [float(str(r["netValue"]).replace(",", "")) for r in (fii[0], dii[0])]
+    if not all(v == v and abs(v) < 200000 for v in values):
+        raise ValueError(f"NSE's figures look wrong: {values}")
+    return pd.DataFrame([values], columns=FLOW_COLS, index=pd.DatetimeIndex([day], name="Date"))
+
+
+def with_nse(df, fetch=None):
+    """df, plus NSE's figures when they are for a session df doesn't have yet. Never fails.
+    Returns (table, the day added from NSE or None)."""
+    try:
+        extra = nse_flows(fetch) if fetch else nse_flows()
+    except Exception as exc:
+        print(f"  (NSE's own FII/DII figures not added: {exc})")
+        return df, None
+    if len(df) and extra.index[0] <= df.index[-1]:
+        return df, None
+    return pd.concat([df, extra]), extra.index[0]
+
+
+def _finish(df, days, nse_day):
+    out = df.tail(days)
+    if nse_day is not None and len(out) and out.index[-1] == nse_day:
+        out.attrs["nse"] = True                # the latest row is NSE's provisional figure
+    return out
+
+
+def flows(days=10, fetch=None):
+    """Daily FII and DII net cash-market buying (+) or selling (-), in rupees crore: the dataset's days,
+    then any later days saved from NSE on earlier nights, then NSE's latest session if that is newer."""
     df = _read_parquet(FLOWS_URL)
     df["Date"] = pd.to_datetime(df["Date"])
-    df = df.set_index("Date").sort_index()[["FII_Net_Cr", "DII_Net_Cr"]]
+    df = df.set_index("Date").sort_index()[FLOW_COLS]
+    saved = _read_saved(SAVED_FLOWS)
+    if len(saved) and len(df):
+        df = pd.concat([df, saved.loc[saved.index > df.index[-1], FLOW_COLS]])
+    df, nse_day = with_nse(df, fetch)
     _save(SAVED_FLOWS, df.tail(HISTORY_DAYS))
-    return df.tail(days)
+    return _finish(df, days, nse_day)
 
 
-def saved_flows(days=10):
+def saved_flows(days=10, fetch=None):
+    """The saved copy, for when the dataset is down, still topped up from NSE if it answers."""
     df = _read_saved(SAVED_FLOWS)
     if df.empty:
         raise RuntimeError("no saved flows either")
-    df = df[["FII_Net_Cr", "DII_Net_Cr"]].tail(days)
-    df.attrs["saved"] = True
-    return df
+    df, nse_day = with_nse(df[FLOW_COLS], fetch)
+    if nse_day is not None:
+        _save(SAVED_FLOWS, df.tail(HISTORY_DAYS))
+    out = _finish(df, days, nse_day)
+    out.attrs["saved"] = True
+    return out
 
 
 def context():
@@ -186,7 +256,8 @@ def describe(ctx):
     f = ctx.get("flows")
     if f is not None and len(f):
         last = f.iloc[-1]
-        lines.append(f"Institutional flows on {f.index[-1]:%d %b} (Rs crore, cash market): FII {last['FII_Net_Cr']:+,.0f}, "
+        source = ", NSE's provisional figures" if f.attrs.get("nse") else ""
+        lines.append(f"Institutional flows on {f.index[-1]:%d %b} (Rs crore, cash market{source}): FII {last['FII_Net_Cr']:+,.0f}, "
                      f"DII {last['DII_Net_Cr']:+,.0f}. Last 5 sessions: FII {f['FII_Net_Cr'].tail(5).sum():+,.0f}, "
                      f"DII {f['DII_Net_Cr'].tail(5).sum():+,.0f}.")
     return lines

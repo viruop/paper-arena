@@ -1,29 +1,34 @@
 # Paper arena: notes for Claude
 
-A paper-trading arena for learning. Six rule-based agents and a Claude agent each manage ₹1 lakh of virtual money in Nifty 50; seven F&O agents and six gold and multi-asset agents (two of them the Trade Like Berlin channel's rules) trade in arenas of their own, and two Telegram channels' calls are paper traded too (Trade Like Berlin, tagged by Claude, and Trade with Akash Garg, read by code). GitHub Actions rebuilds the web page every weekday evening. No real orders are ever placed.
+A paper-trading arena for learning. Six rule-based agents and a Claude agent each manage ₹1 lakh of virtual money in Nifty 50; thirteen F&O agents (four of them in whole lots on ₹5 lakh) and six gold and multi-asset agents (two of them the Trade Like Berlin channel's rules) trade in arenas of their own, and two Telegram channels' calls are paper traded too (Trade Like Berlin, tagged by Claude, and Trade with Akash Garg, read by code). GitHub Actions rebuilds the web page every weekday evening. No real orders are ever placed.
 
 ## Files
 
 - `paper_arena.py`: the agents and the arena. `START` and the existing agents' rules must never change after the start.
-- `claude_agent.py`: the Claude agent's decision. Runs through the Claude API, or with `--snapshot` and `--record` from a routine or a Claude Code session.
+- `claude_agent.py`: the Claude agent's decision. Runs through the Claude API (Claude Opus 5.5) in the daily GitHub run once the `ANTHROPIC_API_KEY` secret is set, or with `--snapshot` and `--record` from a routine or a Claude Code session.
 - `decisions/claude.json`: Claude's saved decisions. Only add to it, through `claude_agent.py --record`.
 - `decisions/snapshots/`: the data behind each decision, saved automatically.
-- `fno_backtest.py`, `fno_arena.py`, `fno_prices.py` and `data/fno/`: the F&O backtest, the seven F&O paper agents and the NSE option prices they trade at.
+- `fno_backtest.py`, `fno_arena.py`, `fno_prices.py` and `data/fno/`: the F&O backtest, the thirteen F&O paper agents and the NSE option prices they trade at. The four "whole lots" agents run on ₹5 lakh and are recorded per ₹1 lakh.
 - `asset_arena.py`, `asset_backtest.py`, `market_data.py` and `data/market/`: the six gold and multi-asset agents (from the Trade Like Berlin research), their backtest, and the saved ETF, gold, silver and S&P 500 prices.
 - `berlin.py`: the Trade Like Berlin videos being tested, shown in their own section of the page. To add a new video, use the `berlin-new-video` skill.
 - `channels.py`: the Telegram channels. `.github/workflows/telegram.yml` runs it every 30 minutes to save each channel's new posts to `data/<channel>/telegram_posts.csv`. To add a channel, add an entry there, starting from the newest post on the day it's added.
 - `voice_notes.py`: run by the same workflow after the posts are saved. It turns each channel's new voice notes into English text (Whisper small, translated from Hindi, newest first) in `data/<channel>/voice_notes.csv`. Only that job writes the file. A machine transcript can mishear a number: take a level from one only when it's clear, and say so in the note.
 - `berlin_calls.py`, `data/berlin/` and `logs/berlin_calls.csv`: Trade Like Berlin's tagged calls (`telegram_calls.csv`), his later posts about them (`telegram_updates.csv`: exits, stop moves, claims), Claude's decision on each post (`telegram_reviewed.csv`), corrections (`call_corrections.csv`) and the results. `logs/berlin_variants.csv` holds each call 15 and 30 minutes late and reversed. To tag new posts, use the `berlin-telegram-calls` skill.
+- `berlin_etf.py` and `logs/berlin_etf.csv`: his Nifty calls copied onto NIFTYBEES at Zerodha's charges, on time and 15 and 30 minutes late. A check on top of the record: the nightly run writes each call's lines once, after the record has scored it, and never changes them.
 - `signal_calls.py`, `dukascopy.py`, `data/akash/` and `logs/akash_calls.csv`: Trade with Akash Garg's signals, read by code every 30 minutes (decision log `telegram_reviewed.csv`) and scored nightly on Dukascopy one-minute bid and ask prices. Claude answers the posts marked "needs review" in `claude_calls.csv`, `claude_updates.csv` and `claude_reviewed.csv`, never in the code's own files (see the `berlin-telegram-calls` skill).
 - `scorecard.py`: "Worth following?", the same ten checks for every channel, written down on 4 Nov 2026. Never change its thresholds.
 - `data/<channel>/telegram_deleted.csv`: saved posts he deleted later, noticed by the 30-minute job. `data/dukascopy_check.json`: whether the nightly run could read Dukascopy's prices.
 - `berlin_study.py`: the forex video's claim checked on every RBNZ decision since 1999.
 - `starts.py` and `logs/starts.json`: the start date of every agent newer than the original Nifty ones, written once by the nightly run the first time it sees the agent.
 - `logbook.py` and `logs/`: the permanent daily and trade logs, added to automatically every night. `logs/journal.md` is the user's own notes.
-- `market_context.py`: Nifty 50 breadth and FII/DII flows. `nifty50.txt` holds the current Nifty 50 list.
+- `market_context.py`: Nifty 50 breadth and FII/DII flows (the dataset's, plus NSE's own figures for the latest session when its site answers). `nifty50.txt` holds the current Nifty 50 list.
+- `research_tests.py`: two outside ideas tested with rules fixed in advance (52-week-high breakout, opening-range breakout). Not agents; a new idea gets its test here before any agent.
 - `events.py` and `data/events/`: the event calendar (`calendar.csv`) and the log of what happened (`log.csv`), shown on the page and in the Claude agent's snapshot, with each market's move around each event. The calendar's NSE holidays and special sessions set when a Claude decision is still allowed. To add events, use the `market-events` skill; check the files with `python events.py --check`.
 - `nifty_backtest.py`: the 2010-to-today backtest, used for learning.
-- `build_site.py`: builds `site/index.html`.
+- `build_site.py`: builds the site: `index.html` (home), `berlin.html`, one page per signal channel (`akash.html`) and `ticket.html`, with the same bar at the top of each.
+- `zerodha.py`: what an order costs at Zerodha (charges and rounding as read on 11 Nov 2026). The NIFTYBEES copy, the ledger and the order ticket all use it; change a rate only from Zerodha's own list, and move `CHECKED`.
+- `real_money.py` and `data/real/orders.csv`: the real-money ledger, orders the user placed by hand at Zerodha, compared with the paper agent given the same money. To add a row, use the `real-money-log` skill; check with `python real_money.py --check`.
+- `ticket.py`: the order ticket (`site/ticket.html`), a calculator that turns a call into a NIFTYBEES or MCX order with quantity, charges and rule checks. `build_site.py` writes it.
 - `REAL_MONEY.md`: the gap register for real money (blockers, majors, minors, the go/no-go order). Add to it or date items resolved; never delete.
 
 ## Rules
@@ -32,4 +37,6 @@ A paper-trading arena for learning. Six rule-based agents and a Claude agent eac
 - A Berlin call is scored only after the decision log covers every post he made before it ended, and a signal only after no post in its 24 hours is still "needs review": review new posts every night.
 - Never move `START`, never edit `logs/starts.json`, and never change an F&O or gold and multi-asset agent's rule; add a new agent instead.
 - Never change an existing agent's rule; add a new agent instead.
+- Nothing here places an order, and Claude never places, changes or cancels one anywhere. The real-money ledger records what the user did by hand: only add rows (a later row with the same id corrects one), never guess a quantity, price or charge, and keep anything private out of it, because the repository is public.
 - For the daily decision, use the `claude-agent-decision` skill. For checking backtests, use the `backtest-review` skill.
+- Once decisions are made through the API (saved with a model ending in "(API)"), the GitHub run is the only decider: don't make the decision in a session, and never hand over `decisions/claude.json` to upload, since an older copy would erase the run's decisions.

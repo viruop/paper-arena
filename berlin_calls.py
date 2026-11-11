@@ -392,12 +392,14 @@ def gold_gap(calls, ref_id, bars):
     return 0.0 if after.empty else after["Open"].iloc[0] - num(ref.iloc[0]["entry"])
 
 
-def score_level(call, bars, calls, updates=(), start=None, flip=False, target_level=None):
+def score_level(call, bars, calls, updates=(), start=None, flip=False, target_level=None, close_by=None):
     """One level call: a list with one result row, [] if it never filled, None if not finished yet.
     updates: his later posts about this call from telegram_updates.csv; an exit ends it like exit_at does,
     and stop and target moves apply from when he posted them. start: the earliest fill, for the delay test (a follower
     acting late). flip: the same fill traded the other way, stop and target mirrored (his management is
     left out). target_level: a fixed target (the on-time trade's), so a late follower aims where he did.
+    close_by: a UTC time of day ("09:40") by which an intraday trade must be out, for the NIFTYBEES copy
+    (berlin_etf.py), which has to close before the broker does it.
     Without these arguments this is the original rule, unchanged."""
     posted, inst, side = utc(call["posted_at"]), call["instrument"], call["side"]
     end = window_end(call, posted)
@@ -405,6 +407,10 @@ def score_level(call, bars, calls, updates=(), start=None, flip=False, target_le
     exits = [utc(u["posted_at"]) for u in updates if u["action"] == "exit" and utc(u["posted_at"]) > posted]
     if exits and min(exits) < end:
         end, his_exit = min(exits), True
+    if close_by is not None and call["horizon"] == "intraday":
+        cut = pd.Timestamp(f"{posted.date()} {close_by}", tz="UTC")
+        if cut < end:
+            end, his_exit = cut, False
     if bars.empty or bars.index[-1] < end - pd.Timedelta(minutes=5):
         return None                                      # its window hasn't ended in the saved prices
     gap = level_gap(calls, call.get("price_ref"), bars) if inst in ("GOLD", "CRUDE") else 0.0
@@ -773,6 +779,11 @@ def main():
         channels.score_all_channels()
     except Exception as exc:  # one channel failing never stops the arena
         print(f"Other channels not scored: {exc}")
+    try:                                        # his Nifty calls again, on NIFTYBEES at Zerodha's charges
+        import berlin_etf
+        berlin_etf.main()
+    except Exception as exc:  # a check on top of the record; it never stops the arena
+        print(f"NIFTYBEES copy of the Nifty calls not scored: {exc}")
 
 
 if __name__ == "__main__":

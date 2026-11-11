@@ -1,5 +1,6 @@
 """
-build_site.py - builds the dashboard web page in the site/ folder from both scripts.
+build_site.py - builds the site in the site/ folder: the home page (index.html), a page for Trade Like
+Berlin (berlin.html), one for each signal channel (akash.html) and the order ticket (ticket.html).
 
 GitHub Actions runs this every weekday evening and publishes site/ with GitHub Pages.
 You can also run it yourself (python build_site.py) and open site/index.html in a browser.
@@ -24,6 +25,10 @@ import pandas as pd  # noqa: E402
 import asset_arena  # noqa: E402
 import berlin  # noqa: E402
 import berlin_calls  # noqa: E402
+try:
+    import berlin_etf  # noqa: E402
+except ImportError:          # berlin_etf.py or zerodha.py not uploaded yet
+    berlin_etf = None
 import berlin_study  # noqa: E402
 import channels  # noqa: E402
 try:
@@ -35,6 +40,10 @@ import logbook  # noqa: E402
 import market_context as mc  # noqa: E402
 import nifty_backtest as bt  # noqa: E402
 import paper_arena as pa  # noqa: E402
+try:
+    import real_money  # noqa: E402
+except ImportError:          # real_money.py or zerodha.py not uploaded yet
+    real_money = None
 import scorecard  # noqa: E402
 import signal_calls  # noqa: E402
 
@@ -48,8 +57,10 @@ COLORS = {  # same colour for an agent on every chart; light and dark versions
     "dark": {"Cash only": "#9AA59F", "Buy & hold": "#6EA8E6", "200-day trend": "#F07F55",
              "Golden cross": "#55C48A", "RSI(2) dip-buy": "#B68CF0", "Momentum rotation": "#E5B23A"},
 }
-EXTRA = {"light": ["#1F9E9E", "#C2417F", "#5B6FD0", "#6F8F00", "#D9622B", "#2F6FB0", "#8A5BC2", "#B8860B"],
-         "dark": ["#4CC9C9", "#E879AE", "#93A3F0", "#A7C93B", "#F08A5D", "#6EA8E6", "#B68CF0", "#E5B23A"]}
+EXTRA = {"light": ["#1F9E9E", "#C2417F", "#5B6FD0", "#6F8F00", "#D9622B", "#2F6FB0", "#8A5BC2", "#B8860B",
+                   "#7A4A2B", "#4A5568"],
+         "dark": ["#4CC9C9", "#E879AE", "#93A3F0", "#A7C93B", "#F08A5D", "#6EA8E6", "#B68CF0", "#E5B23A",
+                  "#D9A679", "#C3CBD6"]}
 THEMES = {"light": {"fg": "#1E2B25", "muted": "#5C6B63", "bg": "#FFFFFF", "grid": "#DCE3DF"},
           "dark": {"fg": "#DDE6E1", "muted": "#93A49B", "bg": "#17211C", "grid": "#2E3C35"}}
 
@@ -84,11 +95,20 @@ def day(d):
 
 
 # --------------------------------- charts ---------------------------------------
+TWINS = getattr(fno_arena, "TWINS", {})      # whole-lot agents share their fractional twin's colour, dashed
+
+
+def twin_in(name, order):
+    return name in TWINS and TWINS[name] in order
+
+
 def color_for(name, theme, order):
     known = COLORS[theme]
+    if twin_in(name, order):
+        name = TWINS[name]
     if name in known:
         return known[name]
-    extras = [n for n in order if n not in known]
+    extras = [n for n in order if n not in known and not twin_in(n, order)]
     return EXTRA[theme][extras.index(name) % len(EXTRA[theme])]
 
 
@@ -99,9 +119,9 @@ def draw(series, filename, log=False, split=None, money_axis="plain"):
         fig.patch.set_facecolor(c["bg"])
         ax.set_facecolor(c["bg"])
         for name, s in series.items():
-            dashed = name == "Cash only"
+            dashed = name == "Cash only" or twin_in(name, names)
             ax.plot(s.index, s.values, label=name, color=color_for(name, theme, names),
-                    lw=1.1 if dashed else 1.7, ls="--" if dashed else "-")
+                    lw=1.1 if name == "Cash only" else 1.7, ls="--" if dashed else "-")
         if log:
             ax.set_yscale("log")
             lo = min(s.min() for s in series.values()) * 0.92
@@ -200,7 +220,13 @@ CSS = """
 html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--ink);font:400 1.0625rem/1.55 "Barlow",system-ui,
 -apple-system,"Segoe UI",Roboto,Arial,sans-serif}
-.wrap{max-width:68rem;margin:0 auto;padding:2.5rem 1.25rem 4rem}
+.wrap{max-width:68rem;margin:0 auto;padding:1rem 1.25rem 4rem}
+.topnav{display:flex;flex-wrap:wrap;gap:0 .25rem;margin:0 0 1.75rem;border-bottom:1px solid var(--rule)}
+.topnav a{display:flex;align-items:center;min-height:2.9rem;padding:0 .8rem;margin-bottom:-1px;font-weight:600;
+color:var(--muted);text-decoration:none;border-bottom:3px solid transparent}
+.topnav a:first-child{padding-left:0}
+.topnav a:hover{color:var(--ink)}
+.topnav a[aria-current=page]{color:var(--ink);border-bottom-color:var(--score)}
 h1,h2,.rank,.num-big{font-family:"Barlow Condensed","Arial Narrow",system-ui,sans-serif}
 h1{font-size:clamp(2.4rem,7vw,3.6rem);font-weight:600;line-height:1;margin:0 0 .75rem;letter-spacing:-.01em}
 h2{font-size:1.6rem;font-weight:600;line-height:1.15;margin:0 0 .75rem}
@@ -260,7 +286,7 @@ a{color:inherit;text-decoration-thickness:1px;text-underline-offset:2px}
 a:focus-visible{outline:2px solid var(--score);outline-offset:2px}
 .board td.c-holding,.board td.c-today,.board td.c-next{white-space:normal;min-width:6.5rem}
 .m-label{display:none}
-@media (max-width:40rem){.wrap{padding-top:1.75rem}th,td{padding:.5rem .45rem}.rank{font-size:1.4rem}
+@media (max-width:40rem){.wrap{padding-top:.5rem}.topnav{margin-bottom:1.25rem}th,td{padding:.5rem .45rem}.rank{font-size:1.4rem}
 .board{padding:1rem .75rem .5rem}
 .board thead{display:none}.board table,.board tbody{display:block}.board .scroll{overflow:visible}
 .board tr{display:grid;grid-template-columns:2rem 1fr auto;grid-template-areas:"rank agent value" "rank holding since" "rank next next";
@@ -289,7 +315,7 @@ details.more>summary{cursor:pointer;list-style:none;padding:.95rem 0;display:fle
 align-items:baseline;gap:1rem;font:600 1.3rem/1.2 "Barlow Condensed","Arial Narrow",system-ui,sans-serif}
 details.more>summary::-webkit-details-marker{display:none}
 details.more>summary::after{content:"+";color:var(--muted);font-size:1.4rem}
-details.more[open]>summary::after{content:"\2212"}
+details.more[open]>summary::after{content:"\\2212"}
 details.more>summary .hint{flex:1;font:400 .92rem/1.35 "Barlow",system-ui,sans-serif;color:var(--muted)}
 details.more[open]{padding-bottom:1rem}
 details.more section{margin-top:1.25rem}
@@ -370,7 +396,8 @@ def context_html(ctx):
         items += [("FII net", crore(last["FII_Net_Cr"]), tone(last["FII_Net_Cr"])),
                   ("DII net", crore(last["DII_Net_Cr"]), tone(last["DII_Net_Cr"])),
                   ("FII, last 5 sessions", crore(f["FII_Net_Cr"].tail(5).sum()), tone(f["FII_Net_Cr"].tail(5).sum()))]
-        notes.append(f"FII and DII figures are net cash-market buying or selling on {day(f.index[-1])}.")
+        notes.append(f"FII and DII figures are net cash-market buying or selling on {day(f.index[-1])}"
+                     + (" (NSE’s provisional figures)." if f.attrs.get("nse") else "."))
     cells = "".join(f"<div><dt>{esc(k)}</dt><dd class='{c}'>{v}</dd></div>" for k, v, c in items)
     chart = ""
     if b and len(b["series"]) > 20:
@@ -497,10 +524,14 @@ def logs_html():
                                                                             "each call, and whether the record agrees"),
              ("logs/berlin_variants.csv", "Late and reversed checks", False, "each call taken 15 and 30 minutes late, "
                                                                             "and reversed"),
+             ("logs/berlin_etf.csv", "NIFTYBEES copy", False, "his Nifty calls copied onto NIFTYBEES at Zerodha’s "
+                                                               "charges, on time and late"),
              ("data/berlin/call_corrections.csv", "Corrections", False, "calls we misread, noted without changing "
                                                                         "their scores"),
              ("data/berlin/telegram_reviewed.csv", "Decision log", False, "what Claude decided about each post, "
                                                                           "and why"),
+             ("data/real/orders.csv", "Real-money ledger", False, "orders you placed yourself at Zerodha, written "
+                                                                   "down afterwards"),
              ("logs/journal.md", "Your journal", False, "your evening notes, which you edit on GitHub")]
     for ch in channels.CHANNELS.values():
         if ch["tagging"] != "parser":
@@ -530,7 +561,8 @@ def fno_backtest_html(fbt):
                      f"worst fall {pct(r['worst_fall'], digits=0)}</span></li>")
     return (f"<h3>Backtest, {day(first)} to {day(last)}</h3><ul class='panel tlist'>{''.join(items)}</ul>"
             f"<p class='meta'>After costs, with {inr(pa.CAPITAL)} at 3x exposure (option buying: 3% of capital a "
-            f"week). Free data has no past option prices, so the backtest estimates them from India VIX; the "
+            f"week); the whole-lot rows use ₹5 lakh in today’s lot of 65 and are shown per {inr(pa.CAPITAL)}. Free "
+            f"data has no past option prices, so the backtest estimates them from India VIX; the "
             f"ranges show results at three different estimates, and worst falls use the middle one. The futures "
             f"rows use real index prices. Paper trading above uses NSE’s real prices where it has them.</p>")
 
@@ -542,9 +574,13 @@ def rupee_text(text):
 
 def fno_html(fres, fbt):
     head = "<section aria-labelledby='fno-h'><h2 id='fno-h'>F&amp;O arena</h2>"
-    intro = (f"<p>Seven futures and options strategies, each with {inr(pa.CAPITAL)} of virtual money. They are kept "
-             f"apart from the Nifty agents because they use leverage. In SEBI’s study of FY26, 87.7% of "
-             f"individual F&amp;O traders lost money.</p>")
+    whole = (f" The {len(TWINS)} marked “whole lots” trade real lots of 65 on ₹5 lakh each, with margin checked: "
+             f"what the same rules need at the smallest real size. Their values are shown per {inr(pa.CAPITAL)} so "
+             f"they compare (dashed lines on the chart), and the rupees in their trade notes are the ₹5 lakh "
+             f"account’s." if TWINS else "")
+    intro = (f"<p>{len(fno_arena.RULES)} futures and options strategies. Most trade {inr(pa.CAPITAL)} of virtual "
+             f"money in fractions of a lot, as a test of the rule.{whole} They are kept apart from the Nifty agents "
+             f"because they use leverage. In SEBI’s study of FY26, 87.7% of individual F&amp;O traders lost money.</p>")
     if fres is None:
         return head + intro + "<p class='meta'>The F&amp;O agents couldn’t be updated tonight.</p>" + \
             fno_backtest_html(fbt) + "</section>"
@@ -567,14 +603,18 @@ def fno_html(fres, fbt):
                 f"<td class='c-today'>{today}</td></tr>")
         real = (f"Option prices: NSE’s real prices on {fres['real_days']} of {fres['days']} trading days"
                 + ("." if fres["real_days"] == fres["days"] else ", estimates on the rest."))
-        body = (f"<p class='meta'>Started with {inr(pa.CAPITAL)} each on {day(fres['start'])}. {real}</p>"
+        began = {d for d in fres["board"]["start"] if d is not None and not pd.isna(d)}
+        started = (f"Started with {inr(pa.CAPITAL)} each on {day(fres['start'])}." if len(began) <= 1 else
+                   f"Each started with {inr(pa.CAPITAL)} on its own start date, the first on {day(fres['start'])}.")
+        body = (f"<p class='meta'>{started} {real}</p>"
                 f"<div class='board'><div class='scroll'><table><thead><tr><th><span class='visually-hidden'>Rank"
                 f"</span>#</th><th>Agent</th><th>Holding now</th><th class='r'>Value</th><th class='r'>Since start"
                 f"</th><th class='r'>Worst fall</th><th class='r'>Trades</th><th>Today</th></tr></thead>"
                 f"<tbody>{''.join(rows)}</tbody></table></div></div>")
         since = fres["values"].loc[fres["start"]:]
+        running = [n for n in since.columns if fres["board"].at[n, "holding"] != "Not started yet"]
         if len(since) >= 2:
-            draw({n: since[n] for n in since.columns}, "fno")
+            draw({n: since[n] for n in running}, "fno")
             body += "<figure>" + picture("fno", "Line chart of each F&O agent's virtual value since it started") \
                 + "</figure>"
         recent = fres["trades"][:20]
@@ -721,7 +761,7 @@ def overview_html(res, fres, ares, tg, sigs=()):
             trades, n, ours, _ = series_numbers(info, tg)
             tl.append(("Small-capital series", pa.CAPITAL + ours, ours / pa.CAPITAL,
                        f"{n} of 10 trades closed, Rs 10,000 risk each"))
-    groups = [("Nifty 50 agents and Claude", nifty), ("Trade Like Berlin", tl),
+    groups = [("Nifty 50 agents and Claude", nifty), ("<a href='berlin.html'>Trade Like Berlin</a>", tl),
               ("Gold and multi-asset", board_rows(ares, [n for n in asset_arena.AGENTS if n not in berlin.STRATEGIES])),
               ("F&amp;O (3x leverage)", board_rows(fres))]
     for ch, sm in sigs or ():
@@ -733,7 +773,7 @@ def overview_html(res, fres, ares, tg, sigs=()):
                 f"No signals closed yet") + (f"; {b['pending']} open" if b["pending"] else "")
         row = (("His signals", b["value"], b["value"] / berlin_calls.CAPITAL - 1, note) if len(sm["calls"]) else
                ("His signals", None, None, f"Saving posts since {day(pd.Timestamp(ch['since']))}; no signals yet"))
-        groups.insert(2, (esc(ch["name"]), [row]))
+        groups.insert(2, (f"<a href='{slug(ch)}.html'>{esc(ch['name'])}</a>", [row]))
     rows = []
     for title, items in groups:
         if not items:
@@ -745,15 +785,16 @@ def overview_html(res, fres, ares, tg, sigs=()):
             rows.append(f"<tr><td class='name'>{esc(name)}<span class='sub'>{esc(note)}</span></td>"
                         f"<td class='r num-big'>{val}</td><td class='r'>{chg}</td></tr>")
     return (f"<section class='scoreboard' aria-labelledby='sb-h'><h2 id='sb-h'>Every strategy</h2>"
-            f"<p class='meta'>Each started with {inr(pa.CAPITAL)} of virtual money on its own start date. "
-            f"Tap a section below for details. A high value here is not proof of skill: see “Skill or luck?” "
-            f"under Details.</p><div class='scroll'><table><thead><tr><th>Strategy</th>"
+            f"<p class='meta'>Each started with {inr(pa.CAPITAL)} of virtual money on its own start date"
+            + (" (the whole-lot F&amp;O agents run on ₹5 lakh and are shown per ₹1 lakh). " if TWINS else ". ") +
+            f"The Telegram channels have pages of their own: tap a name, or the bar at the top. A high value "
+            f"here is not proof of skill: see “Skill or luck?” under Details.</p><div class='scroll'><table><thead><tr><th>Strategy</th>"
             f"<th class='r'>Value</th><th class='r'>Since start</th></tr></thead><tbody>{''.join(rows)}"
             f"</tbody></table></div></section>")
 
 
 INDIA_NOTES = {
-    "NIFTY": "scored on the Nifty 50 index itself; from India that is NIFTYBEES (an ETF) or Nifty futures (lots of 65, margin)",
+    "NIFTY": "scored on the Nifty 50 index itself; from India that is NIFTYBEES (an ETF: his Nifty calls are copied onto it below) or Nifty futures (lots of 65, margin)",
     "GOLD": "scored on COMEX gold futures (GC=F); from India the nearest instrument is MCX gold, a different contract in rupees",
     "CRUDE": "scored on NYMEX WTI futures (CL=F); from India the nearest instrument is MCX crude oil",
     "BTC": "scored on BTC-USD; from India that is an Indian exchange, with 30% tax on gains and 1% TDS per trade",
@@ -1003,6 +1044,91 @@ def call_line(call, res, waiting=None):
     return f"{note} <strong class='{tone(pnl)}'>{money(pnl)}</strong> <span class='meta'>({esc(legs)})</span>"
 
 
+ETF_NO_TRADE = {"not filled": "His level never triggered on NIFTYBEES.",
+                "after 3:10 pm": "Posted after 3:10 pm: too late for an intraday trade.",
+                "short can't be held overnight": "A short can't be held overnight in NIFTYBEES, so it isn't copied.",
+                "no saved prices": "No NIFTYBEES prices were saved for that day.",
+                "too small": "Too small to buy one unit."}
+
+
+def etf_html(etf, calls):
+    """His Nifty calls copied onto NIFTYBEES at Zerodha's charges (berlin_etf.py)."""
+    if not etf or (not etf["books"] and not etf["waiting"]):
+        return ""
+    head = "<h3>The same Nifty calls on NIFTYBEES</h3>"
+    intro = ("Nobody can buy the Nifty index itself. With a small account the nearest thing is NIFTYBEES, an ETF "
+             "that tracks it, bought or sold short for the day at Zerodha.")
+    waiting = (f"<p class='meta'>{len(etf['waiting'])} scored call{'s' if len(etf['waiting']) != 1 else ''} "
+               f"wait{'' if len(etf['waiting']) != 1 else 's'} for NIFTYBEES prices.</p>" if etf["waiting"] else "")
+    if not etf["books"]:
+        return head + f"<p>{intro}</p>" + waiting
+    rows, when = etf["rows"], {}
+    if len(calls):
+        when = dict(zip(calls["id"].astype(str), calls["posted_at"]))
+    b, parts = etf["books"].get("calls"), []
+    if b and b["ontime"]["n"]:
+        o = b["ontime"]
+        parts.append(
+            f"<p>{intro} His {b['copied']} Nifty calls with levels, copied that way with {inr(etf['position'])} a "
+            f"call: {o['n']} traded and {o['wins']} won, for <strong class='{tone(o['net'])}'>{money(o['net'])}"
+            f"</strong> after costs. The price moves alone came to {money(o['move'])}; the spread and slippage "
+            f"took ₹{o['slip']:,.0f} and Zerodha’s charges ₹{o['charges']:,.0f}. Acting 15 minutes late: "
+            f"{money(b['late15']['net'])}; 30 minutes late: {money(b['late30']['net'])}.</p>")
+        if o["risk"] > 0:
+            on_index, on_etf = minus(format(b["index_r"], "+.1f")), minus(format(o["r"], "+.1f"))
+            parts.append(
+                f"<p class='meta'>Costs came to {pct((o['slip'] + o['charges']) / o['risk'], digits=0)} of the money "
+                f"these trades risked to their stops, before the price had moved at all. In units of that risk (R), "
+                f"the same calls made {on_index}R on the index, where the record charges 0.03% a side, and "
+                f"{on_etf}R on NIFTYBEES.</p>")
+    elif b:
+        parts.append(f"<p>{intro} None of his {b['copied']} Nifty calls with levels has traded on it yet.</p>")
+    else:
+        parts.append(f"<p>{intro}</p>")
+    ob = etf["books"].get("options")
+    if ob and ob["ontime"]["n"]:
+        o = ob["ontime"]
+        parts.append(f"<p class='meta'>His options trades, copied as plain NIFTYBEES trades in his direction: "
+                     f"<strong class='{tone(o['net'])}'>{money(o['net'])}</strong> from {o['n']}, {o['wins']} won.</p>")
+    items = []
+    ontime = rows[rows["variant"] == "ontime"].copy()
+    ontime["posted"] = ontime["id"].astype(str).map(when)
+    for _, r in ontime.sort_values("posted", ascending=False).iterrows():
+        mine = rows[rows["id"] == r["id"]]
+        label = (f"{ist(r['posted'])} IST · " if isinstance(r["posted"], str) else "") + (
+            "sell short" if r["side"] == "short" else "buy") + (" · his options trade" if r["book"] == "options" else "")
+        if r["units"] > 0:
+            late = "; ".join(f"{v[4:]} minutes late {money(x['pnl_rs'])}" if x["units"] > 0 else f"{v[4:]} minutes late: no trade"
+                             for v in ("late15", "late30") for _, x in mine[mine["variant"] == v].iterrows())
+            how_out = ("closed at 3:10 pm" if r["outcome"] == "time" and r["product"] == "MIS" else
+                       "window ended" if r["outcome"] == "time" else r["outcome"])
+            what = (f"{int(r['units'])} units in at ₹{r['fill']:,.2f}, out at ₹{float(r['exit']):,.2f} "
+                    f"({esc(how_out)}): move {money(r['move_rs'])}, costs ₹{r['slip_rs'] + r['charges_rs']:,.0f}, "
+                    f"<strong class='{tone(r['pnl_rs'])}'>{money(r['pnl_rs'])}</strong>."
+                    + (f" <span class='meta'>{late[0].upper() + late[1:]}.</span>" if late else ""))
+        else:
+            what = f"<span class='meta'>{esc(ETF_NO_TRADE.get(r['outcome'], r['outcome']))}</span>"
+        items.append(f"<li><span class='meta'>{label}</span><span class='tl-what'>{what}</span></li>")
+    detail = (f"<details class='mini'><summary>Each call on NIFTYBEES ({len(items)})</summary>"
+              f"<ul class='panel tlist calls'>{''.join(items)}</ul></details>" if items else "")
+    how = (f"<p class='meta'>How it’s copied: his Nifty levels become NIFTYBEES prices at the ratio of the two when "
+           f"he posts, and the stop and target then sit on NIFTYBEES’s own price. That price wanders a few "
+           f"hundredths of a percent around Nifty during the day, so a level can trigger on one and not on the "
+           f"other. Intraday trades are closed at 3:10 pm. Every fill except a target loses "
+           f"{etf['slip']:.3%} to the spread, and the charges are <a href='{esc(zerodha_source())}'>Zerodha’s</a> "
+           f"for an intraday trade. A call is copied once the record has scored it and is never redone. "
+           f"Someone watching Nifty and trading by hand would get different entries and exits.</p>")
+    return head + "".join(parts) + waiting + detail + how
+
+
+def zerodha_source():
+    try:
+        import zerodha
+        return zerodha.SOURCE
+    except Exception:
+        return "https://zerodha.com/charges/"
+
+
 def telegram_html(tg):
     if not tg:
         return "<p class='meta'>The Telegram record couldn’t be read tonight.</p>"
@@ -1047,7 +1173,8 @@ def telegram_html(tg):
             f"1% for Bitcoin intraday). A call is scored once its window ends: the close for Nifty intraday, "
             f"24 hours for other intraday calls, 14 days for positional ones, or his exit post. Option-premium "
             f"trades and levels drawn only on chart images can’t be scored. Claims made after the move don’t "
-            f"count. If we misread a call, a correction is added under it, but its score stays as tagged.</p>")
+            f"count. If we misread a call, a correction is added under it, but its score stays as tagged.</p>"
+            + etf_html(tg.get("etf"), calls))
 
 
 def study_line(st):
@@ -1090,8 +1217,9 @@ def series_lines(info, tg):
     return now, result
 
 
-def berlin_html(ares, abt, tg, st):
-    """The channel's strategies: one short card per video, then its Telegram calls."""
+def berlin_html(ares, abt, tg, st, heading=True):
+    """The channel's strategies: one short card per video, then its Telegram calls. heading=False on its
+    own page, where the page's title says it."""
     boards, why, checks = {}, {}, {}
     if ares is not None:
         boards = {n: r for n, r in ares["board"].iterrows()}
@@ -1129,7 +1257,9 @@ def berlin_html(ares, abt, tg, st):
             f"<dt>Now</dt><dd>{now}</dd>" + (f"<dt>Does the claim hold?</dt><dd>{result}</dd>" if result else "")
             + f"</dl><details class='mini'><summary>How it’s tested</summary><p class='meta'>{esc(info['changes'])}"
             f"</p></details></article>")
-    return (f"<section aria-labelledby='berlin-h'><h2 id='berlin-h'>Trade Like Berlin</h2>"
+    head = ("<section aria-labelledby='berlin-h'><h2 id='berlin-h'>Trade Like Berlin</h2>" if heading
+            else "<section aria-label='Trade Like Berlin'>")
+    return (head +
             f"<p>Strategies from the <a href='{berlin.CHANNEL}'>Trade Like Berlin</a> YouTube channel and its "
             f"Telegram calls, all paper traded by fixed rules. Gaps such as a missing stop are filled and stated. "
             f"New video? Send Claude the link.</p>"
@@ -1193,10 +1323,12 @@ def price_feed_line():
             f"so finished signals wait for their prices.</p>")
 
 
-def signal_html(ch, sm):
-    """One signal channel: what it posted, what paper trading its signals did, and whether its claims hold."""
+def signal_html(ch, sm, heading=True):
+    """One signal channel: what it posted, what paper trading its signals did, and whether its claims hold.
+    heading=False on its own page, where the page's title says it."""
     key = re.sub(r"[^a-z0-9]", "", ch["handle"].lower())
-    head = f"<section aria-labelledby='sig-{key}-h'><h2 id='sig-{key}-h'>{esc(ch['name'])}</h2>"
+    head = (f"<section aria-labelledby='sig-{key}-h'><h2 id='sig-{key}-h'>{esc(ch['name'])}</h2>" if heading
+            else f"<section aria-label='{esc(ch['name'])}'>")
     if sm is None:
         return head + "<p class='meta'>This channel’s record couldn’t be read tonight.</p></section>"
     calls, res, b, now = sm["calls"], sm["results"], sm["book"], pd.Timestamp.now(tz="UTC")
@@ -1253,6 +1385,89 @@ def signal_html(ch, sm):
             f"permitted for Indian residents, so these signals are only ever paper traded here.</p></section>")
 
 
+# ----------------------------------- real money -----------------------------------
+ORDER_WORDS = {"deposit": "Put in", "withdraw": "Took out", "fee": "Fee", "buy": "Bought", "sell": "Sold"}
+
+
+def rs(x, signed=False):
+    """Rupees to the paisa for the small real account: ₹4,987.30, or +₹12.30 / −₹12.30 when signed."""
+    sign = ("+" if x >= 0 else "\u2212") if signed else ("\u2212" if x < 0 else "")
+    return f"{sign}\u20b9{abs(x):,.2f}"
+
+
+def order_text(r):
+    """One ledger row in words."""
+    a = r["action"]
+    if a in ("buy", "sell"):
+        unit = "lot" if r["product"] == "MCX" else "unit"
+        qty = int(float(r["quantity"]))
+        fees, estimate = real_money.order_charges(r)
+        return (f"{ORDER_WORDS[a]} {qty} {unit}{'s' if qty != 1 else ''} of {esc(r['symbol'])} at "
+                f"\u20b9{float(r['price']):,.2f}" + (" for the day" if r["product"] == "MIS" else "")
+                + f" <span class='meta'>charges {rs(fees)}{' (estimated)' if estimate else ''}</span>")
+    return f"{ORDER_WORDS[a]} {rs(float(r['amount']))}"
+
+
+def real_html(rm):
+    """The real-money ledger (real_money.py): your own orders at Zerodha next to the paper agent."""
+    head = "<section aria-labelledby='real-h'><h2 id='real-h'>Real money</h2>"
+    if rm is None:
+        return head + "<p class='meta'>The real-money ledger couldn’t be read tonight.</p></section>"
+    if not rm["started"]:
+        return (head + "<p>No real orders yet: everything else on this page is virtual money. When you place an "
+                "order at Zerodha yourself, tell Claude what you bought or sold, how many and at what price. It is "
+                "written to <code>data/real/orders.csv</code> and shown here next to the paper agent given the same "
+                "money on the same day. The <a href='ticket.html'>order ticket</a> works out the quantity, the "
+                "charges and the rule checks before you place an order.</p><p class='meta'>The arena never places "
+                "an order. The ledger is public, like everything else in the repository.</p></section>")
+    gap = rm["value"] - rm["paper"]
+    followed = ", ".join(esc(a) for a in rm["followed"]) or "no paper agent"
+    items = [("Put in", rs(rm["put_in"]), ""), ("Worth now", rs(rm["value"]), ""),
+             ("Gain or loss", f"{rs(rm['pnl'], True)} ({pct(rm['pnl_pct'], True, 2)})", tone(rm["pnl"])),
+             ("Charges paid", rs(rm["charges"]), ""), ("Same money in the paper agent", rs(rm["paper"]), ""),
+             ("Real against paper", rs(gap, True), tone(gap))]
+    cells = "".join(f"<div><dt>{esc(k)}</dt><dd class='{c}'>{v}</dd></div>" for k, v, c in items)
+    body = (f"<p class='meta'>Orders you placed by hand at Zerodha, written down afterwards; the arena never places "
+            f"an order. Prices up to the close on {day(rm['priced_to'] if rm['priced_to'] is not None else rm['asof'])}. "
+            f"Following: {followed}.</p>"
+            f"<dl class='stats'>{cells}</dl>")
+    if rm["holdings"]:
+        rows = "".join(
+            f"<tr><td class='agent'>{esc(h['symbol'])}</td><td class='r'>{h['units']}{' lots' if h['future'] else ''}</td>"
+            f"<td class='r'>{h['avg']:,.2f}</td><td class='r'>{h['price']:,.2f}{'' if h['priced'] else '*'}</td>"
+            f"<td class='r'>{rs(h['value']) if not h['future'] else '–'}</td>"
+            f"<td class='r {tone(h['gain'])}'>{rs(h['gain'], True)}</td></tr>" for h in rm["holdings"])
+        body += (f"<h3>Holding now</h3><div class='panel scroll'><table><thead><tr><th>What</th><th class='r'>Units</th>"
+                 f"<th class='r'>Average cost</th><th class='r'>Last close</th><th class='r'>Value</th>"
+                 f"<th class='r'>Gain or loss</th></tr></thead><tbody>{rows}</tbody></table></div>"
+                 f"<p class='meta'>Cash in the account: {rs(rm['cash'])}."
+                 + (" * No saved prices: valued at your last trade price." if any(not h["priced"] for h in rm["holdings"]) else "")
+                 + "</p>")
+    else:
+        body += f"<p class='meta'>Holding nothing now. Cash in the account: {rs(rm['cash'])}.</p>"
+    ser = rm["series"]
+    if len(ser) >= 5:
+        draw({"Real account": ser["value"], "Paper agent, same money": ser["paper"], "Money put in": ser["put_in"]},
+             "real")
+        body += ("<figure>" + picture("real", "Line chart of the real account's value, the paper agent given the "
+                                              "same money, and the money put in") + "</figure>")
+    orders = [r for _, r in rm["rows"].iloc[::-1].iterrows()]
+    li = lambda r: (f"<li><span class='meta'>{day(pd.Timestamp(r['date']))}"
+                    + (f" · {esc(r['agent'])}" if r["agent"] else "") + f"</span><span class='tl-what'>{order_text(r)}"
+                    + (f" <span class='meta'>{esc(r['note'])}</span>" if r["note"] else "") + "</span></li>")
+    body += f"<h3>Ledger</h3><ul class='panel tlist'>{''.join(li(r) for r in orders[:8])}</ul>"
+    if len(orders) > 8:
+        body += (f"<details class='mini'><summary>Older rows ({len(orders) - 8})</summary><ul class='panel tlist'>"
+                 f"{''.join(li(r) for r in orders[8:])}</ul></details>")
+    notes = "".join(f"<p class='meta'>{esc(w)}</p>" for w in rm["warnings"])
+    how = ("<p class='meta'>The comparison puts each deposit into the paper agent named on it at that day’s close, "
+           "and takes withdrawals out the same way. The gap is what real trading costs over the paper model: whole "
+           "units, real charges, idle cash, a worse price, an order placed late or not at all. A small account also "
+           "pays the fixed ₹15.34 on every sale from the demat account, which the paper model spreads thinner. "
+           "Nothing here is advice.</p>")
+    return head + body + notes + how + "</section>"
+
+
 def backtest_html(rows, curves, first, last):
     draw(curves, "backtest", log=True, split=bt.SPLIT, money_axis="lakh")
     split_head = ""
@@ -1280,21 +1495,39 @@ def backtest_html(rows, curves, first, last):
             f"<p class='meta'>Past results don't predict future ones.</p></section>")
 
 
-def page(res, bt_parts, ctx, fres=None, fbt=None, view=None, ares=None, abt=None, tg=None, st=None, sigs=()):
-    built = dt.datetime.now(IST)
-    if res["started"]:
-        status = (f"Prices up to the close on {day(res['latest'])}. Day {res['days']} of paper trading, "
-                  f"which started on {day(res['s0'])}.")
-    else:
-        status = (f"Prices up to the close on {day(res['latest'])}. Paper trading starts on "
-                  f"{day(pd.Timestamp(pa.START))}.")
+# ----------------------------------- the pages -----------------------------------
+def slug(ch):
+    """A signal channel's page name, from its folder: data/akash -> akash."""
+    return re.sub(r"[^a-z0-9]", "", os.path.basename(ch["folder"].rstrip("/")).lower()) or "channel"
+
+
+def site_pages(sigs=(), has_ticket=False):
+    """Every page of the site, in the order of the bar at the top: (key, file, label)."""
+    pages = [("home", "index.html", "Home"), ("berlin", "berlin.html", "Berlin")]
+    pages += [(slug(ch), f"{slug(ch)}.html", slug(ch).capitalize()) for ch, _ in sigs or ()]
+    if has_ticket:
+        pages.append(("ticket", "ticket.html", "Ticket"))
+    return pages
+
+
+def nav_html(pages, current):
+    """The bar at the top of every page."""
+    links = "".join(f"<a href='{file}'" + (" aria-current='page'" if key == current else "") + f">{esc(label)}</a>"
+                    for key, file, label in pages)
+    return f"<nav class='topnav' aria-label='Pages'>{links}</nav>"
+
+
+def shell(title, description, nav, header, main, built, live=False):
+    """One page: the same head, bar and footer around its own header and content."""
+    placed = ("The arena never places an order: the orders in the Real money section were placed by hand."
+              if live else "No real orders are placed.")
     return f"""<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Paper arena</title>
-<meta name="description" content="Rule-following agents and Claude trade Nifty with virtual money. For learning only.">
+<title>{esc(title)}</title>
+<meta name="description" content="{esc(description)}">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;600&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
@@ -1302,32 +1535,15 @@ def page(res, bt_parts, ctx, fres=None, fbt=None, view=None, ares=None, abt=None
 </head>
 <body>
 <div class="wrap">
+{nav}
 <header>
-<h1>Paper arena</h1>
-<p class="lede">Every strategy here trades {inr(pa.CAPITAL)} of virtual money by fixed rules, so you can see which ones actually make money. Nothing here is real money.</p>
-<p class="meta">{status}</p>
+{header}
 </header>
 <main>
-{drift_html(view)}
-{overview_html(res, fres, ares, tg, sigs)}
-{claude_latest_html(res)}
-{events_html()}
-{berlin_html(ares, abt, tg, st)}
-{''.join(signal_html(ch, sm) for ch, sm in sigs or ())}
-<section aria-labelledby='more-h'><h2 id='more-h'>Details</h2>
-{more("Nifty 50 agents", "Standings, the market, why each agent holds what it holds, trades",
-      board_html(res) + market_html(res, ctx) + why_html(res) + arena_chart_html(res) + trades_html(res))}
-{more("Claude’s decisions", "Every decision with its reasons", claude_html(res), solo=True)}
-{more("Skill or luck?", "Each strategy’s returns tested against chance", luck_html(view), solo=True)}
-{more("Gold and multi-asset arena", "Four ETF agents, their rules and backtests", asset_html(ares, abt), solo=True)}
-{more("F&amp;O arena", "Seven futures and options agents, 3x leverage", fno_html(fres, fbt), solo=True)}
-{more("Backtest since 2010", "How the Nifty rules did before paper trading", backtest_html(*bt_parts), solo=True)}
-{more("Your calls", "Add your own Nifty calls", calls_html(res), solo=True)}
-{more("Permanent record", "The logs and saved data behind this page", logs_html(), solo=True)}
-</section>
+{main}
 </main>
 <footer>
-<p>For learning only. Not investment advice. No real orders are placed.</p>
+<p>For learning only. Not investment advice. {placed}</p>
 <p>Data: free daily index data from <a href="{DATA_URL}">indian-market-historical-data</a>, ETF, gold, silver and S&amp;P 500 prices from Yahoo Finance’s public data, and one-minute forex, gold, index and Bitcoin prices from Dukascopy’s public data feed, all for personal, non-commercial use.</p>
 <p>Page built on {day(built)} at {built:%H:%M} IST.</p>
 </footer>
@@ -1335,6 +1551,79 @@ def page(res, bt_parts, ctx, fres=None, fbt=None, view=None, ares=None, abt=None
 </body>
 </html>
 """
+
+
+def page(res, bt_parts, ctx, fres=None, fbt=None, view=None, ares=None, abt=None, tg=None, st=None, sigs=(),
+         rm=None, nav="", built=None):
+    """The home page: every strategy on one board, Claude's call, market events and the details."""
+    built = built or dt.datetime.now(IST)
+    live = bool(rm and rm.get("started"))                 # real orders have been written down
+    real_note = (" The one exception is the Real money section: orders placed by hand at Zerodha." if live
+                 else " Nothing here is real money.")
+    real_section = real_html(rm) if real_money is not None else ""
+    if res["started"]:
+        status = (f"Prices up to the close on {day(res['latest'])}. Day {res['days']} of paper trading, "
+                  f"which started on {day(res['s0'])}.")
+    else:
+        status = (f"Prices up to the close on {day(res['latest'])}. Paper trading starts on "
+                  f"{day(pd.Timestamp(pa.START))}.")
+    header = f"""<h1>Paper arena</h1>
+<p class="lede">Every strategy here trades {inr(pa.CAPITAL)} of virtual money by fixed rules, so you can see which ones actually make money.{real_note}</p>
+<p class="meta">{status}</p>"""
+    main = f"""{drift_html(view)}
+{overview_html(res, fres, ares, tg, sigs)}
+{real_section if live else ""}
+{claude_latest_html(res)}
+{events_html()}
+<section aria-labelledby='more-h'><h2 id='more-h'>Details</h2>
+{more("Nifty 50 agents", "Standings, the market, why each agent holds what it holds, trades",
+      board_html(res) + market_html(res, ctx) + why_html(res) + arena_chart_html(res) + trades_html(res))}
+{more("Claude’s decisions", "Every decision with its reasons", claude_html(res), solo=True)}
+{more("Skill or luck?", "Each strategy’s returns tested against chance", luck_html(view), solo=True)}
+{more("Gold and multi-asset arena", "Four ETF agents, their rules and backtests", asset_html(ares, abt), solo=True)}
+{more("F&amp;O arena", f"{len(fno_arena.RULES)} futures and options agents, 3x leverage", fno_html(fres, fbt), solo=True)}
+{more("Backtest since 2010", "How the Nifty rules did before paper trading", backtest_html(*bt_parts), solo=True)}
+{more("Your calls", "Add your own Nifty calls", calls_html(res), solo=True)}
+{more("Real money", "Your own orders at Zerodha, once there are any", "" if live else real_section, solo=True)}
+{more("Permanent record", "The logs and saved data behind this page", logs_html(), solo=True)}
+</section>"""
+    return shell("Paper arena", "Rule-following agents and Claude trade Nifty with virtual money. For learning only.",
+                 nav, header, main, built, live)
+
+
+def berlin_page(ares, abt, tg, st, nav="", built=None, live=False):
+    """Trade Like Berlin on a page of its own: the videos' strategies, his Telegram calls, the NIFTYBEES copy."""
+    built = built or dt.datetime.now(IST)
+    header = ("<h1>Trade Like Berlin</h1><p class='meta'>A YouTube and Telegram channel, paper traded with "
+              "virtual money. His posts are saved every half hour and his calls are scored each weekday night.</p>")
+    return shell("Trade Like Berlin · Paper arena",
+                 "The Trade Like Berlin channel's strategies and Telegram calls, paper traded by fixed rules. "
+                 "For learning only.", nav, header, berlin_html(ares, abt, tg, st, heading=False), built, live)
+
+
+def signal_page(ch, sm, nav="", built=None, live=False):
+    """One signal channel on a page of its own."""
+    built = built or dt.datetime.now(IST)
+    header = (f"<h1>{esc(ch['name'])}</h1><p class='meta'>A Telegram signal channel, paper traded with virtual "
+              f"money. Its posts are saved every half hour and its signals are scored each night.</p>")
+    return shell(f"{ch['name']} · Paper arena",
+                 f"{ch['name']}: every signal read by code and paper traded on one-minute prices. For learning only.",
+                 nav, header, signal_html(ch, sm, heading=False), built, live)
+
+
+def have_ticket():
+    """Whether the order ticket can be built (ticket.py and zerodha.py are there), so the bar links to it only then."""
+    try:
+        import ticket  # noqa: F401
+        return True
+    except Exception as exc:
+        print(f"  ! Order ticket skipped: {exc}")
+        return False
+
+
+def write(name, text):
+    with open(os.path.join(SITE, name), "w", encoding="utf-8") as f:
+        f.write(text)
 
 
 def main():
@@ -1359,6 +1648,11 @@ def main():
     except Exception as exc:  # the page still builds without the Telegram record
         print(f"  ! Telegram record skipped: {exc}")
         tg = None
+    if tg is not None and berlin_etf is not None:
+        try:
+            tg["etf"] = berlin_etf.summary()
+        except Exception as exc:  # the page still builds without the NIFTYBEES copy
+            print(f"  ! NIFTYBEES copy skipped: {exc}")
     try:
         st = berlin_study.study(berlin_study.rates(refresh=False))
     except Exception as exc:  # no saved Fed rates yet
@@ -1373,15 +1667,32 @@ def main():
         except Exception as exc:  # the page still builds; the section says it couldn't be read
             print(f"  ! {ch['name']} skipped: {exc}")
             sigs.append((ch, None))
+    rm = None
+    if real_money is not None:
+        try:
+            rm = real_money.summary()
+        except Exception as exc:  # the page still builds; the section says it couldn't be read
+            print(f"  ! Real-money ledger skipped: {exc}")
     view = logbook.merged(res, fres, ares)
-    with open(os.path.join(SITE, "index.html"), "w", encoding="utf-8") as f:
-        f.write(page(res, bt_parts, ctx, fres, fbt, view, ares, abt, tg, st, sigs))
+    built, live = dt.datetime.now(IST), bool(rm and rm.get("started"))
+    pages = site_pages(sigs, have_ticket())
+    bar = lambda key: nav_html(pages, key)
+    write("index.html", page(res, bt_parts, ctx, fres, fbt, view, ares, abt, tg, st, sigs, rm, bar("home"), built))
+    write("berlin.html", berlin_page(ares, abt, tg, st, bar("berlin"), built, live))
+    for ch, sm in sigs:
+        write(f"{slug(ch)}.html", signal_page(ch, sm, bar(slug(ch)), built, live))
+    if pages[-1][0] == "ticket":
+        try:
+            import ticket
+            write("ticket.html", ticket.page(css=CSS, built=built, nav=bar("ticket")))
+        except Exception as exc:  # the other pages never depend on it
+            print(f"  ! Order ticket not written: {exc}")
     if view:
         log = pd.concat([b["values"] for b in view], axis=1).round(2)
         log = log.loc[:, ~log.columns.duplicated()]
         log.index.name = "Date"
         log.to_csv(os.path.join(SITE, "paper_arena_log.csv"))
-    print(f"Built {SITE}/index.html")
+    print(f"Built {SITE}/: " + ", ".join(file for _, file, _ in pages))
 
 
 if __name__ == "__main__":

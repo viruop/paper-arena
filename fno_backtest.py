@@ -31,6 +31,13 @@ PREMIUM_PCT = 0.03        # option buying: premium spent per trade, as a share o
 FUT_STOP = 0.005          # intraday futures stop-loss, 0.5% against the entry
 STRADDLE_STOP = 0.30      # intraday straddle stop-loss, premium up 30%
 OTM = 0.02                # strangle and condor: sold strikes about 2% away from Nifty
+MONEYNESS = 0.02          # ITM and OTM option buying: strikes about 2% in or out of the money
+LOT_CAPITAL = 500_000     # each whole-lot agent's own money. Its value is shown per Rs 1 lakh, to compare.
+MARGIN = 0.12             # margin for one lot of futures, or of a short call and put together, as a share
+                          # of the lot's Nifty value. Zerodha's table on 11 Nov 2026 said 11.4% for futures.
+                          # It rises when markets turn volatile, so real accounts are forced out sooner.
+MARGIN_USE = 0.5          # a whole-lot agent opens a position only if its margin is at most half the account
+MAX_PREMIUM = 0.06        # whole-lot option buying: one lot is still bought if it costs up to 6% of the account
 WING = 0.04               # condor: protective strikes about 4% away
 STRIKE_STEP = 50
 LOT = 65                  # Nifty lot size, used for per-order brokerage
@@ -226,9 +233,10 @@ class ModelPrices:
 class Book:
     """One strategy's money, trades and holdings."""
 
-    def __init__(self, name):
-        self.name, self.equity, self.curve, self.dead = name, CAPITAL, {}, False
+    def __init__(self, name, capital=CAPITAL):
+        self.name, self.equity, self.curve, self.dead = name, capital, {}, False
         self.trades, self.labels, self.pnls = [], {}, []
+        self.scale = capital / CAPITAL          # a whole-lot agent's value is recorded per Rs 1 lakh
 
     def interest(self):
         self.equity *= 1 + CASH_DAILY
@@ -240,7 +248,7 @@ class Book:
         value = self.equity + open_value
         if value <= 0:
             self.dead, self.equity, value, holding = True, 0.0, 0.0, "Wiped out"
-        self.curve[day] = value
+        self.curve[day] = value / self.scale
         self.labels[day] = holding
 
 
@@ -351,13 +359,17 @@ def intraday_straddle(df, cal, lev=LEVERAGE, start=START, prices=None):
     return book
 
 
-def weekly_options(df, cal, kind, lev=LEVERAGE, premium_pct=PREMIUM_PCT, start=START, prices=None):
+def weekly_options(df, cal, kind, lev=LEVERAGE, premium_pct=PREMIUM_PCT, start=START, prices=None, shift=0.0,
+                   name=None):
     """Opened at each expiry day's close and held to the next weekly expiry.
     kind: 'strangle' (sell ~2% OTM call and put), 'condor' (same plus ~4% OTM protection),
-    'buy' (buy the at-the-money call if Nifty is above its 20-day average, else the put)."""
+    'buy' (buy the at-the-money call if Nifty is above its 20-day average, else the put).
+    shift ('buy' only): how far the bought strike sits from Nifty, as a share of it: positive is out of the
+    money (a call above Nifty, a put below), negative is in the money, 0 is the original at-the-money rule.
+    name: the book's name, for the ITM and OTM agents."""
     prices = prices or ModelPrices()
     names = {"strangle": "Weekly short strangle", "condor": "Weekly iron condor", "buy": "Weekly option buying"}
-    book, legs, expiry, opened_at = Book(names[kind]), [], None, 0.0
+    book, legs, expiry, opened_at = Book(name or names[kind]), [], None, 0.0
     for r in df.loc[start:].itertuples():
         if book.dead:
             break
@@ -377,8 +389,10 @@ def weekly_options(df, cal, kind, lev=LEVERAGE, premium_pct=PREMIUM_PCT, start=S
             s = r.Close
             if kind == "buy":
                 call = s > r.SMA20
-                strike = strike_near(s)
+                strike = strike_near(s * (1 + shift)) if call else strike_near(s * (1 - shift))
                 prem = prices.option(day, strike, call, expiry, left, s, r.Vix)
+                if shift:
+                    prem = max(prem, 0.05)               # a cheap option can't be bought below the 5-paise tick
                 legs = [(strike, call, premium_pct * book.equity / prem)]
             else:
                 qty = lev * book.equity / s
@@ -401,6 +415,142 @@ def weekly_options(df, cal, kind, lev=LEVERAGE, premium_pct=PREMIUM_PCT, start=S
                              for strike, call, q in legs)
             holding = (" + ".join(f"{'Long' if q > 0 else 'Short'} {strike:,} {'CE' if call else 'PE'}"
                                   for strike, call, q in legs) + f", expiry {short_date(expiry)}")
+        book.mark(day, open_value, holding)
+    return book
+
+
+# ------------------------------- whole-lot versions -------------------------------
+# The agents above hold a fraction of a lot, which no exchange allows. These trade whole lots of 65 on
+# Rs 5 lakh each and check margin, so they show what the same rules need at the smallest real size.
+def lots_for(equity, spot, margin_per_lot, lev=LEVERAGE):
+    """Whole lots for a futures or option-selling position: the exposure target (lev x the account) rounded
+    down to whole lots, but at least one, cut until the margin is within MARGIN_USE of the account.
+    0 when even one lot doesn't fit."""
+    lots = max(1, math.floor(lev * equity / (spot * LOT)))
+    while lots > 0 and lots * margin_per_lot > MARGIN_USE * equity:
+        lots -= 1
+    return lots
+
+
+def lot_words(n):
+    return f"{n} lot{'' if n == 1 else 's'}"
+
+
+def futures_trend_lots(df, cal, start=START, capital=LOT_CAPITAL):
+    """futures_trend in whole lots: the same signal (long above the 200-day average, short below), traded at
+    the next open in as many lots as lots_for allows. Forced out at a close where the account is worth less
+    than the margin its position needs; it comes back when a lot fits again."""
+    book, lots, pos = Book("Futures trend (whole lots)", capital), 0, 0
+    rows = list(df.itertuples())
+    for i in range(1, len(rows)):
+        prev, r = rows[i - 1], rows[i]
+        if r.Index < pd.Timestamp(start) or book.dead:
+            continue
+        book.interest()
+        target = 1 if prev.Close > prev.SMA200 else -1
+        units = pos * lots * LOT
+        if target != pos or lots == 0:
+            book.equity += units * (r.Open - prev.Close)
+            if units:
+                book.equity -= futures_cost(r.Index, r.Open, units, buy=units < 0)
+            was = lots
+            lots = lots_for(book.equity, r.Open, MARGIN * r.Open * LOT)
+            units = target * lots * LOT
+            if lots:
+                book.equity -= futures_cost(r.Index, r.Open, units, buy=units > 0)
+                book.equity += units * (r.Close - r.Open)
+                book.note(r.Index, f"{'Bought' if target > 0 else 'Sold'} {lot_words(lots)} of futures at the open, "
+                                   f"{r.Open:,.0f}" + (" (reversed)" if was and pos else ""))
+            elif was:
+                book.note(r.Index, f"Closed at the open, {r.Open:,.0f}: one lot's margin is more than half the account")
+            pos = target
+        else:
+            book.equity += units * (r.Close - prev.Close)
+        book.equity -= units * prev.Close * (CASH_RATE - DIV_YIELD) / DAYS_PER_YEAR
+        if units and r.Index in cal.monthly:
+            book.equity -= futures_cost(r.Index, r.Close, units, buy=units < 0)
+            book.equity -= futures_cost(r.Index, r.Close, units, buy=units > 0)
+        if lots and book.equity < lots * MARGIN * r.Close * LOT:        # the broker would close it
+            book.equity -= futures_cost(r.Index, r.Close, units, buy=units < 0, stop=True)
+            book.note(r.Index, f"Forced out at the close, {r.Close:,.0f}: the account fell below the margin")
+            lots = 0
+        book.mark(r.Index, holding=(f"{'Long' if pos > 0 else 'Short'} {lot_words(lots)} of futures" if lots
+                                    else "Cash: no lot fits"))
+    return book
+
+
+def weekly_lots(df, cal, kind, start=START, prices=None, capital=LOT_CAPITAL):
+    """weekly_options in whole lots. 'strangle' and 'condor' size with lots_for: the strangle's margin is
+    MARGIN of the lot's Nifty value, the condor's is the most one side can lose (the gap between its sold and
+    bought strikes). 'buy' spends about PREMIUM_PCT of the account on whole lots, at least one lot unless one
+    costs more than MAX_PREMIUM of it. A week where nothing fits is skipped. The strangle is forced out at a
+    close where the account is worth less than its margin."""
+    prices = prices or ModelPrices()
+    names = {"strangle": "Weekly short strangle (whole lots)", "condor": "Weekly iron condor (whole lots)",
+             "buy": "Weekly option buying (whole lots)"}
+    book, legs, expiry, opened_at, lots = Book(names[kind], capital), [], None, 0.0, 0
+    for r in df.loc[start:].itertuples():
+        if book.dead:
+            break
+        book.interest()
+        day = r.Index
+        if legs and day >= expiry:                       # settle at expiry
+            for strike, call, qty in legs:
+                intrinsic = max(r.Close - strike, 0) if call else max(strike - r.Close, 0)
+                book.equity += qty * intrinsic
+                if qty > 0 and intrinsic > 0:
+                    book.equity -= exercise_cost(day, intrinsic, qty)
+            book.note(day, f"Expired with Nifty at {r.Close:,.0f}: {money(book.equity - opened_at)} on the week")
+            legs = []
+        if not legs and prices.is_expiry(day, cal):      # open the next position at the close
+            expiry = prices.expiry_after(day, cal, include_today=False)
+            left = cal.sessions(day, expiry)
+            s = r.Close
+            if kind == "buy":
+                call = s > r.SMA20
+                strike = strike_near(s)
+                one = prices.option(day, strike, call, expiry, left, s, r.Vix) * LOT
+                lots = max(1, math.floor(PREMIUM_PCT * book.equity / one)) if one <= MAX_PREMIUM * book.equity else 0
+                legs = [(strike, call, lots * LOT)] if lots else []
+                skipped = f"one lot costs {money(one)[1:]}, more than {MAX_PREMIUM:.0%} of the account"
+            else:
+                sold = [(strike_up(s * (1 + OTM)), True), (strike_down(s * (1 - OTM)), False)]
+                wings = [(strike_up(s * (1 + WING)), True), (strike_down(s * (1 - WING)), False)]
+                gap = max(wings[0][0] - sold[0][0], sold[1][0] - wings[1][0])
+                lots = lots_for(book.equity, s, gap * LOT if kind == "condor" else MARGIN * s * LOT)
+                legs = [(k, c, -lots * LOT) for k, c in sold] if lots else []
+                if kind == "condor" and lots:
+                    legs += [(k, c, lots * LOT) for k, c in wings]
+                skipped = "one lot's margin is more than half the account"
+            if legs:
+                opened_at = book.equity
+                parts = []
+                for strike, call, q in legs:
+                    prem = prices.option(day, strike, call, expiry, left, s, r.Vix)
+                    book.equity -= q * prem
+                    book.equity -= option_cost(day, prem, abs(q), buy=q > 0)
+                    parts.append(f"{'bought' if q > 0 else 'sold'} {strike:,} {'CE' if call else 'PE'} at {prem:,.1f}")
+                text = ", ".join(parts) + f" ({lot_words(lots)}, expiry {short_date(expiry)})"
+                book.note(day, text[0].upper() + text[1:])
+            else:
+                book.note(day, f"No trade this week: {skipped}")
+        open_value, holding = 0.0, "Cash"
+        if legs:
+            left = cal.sessions(day, expiry)
+            marks = [(strike, call, q, prices.option(day, strike, call, expiry, left, r.Close, r.Vix))
+                     for strike, call, q in legs]
+            open_value = sum(q * p for _, _, q, p in marks)
+            if kind == "strangle" and left > 0 and book.equity + open_value < lots * MARGIN * r.Close * LOT:
+                for strike, call, q, p in marks:         # the broker would close it: buy both back at the close
+                    book.equity += q * p
+                    book.equity -= option_cost(day, p, abs(q), buy=True, stop=True)
+                book.note(day, f"Forced out at the close with Nifty at {r.Close:,.0f}: the account fell below the "
+                               f"margin ({money(book.equity - opened_at)} on the week)")
+                legs, open_value = [], 0.0
+            else:
+                holding = (f"{lot_words(lots)}: " + " + ".join(
+                    f"{'Long' if q > 0 else 'Short'} {strike:,} {'CE' if call else 'PE'}" for strike, call, q in legs)
+                    + f", expiry {short_date(expiry)}")
         book.mark(day, open_value, holding)
     return book
 
@@ -493,7 +643,13 @@ def run_all(df, cal, lev=LEVERAGE, premium_pct=PREMIUM_PCT, start=START, prices=
              weekly_options(df, cal, "strangle", lev, start=start, prices=prices),
              weekly_options(df, cal, "condor", lev, start=start, prices=prices),
              weekly_options(df, cal, "buy", lev, premium_pct, start=start, prices=prices),
-             low_vix_straddle(df, cal, start, prices)]
+             low_vix_straddle(df, cal, start, prices),
+             weekly_options(df, cal, "buy", lev, premium_pct, start=start, prices=prices, shift=-MONEYNESS,
+                            name="Weekly ITM option buying"),
+             weekly_options(df, cal, "buy", lev, premium_pct, start=start, prices=prices, shift=MONEYNESS,
+                            name="Weekly OTM option buying"),
+             futures_trend_lots(df, cal, start), weekly_lots(df, cal, "strangle", start, prices),
+             weekly_lots(df, cal, "condor", start, prices), weekly_lots(df, cal, "buy", start, prices)]
     curves = {b.name: pd.Series(b.curve) for b in books}
     return curves, {b.name: b for b in books}
 

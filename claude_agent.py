@@ -18,9 +18,11 @@ FOR LEARNING ONLY. Paper trading. No real orders are placed. Not investment advi
 """
 
 # ================================ SETTINGS ================================
-MODEL = "claude-sonnet-5-5"   # the Claude model that decides
+MODEL = "claude-opus-5-5"     # the Claude model that decides: Claude Opus 5.5, the model behind the
+                              # decisions made in chat before the API key was added (Oct-Nov 2026)
 MAX_SEARCHES = 3              # web searches for market news each evening; 0 = decide from the data only
 MAX_TOKENS = 3000
+TIMEOUT = 300                 # seconds to wait for one reply (searching takes a while)
 # ==========================================================================
 
 import datetime as dt
@@ -126,21 +128,29 @@ def snapshot(closes, res, log, ctx=None, as_of=None):
 
 
 def ask_claude(system, user_text, key):
+    """Ask Claude once. Returns the whole reply's content blocks, the number of web searches it made
+    and why it stopped. A long search turn can pause (stop_reason "pause_turn"): the reply so far is
+    sent back unchanged so Claude can finish, and the pieces are joined."""
     tools = ([{"type": "web_search_20250305", "name": "web_search", "max_uses": MAX_SEARCHES}]
              if MAX_SEARCHES > 0 else [])
-    messages = [{"role": "user", "content": user_text}]
-    for _ in range(3):  # a long search turn can pause; send it back to let Claude finish
+    question = {"role": "user", "content": user_text}
+    content, searches, stop = [], 0, None
+    for _ in range(4):
+        messages = [question] + ([{"role": "assistant", "content": content}] if content else [])
         body = {"model": MODEL, "max_tokens": MAX_TOKENS, "system": system, "messages": messages}
         if tools:
             body["tools"] = tools
         request = urllib.request.Request(API_URL, data=json.dumps(body).encode("utf-8"), headers={
             "x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json"})
-        with urllib.request.urlopen(request, timeout=180) as resp:
+        with urllib.request.urlopen(request, timeout=TIMEOUT) as resp:
             data = json.loads(resp.read())
-        if data.get("stop_reason") != "pause_turn":
-            return data
-        messages = [messages[0], {"role": "assistant", "content": data["content"]}]
-    return data
+        new = data.get("content") or []
+        content = new if content and new[:len(content)] == content else content + new  # never twice
+        searches += (data.get("usage") or {}).get("server_tool_use", {}).get("web_search_requests", 0) or 0
+        stop = data.get("stop_reason")
+        if stop != "pause_turn":
+            break
+    return {"content": content, "searches": searches, "stop_reason": stop}
 
 
 def parse_decision(text):
@@ -200,6 +210,7 @@ def run_api(now=None):
     if not key:
         print("No ANTHROPIC_API_KEY set, so the Claude agent keeps its last position.")
         return
+    clock_given = now is not None
     now = now or dt.datetime.now(IST)
     log = load_log()
     closes = pa.load_all()
@@ -220,12 +231,17 @@ def run_api(now=None):
         print(f"Could not reach the Claude API ({err}). Keeping the last position.")
         return
 
-    text = "".join(b.get("text", "") for b in data.get("content", []) if b.get("type") == "text")
-    searches = data.get("usage", {}).get("server_tool_use", {}).get("web_search_requests", 0)
+    text = "".join(b.get("text", "") for b in data["content"] if b.get("type") == "text")
+    if not clock_given:   # the reply can take minutes: it must still arrive before the next session opens
+        due, why = status(res["latest"], log, dt.datetime.now(IST))
+        if not due:
+            print(f"Claude's reply came too late, so nothing is saved: {why}")
+            return
     try:
-        record = make_record(res["latest"], parse_decision(text) or {}, MODEL, now, searches)
+        record = make_record(res["latest"], parse_decision(text) or {}, f"{MODEL} (API)", now, data["searches"])
     except ValueError as err:
-        print(f"No valid decision in Claude's reply ({err}), so it keeps its last position. Reply was:\n{text[:1500]}")
+        print(f"No valid decision in Claude's reply ({err}; it stopped with {data['stop_reason']}), "
+              f"so it keeps its last position. Reply was:\n{text[:1500]}")
         return
     log.append(record)
     save_log(log)
