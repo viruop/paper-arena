@@ -37,3 +37,5 @@ date,agent,trade,nifty_close
 2026-11-09,Weekly option buying,"Bought 25,050 CE at 232.7 (expiry 17 Nov)",25044.65
 2026-11-09,Weekly short strangle,"Expired with Nifty at 25,045: -Rs 8,168 on the week",25044.65
 2026-11-09,Weekly short strangle,"Sold 25,550 CE at 75.9, sold 24,500 PE at 70.5 (expiry 17 Nov)",25044.65
+2026-11-11,Intraday futures,"Bought at the open 25,338, stopped out at 25,211: -Rs 1,974",25255.05
+2026-11-11,Intraday short straddle,"Sold the 25,350 straddle at 455.1, bought back at 483.3: -Rs 386",25255.05

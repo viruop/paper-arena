@@ -207,3 +207,23 @@ date,agent,holding,value,since_start,trade,nifty_close
 2026-11-09,Weekly iron condor,"Short 25,550 CE + Short 24,500 PE + Long 26,050 CE + Long 24,000 PE, expiry 17 Nov",94653.79,-0.053462,"Expired with Nifty at 25,045: -Rs 5,436 on the week; Sold 25,550 CE at 75.9, sold 24,500 PE at 70.5, bought 26,050 CE at 20.6, bought 24,000 PE at 19.4 (expiry 17 Nov)",25044.65
 2026-11-09,Weekly option buying,"Long 25,050 CE, expiry 17 Nov",122089.60,0.220896,"Expired with Nifty at 25,045: +Rs 21,992 on the week; Bought 25,050 CE at 232.7 (expiry 17 Nov)",25044.65
 2026-11-09,Weekly short strangle,"Short 25,550 CE + Short 24,500 PE, expiry 17 Nov",91931.89,-0.080681,"Expired with Nifty at 25,045: -Rs 8,168 on the week; Sold 25,550 CE at 75.9, sold 24,500 PE at 70.5 (expiry 17 Nov)",25044.65
+2026-11-11,200-day trend,NIFTY 50,101031.85,0.010318,,25255.05
+2026-11-11,3-day rule + US filter (control),NIFTYBEES,110327.05,0.103270,,25255.05
+2026-11-11,Buy & hold,NIFTY 50,111637.02,0.116370,,25255.05
+2026-11-11,Cash only,Cash,100303.46,0.003035,,25255.05
+2026-11-11,Claude,NIFTY 50,108504.13,0.085041,,25255.05
+2026-11-11,Futures trend (long/short),Long futures (3x),82245.30,-0.177547,,25255.05
+2026-11-11,Gold breakdown short (control),Short gold (Gold Petal),101600.51,0.016005,,25255.05
+2026-11-11,Gold breakout,Cash,100209.99,0.002100,,25255.05
+2026-11-11,Gold/silver reversion,SILVERBEES,96263.66,-0.037363,,25255.05
+2026-11-11,Gold/silver trend,GOLDBEES,98396.63,-0.016034,,25255.05
+2026-11-11,Golden cross,Cash,100303.46,0.003035,,25255.05
+2026-11-11,Intraday futures,Nothing overnight,105135.72,0.051357,"Bought at the open 25,338, stopped out at 25,211: -Rs 1,974",25255.05
+2026-11-11,Intraday short straddle,Nothing overnight,96693.64,-0.033064,"Sold the 25,350 straddle at 455.1, bought back at 483.3: -Rs 386",25255.05
+2026-11-11,Low-VIX long straddle,Cash,100254.67,0.002547,,25255.05
+2026-11-11,Momentum rotation,NIFTY PHARMA,113497.02,0.134970,,25255.05
+2026-11-11,Nifty-gold switch,NIFTYBEES,110327.05,0.103270,,25255.05
+2026-11-11,RSI(2) dip-buy,Cash,100303.46,0.003035,,25255.05
+2026-11-11,Weekly iron condor,"Short 25,550 CE + Short 24,500 PE + Long 26,050 CE + Long 24,000 PE, expiry 17 Nov",94825.10,-0.051749,,25255.05
+2026-11-11,Weekly option buying,"Long 25,050 CE, expiry 17 Nov",123147.32,0.231473,,25255.05
+2026-11-11,Weekly short strangle,"Short 25,550 CE + Short 24,500 PE, expiry 17 Nov",92084.04,-0.079160,,25255.05

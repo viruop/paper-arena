@@ -1,0 +1,39 @@
+Data as of the close of 2026-11-11, recorded by the nightly run after this decision was saved. News searches aren't included.
+
+Latest close: Wednesday 11 November 2026. Your decision is filled at the next trading day's close.
+Nifty 50 close: 25,255.05 (+0.84% on the day).
+Averages: 200-day 23,991, 50-day 23,304, 20-day 23,501, 5-day 24,971. RSI(2) 97, RSI(14) 79.
+2026 so far: high 26,329 on 02 Jan, low 22,232 on 08 Oct.
+Breadth on 09 Nov: 58% of Nifty 50 stocks are above their 200-day average and 90% above their 50-day average (50 stocks with data).
+  A month ago: 12% above the 200-day, 14% above the 50-day.
+Institutional flows on 09 Nov (Rs crore, cash market): FII +7,212, DII -7,173. Last 5 sessions: FII +43,220, DII -27,998.
+Scheduled events in the next 7 days (IST, from data/events/calendar.csv):
+  Thu 12 Nov 16:00: India inflation (CPI) for October (IN, data, high importance)
+  Mon 16 Nov 12:00: India wholesale inflation (WPI) for October (IN, data, medium importance)
+What happened in the last 7 days (when it became public, IST; each market's move from its last close before it to its first close after it):
+  Mon 09 Nov 05:30: Oil fell on an unconfirmed report that Iran eased its Strait of Hormuz demands, with a proposed Hormuz deal going to President Trump, who signalled restraint on Iran despite fresh shipping attacks. Time approximate: the reports are dated 9 Nov and the first report's exact time was not found, so the start of the day (UTC) is used. Reports put Brent near $94, extending its biggest weekly drop since 2020. The report on Iran's demands was unconfirmed. Moves: Nifty 50 +0.1%, Gold +1.0%, Brent -5.8%, USD/INR -0.6%, S&P 500 +2.3%.
+  Fri 06 Nov 19:00: US payrolls rose 165,000 in October and unemployment fell to 4.1%. Expected: +59,000 and 4.2%. Average hourly earnings +0.4% m/m, 3.1% y/y (expected 0.3% and 2.9%). August revised up to 186,000 (+53,000), September to 60,000 (+31,000). Moves: Nifty 50 +0.1%, Gold -0.9%, Brent +0.0%, USD/INR -0.1%, S&P 500 +0.3%.
+  Thu 05 Nov 20:00: US stocks sold off sharply on 5 Nov, led by AI and chip stocks: Nasdaq closed -5.52%. Close figures (replacing the intraday ones in the earlier row): Nasdaq -5.52%, the Dow down about 1,833 points; S&P 500 and Dow had their worst day since April 2025; about $2.5 trillion of market value lost. Reports tie it to fears that Democrats' midterm gains (including a Texas governor-elect who campaigned on a data-centre moratorium) could slow the AI buildout. Time is the US open; the selling built through the day. Moves: Nifty 50 +2.0% (3 closes +2.9%), Gold +1.0%, Brent +3.9%, USD/INR -0.2%, S&P 500 -4.4%.
+Index returns over 1 month / 3 months / 6 months:
+  NIFTY 50: +11.1% / +3.4% / +7.9%
+  NIFTY BANK: +9.6% / +5.0% / +13.7%
+  NIFTY IT: +8.3% / +3.1% / +15.7%
+  NIFTY PHARMA: +10.4% / +7.5% / +20.4%
+  NIFTY MIDCAP 50: +4.6% / -3.3% / +3.5%
+The arena (each agent started with Rs 1 lakh):
+  Momentum rotation: holds NIFTY PHARMA, value Rs 1.13 lakh (+13.50% since start); at next close: hold. 6-month returns: NIFTY PHARMA +20.7%, NIFTY IT +14.4%, NIFTY BANK +13.5%, NIFTY 50 +8.0%, NIFTY MIDCAP 50 +4.1%. The best one must beat cash (3.0%) to be bought; next decision on the last trading day of November.
+  Buy & hold: holds NIFTY 50, value Rs 1.12 lakh (+11.64% since start); at next close: hold. Bought at the first close and never sells.
+  Claude: holds NIFTY 50, value Rs 1.09 lakh (+8.50% since start); at next close: hold. Latest decision (2026-11-11): 100% in Nifty 50. Staying fully in: Nifty rose 0.8% to 25,255 on bank and auto buying as oil eased to about $92 and the rupee hit its strongest since April, though it closed about 170 points below the day's high after hot US inflation data. Goes to cash if Nifty closes below its 20-day average (about 23,500, rising). Goes fully in if Already fully in; stays in while Nifty holds above its 20-day average.
+  200-day trend: holds NIFTY 50, value Rs 1.01 lakh (+1.03% since start); at next close: hold. Nifty 25,255 is ABOVE its 200-day average 23,991, so it wants Nifty.
+  Cash only: holds Cash, value Rs 1.00 lakh (+0.30% since start); at next close: hold. Never buys. Earns the liquid-fund rate. This is the bar every agent must beat.
+  RSI(2) dip-buy: holds Cash, value Rs 1.00 lakh (+0.30% since start); at next close: hold. RSI(2) is 97. It buys when RSI(2) is below 10 while Nifty is above its 200-day average (yes today) and sells when Nifty closes above its 5-day average 24,971.
+  Golden cross: holds Cash, value Rs 1.00 lakh (+0.30% since start); at next close: hold. 50-day average 23,304 is BELOW the 200-day average 23,991, so it wants cash.
+Your decisions so far (newest first):
+  2026-11-09: 100% in Nifty. Staying fully in: Nifty edged up 0.2% to 25,045 and held above 25,000 after a flat Muhurat session, as banks and pharma offset IT selling and Brent eased towards $95. Cash if: Nifty closes below its 20-day average (about 23,370, rising). Fully in if: Already fully in; stays in while Nifty holds above its 20-day average.
+  2026-11-06: 100% in Nifty. Staying fully in: Nifty rose 2.0% to 25,030 for a seventh straight gain and a nine-month high, shrugging off a 5.5% Nasdaq fall on the biggest foreign buying in nearly six years and easing oil. Cash if: Nifty closes below its 20-day average (about 23,120, rising). Fully in if: Already fully in; stays in while Nifty holds above its 20-day average.
+  2026-11-05: 100% in Nifty. Staying fully in: Nifty jumped 2.4% to 24,537 for a sixth straight gain, back above its 200-day average, as oil fell after the US midterm results and foreign investors made their biggest purchase in over a year. Cash if: Nifty closes below its 20-day average (about 22,980, rising). Fully in if: Already fully in; stays in while Nifty holds above its 20-day average.
+  2026-11-04: 100% in Nifty. Staying fully in: Nifty rose for a fifth day to 23,961 on broad buying, with falling oil and a firmer rupee, and is now just below its 200-day average. Cash if: Nifty closes below its 20-day average (about 22,880, rising). Fully in if: Already fully in; stays in while Nifty holds above its 20-day average.
+  2026-11-03: 100% in Nifty. Staying fully in: Nifty rose 1.6% to 23,811 for a fourth straight gain as oil fell and foreign investors kept buying, far above the plan's exit level. Cash if: Nifty closes below its 20-day average (about 22,820, rising). Fully in if: Already fully in; stays in while Nifty holds above its 20-day average.
+  2026-11-02: 100% in Nifty. Going fully in: Nifty closed at 23,441, above its 50-day average for the first time since the October fall, which was the condition set in advance. Cash if: Nifty closes below its 20-day average (about 22,760). Fully in if: Already fully in; stays in while Nifty holds above its 20-day average.
+  2026-10-30: 50% in Nifty. Holding half: Nifty rose for a second day to 23,053, but the gains came from IT and pharma while mid and small caps fell, and it is still below its falling 50-day average with Brent near $116. Cash if: Nifty closes below 22,000. Fully in if: Nifty closes above its 50-day average (about 23,255, falling).
+  2026-10-29: 50% in Nifty. Holding half: Nifty rose 1% after the Fed held rates and foreign investors kept buying, but it is still below its falling 50- and 200-day averages, so the trend hasn't turned yet. Cash if: Nifty closes below 22,000. Fully in if: Nifty closes above its 50-day average (about 23,280, falling).
