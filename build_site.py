@@ -1629,4 +1629,396 @@ def signal_html(ch, sm, heading=True):
     calls, res, b, now = sm["calls"], sm["results"], sm["book"], pd.Timestamp.now(tz="UTC")
     ups = sm["updates"]                                     # claims already checked against the record
     def li(c):
-        mine = ups[ups["call_id"].astype(str) == st
+        mine = ups[ups["call_id"].astype(str) == str(c["id"])] if len(ups) else None
+        return (f"<li><span class='meta'>{ist(c['posted_at'])} IST · {esc(market_name(c['instrument']))} · "
+                f"<a href='{esc(ch['url'])}/{esc(c['id'])}'>his post</a></span><span class='tl-what'>"
+                f"{signal_text(c)} {signal_result(c, res, now, sm.get('waiting'))}</span>{update_lines(mine)}"
+                f"{deleted_line(c['id'], sm.get('deleted'))}{correction_lines(sm.get('corrections', {}).get(str(c['id']), []))}</li>")
+    ordered = [c for _, c in calls.sort_values("posted_at", ascending=False).iterrows()] if len(calls) else []
+    counts = calls["instrument"].map(market_name).value_counts() if len(calls) else pd.Series(dtype=int)
+    markets = sorted(counts.index, key=lambda m: (-counts[m], m))      # most signalled first
+    sc = scorecard.signal_checks(sm)
+    done = b["wins"] + b["losses"]
+    intro = (f"<p><a href='{esc(ch['url'])}'>{esc(ch['name'])}</a> is a Telegram channel that posts trade signals "
+             f"with exact levels. Every post since {day(pd.Timestamp(ch['since']))} is saved within about half an hour "
+             f"({sm['posts']} so far" + (f", {sm['promo']} of them ads for his paid group, broker offers or live "
+                                         f"streams" if sm["promo"] else "")
+             + (f", {len(sm['deleted'])} deleted by him later" if sm.get("deleted") is not None and len(sm["deleted"]) else "")
+             + "). "
+             f"Code reads the signals by fixed rules, with no judgement calls: "
+             + (f"{len(calls)} signal{'s' if len(calls) != 1 else ''} so far, on "
+                + (", ".join(markets[:-1]) + " and " + markets[-1] if len(markets) > 1 else markets[0]) if len(calls)
+                else "no signals yet") + ". Each risks ₹1,000.</p>"
+             + (f"<p class='meta'>{esc(ch['scope'])}</p>" if ch.get("scope") else "")
+             + india_note_html(list(calls["instrument"]) if len(calls) else []))
+    book = (f"<p>Signals: <strong>{inr(b['value'])}</strong>, {b['wins']} won and {b['losses']} lost"
+            + (f", {b['pending']} still open" if b["pending"] else "") + ".</p>") if done or b["pending"] else ""
+    items = "".join(li(c) for c in ordered[:6])
+    older = "".join(li(c) for c in ordered[6:])
+    waiting = []
+    if len(sm["review"]):
+        n = len(sm["review"])
+        waiting.append(f"{n} post{'s' if n != 1 else ''} wait{'' if n != 1 else 's'} for Claude to read: trade posts "
+                       f"without a clear stop and target, or instructions that can’t be tied to one signal.")
+    if sm["unlinked"]:
+        n = sm["unlinked"]
+        waiting.append(f"{n} of his “TP done” or “SL hit” posts {'are' if n != 1 else 'is'} about signals never "
+                       f"posted here, so {'they' if n != 1 else 'it'} can’t be checked.")
+    feed = price_feed_line()
+    return (head + intro + book + scorecard_html(sc, "its signals")
+            + (f"<ul class='panel tlist calls'>{items}</ul>" if items else "")
+            + (f"<details class='mini'><summary>Older signals ({len(ordered) - 6})</summary>"
+               f"<ul class='panel tlist calls'>{older}</ul></details>" if older else "")
+            + (f"<p class='meta'>{' '.join(waiting)}</p>" if waiting else "") + feed +
+            f"<p class='meta'>How it’s scored: one-minute bid and ask prices from Dukascopy. A “now” signal fills at "
+            f"the next minute’s price (the ask for a buy, the bid for a sell); limit and stop orders fill when the "
+            f"price reaches his level. Each signal risks ₹1,000, split equally over his targets, and is followed "
+            f"for 24 hours or until he posts an exit. If one minute touches both his stop and a target, the stop "
+            f"counts. “Move to breakeven” puts the stop at the entry from the minute after he posts it. His “TP "
+            f"done” and “SL hit” posts are checked against the record, not taken as results. Each signal is also "
+            f"tested 15 minutes late and reversed. Trading forex or gold CFDs through offshore brokers isn’t "
+            f"permitted for Indian residents, so these signals are only ever paper traded here.</p></section>")
+
+
+# ----------------------------------- real money -----------------------------------
+ORDER_WORDS = {"deposit": "Put in", "withdraw": "Took out", "fee": "Fee", "buy": "Bought", "sell": "Sold"}
+
+
+def rs(x, signed=False):
+    """Rupees to the paisa for the small real account: ₹4,987.30, or +₹12.30 / −₹12.30 when signed."""
+    sign = ("+" if x >= 0 else "\u2212") if signed else ("\u2212" if x < 0 else "")
+    return f"{sign}\u20b9{abs(x):,.2f}"
+
+
+def order_text(r):
+    """One ledger row in words."""
+    a = r["action"]
+    if a in ("buy", "sell"):
+        unit = "lot" if r["product"] == "MCX" else "unit"
+        qty = int(float(r["quantity"]))
+        fees, estimate = real_money.order_charges(r)
+        return (f"{ORDER_WORDS[a]} {qty} {unit}{'s' if qty != 1 else ''} of {esc(r['symbol'])} at "
+                f"\u20b9{float(r['price']):,.2f}" + (" for the day" if r["product"] == "MIS" else "")
+                + f" <span class='meta'>charges {rs(fees)}{' (estimated)' if estimate else ''}</span>")
+    return f"{ORDER_WORDS[a]} {rs(float(r['amount']))}"
+
+
+def real_html(rm):
+    """The real-money ledger (real_money.py): your own orders at Zerodha next to the paper agent."""
+    head = "<section aria-labelledby='real-h'><h2 id='real-h'>Real money</h2>"
+    if rm is None:
+        return head + "<p class='meta'>The real-money ledger couldn’t be read tonight.</p></section>"
+    if not rm["started"]:
+        return (head + "<p>No real orders yet: everything else on this page is virtual money. When you place an "
+                "order at Zerodha yourself, tell Claude what you bought or sold, how many and at what price. It is "
+                "written to <code>data/real/orders.csv</code> and shown here next to the paper agent given the same "
+                "money on the same day. The <a href='ticket.html'>order ticket</a> works out the quantity, the "
+                "charges and the rule checks before you place an order.</p><p class='meta'>The arena never places "
+                "an order. The ledger is public, like everything else in the repository.</p></section>")
+    gap = rm["value"] - rm["paper"]
+    followed = ", ".join(esc(a) for a in rm["followed"]) or "no paper agent"
+    items = [("Put in", rs(rm["put_in"]), ""), ("Worth now", rs(rm["value"]), ""),
+             ("Gain or loss", f"{rs(rm['pnl'], True)} ({pct(rm['pnl_pct'], True, 2)})", tone(rm["pnl"])),
+             ("Charges paid", rs(rm["charges"]), ""), ("Same money in the paper agent", rs(rm["paper"]), ""),
+             ("Real against paper", rs(gap, True), tone(gap))]
+    cells = "".join(f"<div><dt>{esc(k)}</dt><dd class='{c}'>{v}</dd></div>" for k, v, c in items)
+    body = (f"<p class='meta'>Orders you placed by hand at Zerodha, written down afterwards; the arena never places "
+            f"an order. Prices up to the close on {day(rm['priced_to'] if rm['priced_to'] is not None else rm['asof'])}. "
+            f"Following: {followed}.</p>"
+            f"<dl class='stats'>{cells}</dl>")
+    if rm["holdings"]:
+        rows = "".join(
+            f"<tr><td class='agent'>{esc(h['symbol'])}</td><td class='r'>{h['units']}{' lots' if h['future'] else ''}</td>"
+            f"<td class='r'>{h['avg']:,.2f}</td><td class='r'>{h['price']:,.2f}{'' if h['priced'] else '*'}</td>"
+            f"<td class='r'>{rs(h['value']) if not h['future'] else '–'}</td>"
+            f"<td class='r {tone(h['gain'])}'>{rs(h['gain'], True)}</td></tr>" for h in rm["holdings"])
+        body += (f"<h3>Holding now</h3><div class='panel scroll'><table><thead><tr><th>What</th><th class='r'>Units</th>"
+                 f"<th class='r'>Average cost</th><th class='r'>Last close</th><th class='r'>Value</th>"
+                 f"<th class='r'>Gain or loss</th></tr></thead><tbody>{rows}</tbody></table></div>"
+                 f"<p class='meta'>Cash in the account: {rs(rm['cash'])}."
+                 + (" * No saved prices: valued at your last trade price." if any(not h["priced"] for h in rm["holdings"]) else "")
+                 + "</p>")
+    else:
+        body += f"<p class='meta'>Holding nothing now. Cash in the account: {rs(rm['cash'])}.</p>"
+    ser = rm["series"]
+    if len(ser) >= 5:
+        draw({"Real account": ser["value"], "Paper agent, same money": ser["paper"], "Money put in": ser["put_in"]},
+             "real")
+        body += ("<figure>" + picture("real", "Line chart of the real account's value, the paper agent given the "
+                                              "same money, and the money put in") + "</figure>")
+    orders = [r for _, r in rm["rows"].iloc[::-1].iterrows()]
+    li = lambda r: (f"<li><span class='meta'>{day(pd.Timestamp(r['date']))}"
+                    + (f" · {esc(r['agent'])}" if r["agent"] else "") + f"</span><span class='tl-what'>{order_text(r)}"
+                    + (f" <span class='meta'>{esc(r['note'])}</span>" if r["note"] else "") + "</span></li>")
+    body += f"<h3>Ledger</h3><ul class='panel tlist'>{''.join(li(r) for r in orders[:8])}</ul>"
+    if len(orders) > 8:
+        body += (f"<details class='mini'><summary>Older rows ({len(orders) - 8})</summary><ul class='panel tlist'>"
+                 f"{''.join(li(r) for r in orders[8:])}</ul></details>")
+    notes = "".join(f"<p class='meta'>{esc(w)}</p>" for w in rm["warnings"])
+    how = ("<p class='meta'>The comparison puts each deposit into the paper agent named on it at that day’s close, "
+           "and takes withdrawals out the same way. The gap is what real trading costs over the paper model: whole "
+           "units, real charges, idle cash, a worse price, an order placed late or not at all. A small account also "
+           "pays the fixed ₹15.34 on every sale from the demat account, which the paper model spreads thinner. "
+           "Nothing here is advice.</p>")
+    return head + body + notes + how + "</section>"
+
+
+def backtest_html(rows, curves, first, last):
+    draw(curves, "backtest", log=True, split=bt.SPLIT, money_axis="lakh")
+    split_head = ""
+    if bt.SPLIT:
+        y = pd.Timestamp(bt.SPLIT).year
+        split_head = f"<th class='r'>{first.year}\u2013{str(y - 1)[-2:]}</th><th class='r'>{y}\u2013{str(last.year)[-2:]}</th>"
+    body = []
+    for name, r in rows.items():
+        split_cells = ""
+        if bt.SPLIT:
+            split_cells = f"<td class='r'>{pct(r['in'])}</td><td class='r'>{pct(r['out'])}</td>"
+        body.append(
+            f"<tr><td class='agent'>{esc(name)}</td><td class='r'>{pct(r['ret'])}</td>"
+            f"<td class='r'>{pct(r['day'], digits=3)}</td><td class='r'>{pct(r['fall'])}</td>"
+            f"<td class='r'>{inr(r['final'])}</td>{split_cells}</tr>")
+    return (f"<section aria-labelledby='bt-h'><h2 id='bt-h'>How these rules did from {first.year} to now</h2>"
+            f"<p>A backtest from {day(first)} to {day(last)} on the Nifty price index (without dividends), after "
+            f"{bt.COST_PER_SIDE:.2%} costs per buy or sell, acting at the close the day after each signal. The last "
+            f"two columns split the period, to show whether a rule kept working on later years.</p>"
+            f"<div class='panel scroll'><table><thead><tr><th>Strategy</th><th class='r'>Return per year</th>"
+            f"<th class='r'>Per trading day</th><th class='r'>Worst fall</th><th class='r'>{inr(bt.CAPITAL)} became</th>"
+            f"{split_head}</tr></thead><tbody>{''.join(body)}</tbody></table></div>"
+            f"<figure>{picture('backtest', 'Growth of one lakh rupees under each strategy since 2010, log scale')}"
+            f"<figcaption>Log scale. The dotted line marks the start of the later test years.</figcaption></figure>"
+            f"<p class='meta'>Past results don't predict future ones.</p></section>")
+
+
+# ----------------------------------- the pages -----------------------------------
+def slug(ch):
+    """A signal channel's page name, from its folder: data/akash -> akash."""
+    return re.sub(r"[^a-z0-9]", "", os.path.basename(ch["folder"].rstrip("/")).lower()) or "channel"
+
+
+def site_pages(sigs=(), has_ticket=False):
+    """Every page of the site, in the order of the bar at the top: (key, file, label)."""
+    pages = [("home", "index.html", "Home"), ("berlin", "berlin.html", "Berlin")]
+    pages += [(slug(ch), f"{slug(ch)}.html", slug(ch).capitalize()) for ch, _ in sigs or ()]
+    if has_ticket:
+        pages.append(("ticket", "ticket.html", "Ticket"))
+    return pages
+
+
+def nav_html(pages, current):
+    """The bar at the top of every page."""
+    links = "".join(f"<a href='{file}'" + (" aria-current='page'" if key == current else "") + f">{esc(label)}</a>"
+                    for key, file, label in pages)
+    return f"<nav class='topnav' aria-label='Pages'>{links}</nav>"
+
+
+def shell(title, description, nav, header, main, built, live=False):
+    """One page: the same head, bar and footer around its own header and content."""
+    placed = ("The arena never places an order: the orders in the Real money section were placed by hand."
+              if live else "No real orders are placed.")
+    return f"""<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{esc(title)}</title>
+<meta name="description" content="{esc(description)}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;600&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<style>{CSS}.visually-hidden{{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}}</style>
+</head>
+<body>
+<div class="wrap">
+{nav}
+<header>
+{header}
+</header>
+<main>
+{main}
+</main>
+<footer>
+<p>For learning only. Not investment advice. {placed}</p>
+<p>Data: free daily index data from <a href="{DATA_URL}">indian-market-historical-data</a>, ETF, gold, silver and S&amp;P 500 prices from Yahoo Finance’s public data, and one-minute forex, gold, index and Bitcoin prices from Dukascopy’s public data feed, all for personal, non-commercial use.</p>
+<p>Page built on {day(built)} at {built:%H:%M} IST.</p>
+</footer>
+</div>
+</body>
+</html>
+"""
+
+
+def page(res, bt_parts, ctx, fres=None, fbt=None, view=None, ares=None, abt=None, tg=None, st=None, sigs=(),
+         rm=None, nav="", built=None):
+    """The home page: every strategy on one board, Claude's call, market events and the details."""
+    built = built or dt.datetime.now(IST)
+    live = bool(rm and rm.get("started"))                 # real orders have been written down
+    real_note = (" The one exception is the Real money section: orders placed by hand at Zerodha." if live
+                 else " Nothing here is real money.")
+    real_section = real_html(rm) if real_money is not None else ""
+    if res["started"]:
+        status = (f"Prices up to the close on {day(res['latest'])}. Day {res['days']} of paper trading, "
+                  f"which started on {day(res['s0'])}.")
+    else:
+        status = (f"Prices up to the close on {day(res['latest'])}. Paper trading starts on "
+                  f"{day(pd.Timestamp(pa.START))}.")
+    header = f"""<h1>Paper arena</h1>
+<p class="lede">Every strategy here trades {inr(pa.CAPITAL)} of virtual money by fixed rules, so you can see which ones actually make money.{real_note}</p>
+<p class="meta">{status}</p>"""
+    main = f"""{drift_html(view)}
+{overview_html(res, fres, ares, tg, sigs, view)}
+{real_section if live else ""}
+{claude_latest_html(res)}
+{events_html()}
+<section aria-labelledby='more-h'><h2 id='more-h'>Details</h2>
+{more("Nifty 50 agents", "Standings, the market, why each agent holds what it holds, trades",
+      board_html(res) + market_html(res, ctx) + why_html(res) + arena_chart_html(res) + trades_html(res))}
+{more("Claude’s decisions", "Every decision with its reasons", claude_html(res), solo=True)}
+{more("Skill or luck?", "Each strategy’s returns tested against chance", luck_html(view), solo=True)}
+{more("Gold and multi-asset arena", "Four ETF agents, their rules and backtests", asset_html(ares, abt), solo=True)}
+{more("F&amp;O arena", f"{len(fno_arena.RULES)} futures and options agents, 3x leverage", fno_html(fres, fbt), solo=True)}
+{more("Backtest since 2010", "How the Nifty rules did before paper trading", backtest_html(*bt_parts), solo=True)}
+{more("Your calls", "Add your own Nifty calls", calls_html(res), solo=True)}
+{more("Real money", "Your own orders at Zerodha, once there are any", "" if live else real_section, solo=True)}
+{more("Permanent record", "The logs and saved data behind this page", logs_html(), solo=True)}
+</section>"""
+    return shell("Paper arena", "Rule-following agents and Claude trade Nifty with virtual money. For learning only.",
+                 nav, header, main, built, live)
+
+
+def checks_words(sc):
+    """A channel's "Worth following?" checks in a line, for its board."""
+    passed = sum(1 for _, ok, _ in sc["rows"] if ok is True)
+    return f"Worth following? {sc['verdict']} {passed} of {len(sc['rows'])} checks pass so far."
+
+
+def berlin_page(ares, abt, tg, st, nav="", built=None, live=False, groups=None, view=None):
+    """Trade Like Berlin on a page of its own: its board, the videos' strategies, his Telegram calls, the
+    NIFTYBEES copy."""
+    built = built or dt.datetime.now(IST)
+    board = ""
+    if groups:
+        checks = {}
+        try:
+            checks["His Telegram calls"] = checks_words(scorecard.berlin_checks(tg)) if tg else ""
+        except Exception:
+            pass
+        board = board_section(groups, view, f"Each started with {inr(pa.CAPITAL)} of virtual money. The two "
+                              f"strategies from his videos are agents with daily values; his calls are books "
+                              f"that risk ₹1,000 a call, counted from his first.", heading="Where it stands",
+                              checks=checks)
+    header = ("<h1>Trade Like Berlin</h1><p class='meta'>A YouTube and Telegram channel, paper traded with "
+              "virtual money. His posts are saved every half hour and his calls are scored each weekday night.</p>")
+    return shell("Trade Like Berlin · Paper arena",
+                 "The Trade Like Berlin channel's strategies and Telegram calls, paper traded by fixed rules. "
+                 "For learning only.", nav, header, board + berlin_html(ares, abt, tg, st, heading=False), built, live)
+
+
+def signal_page(ch, sm, nav="", built=None, live=False, groups=None, view=None):
+    """One signal channel on a page of its own, with its board."""
+    built = built or dt.datetime.now(IST)
+    board = ""
+    if groups:
+        checks = {}
+        try:
+            checks["His signals"] = checks_words(scorecard.signal_checks(sm)) if sm else ""
+        except Exception:
+            pass
+        board = board_section(groups, view, f"A book of {inr(pa.CAPITAL)} of virtual money that risks ₹1,000 on "
+                              f"each signal, counted from his first.", heading="Where it stands", checks=checks,
+                              word="signal")
+    header = (f"<h1>{esc(ch['name'])}</h1><p class='meta'>A Telegram signal channel, paper traded with virtual "
+              f"money. Its posts are saved every half hour and its signals are scored each night.</p>")
+    return shell(f"{ch['name']} · Paper arena",
+                 f"{ch['name']}: every signal read by code and paper traded on one-minute prices. For learning only.",
+                 nav, header, board + signal_html(ch, sm, heading=False), built, live)
+
+
+def have_ticket():
+    """Whether the order ticket can be built (ticket.py and zerodha.py are there), so the bar links to it only then."""
+    try:
+        import ticket  # noqa: F401
+        return True
+    except Exception as exc:
+        print(f"  ! Order ticket skipped: {exc}")
+        return False
+
+
+def write(name, text):
+    with open(os.path.join(SITE, name), "w", encoding="utf-8") as f:
+        f.write(text)
+
+
+def main():
+    os.makedirs(SITE, exist_ok=True)
+    res = pa.compute()
+    ctx = mc.context()
+    bt_parts = backtest_summary()
+    fres = logbook.fno_results()
+    try:
+        fbt = fno_arena.backtest_rows()
+    except Exception as exc:  # the page still builds without the F&O backtest
+        print(f"  ! F&O backtest skipped: {exc}")
+        fbt = None
+    ares = logbook.asset_results()
+    try:
+        abt = asset_arena.backtest_rows(ares["market"] if ares else None)
+    except Exception as exc:  # the page still builds without this backtest
+        print(f"  ! Gold and multi-asset backtest skipped: {exc}")
+        abt = None
+    try:
+        tg = berlin_calls.summary()
+    except Exception as exc:  # the page still builds without the Telegram record
+        print(f"  ! Telegram record skipped: {exc}")
+        tg = None
+    if tg is not None and berlin_etf is not None:
+        try:
+            tg["etf"] = berlin_etf.summary()
+        except Exception as exc:  # the page still builds without the NIFTYBEES copy
+            print(f"  ! NIFTYBEES copy skipped: {exc}")
+    try:
+        st = berlin_study.study(berlin_study.rates(refresh=False))
+    except Exception as exc:  # no saved Fed rates yet
+        print(f"  ! RBNZ study skipped: {exc}")
+        st = None
+    sigs = []
+    for ch in channels.CHANNELS.values():
+        if ch["tagging"] != "parser":
+            continue
+        try:
+            sigs.append((ch, signal_calls.summary(ch)))
+        except Exception as exc:  # the page still builds; the section says it couldn't be read
+            print(f"  ! {ch['name']} skipped: {exc}")
+            sigs.append((ch, None))
+    rm = None
+    if real_money is not None:
+        try:
+            rm = real_money.summary()
+        except Exception as exc:  # the page still builds; the section says it couldn't be read
+            print(f"  ! Real-money ledger skipped: {exc}")
+    view = logbook.merged(res, fres, ares)
+    built, live = dt.datetime.now(IST), bool(rm and rm.get("started"))
+    pages = site_pages(sigs, have_ticket())
+    bar = lambda key: nav_html(pages, key)
+    write("index.html", page(res, bt_parts, ctx, fres, fbt, view, ares, abt, tg, st, sigs, rm, bar("home"), built))
+    boards = score_groups(res, fres, ares, tg, sigs)
+    write("berlin.html", berlin_page(ares, abt, tg, st, bar("berlin"), built, live, boards["berlin"], view))
+    for ch, sm in sigs:
+        write(f"{slug(ch)}.html", signal_page(ch, sm, bar(slug(ch)), built, live, boards.get(slug(ch))))
+    if pages[-1][0] == "ticket":
+        try:
+            import ticket
+            write("ticket.html", ticket.page(css=CSS, built=built, nav=bar("ticket")))
+        except Exception as exc:  # the other pages never depend on it
+            print(f"  ! Order ticket not written: {exc}")
+    if view:
+        log = pd.concat([b["values"] for b in view], axis=1).round(2)
+        log = log.loc[:, ~log.columns.duplicated()]
+        log.index.name = "Date"
+        log.to_csv(os.path.join(SITE, "paper_arena_log.csv"))
+    print(f"Built {SITE}/: " + ", ".join(file for _, file, _ in pages))
+
+
+if __name__ == "__main__":
+    main()
+
