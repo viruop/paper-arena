@@ -39,3 +39,6 @@ date,agent,trade,nifty_close
 2026-11-09,Weekly short strangle,"Sold 25,550 CE at 75.9, sold 24,500 PE at 70.5 (expiry 17 Nov)",25044.65
 2026-11-11,Intraday futures,"Bought at the open 25,338, stopped out at 25,211: -Rs 1,974",25255.05
 2026-11-11,Intraday short straddle,"Sold the 25,350 straddle at 455.1, bought back at 483.3: -Rs 386",25255.05
+2026-11-12,Futures trend (whole lots),"Bought 1 lot of futures at the open, 25,214",25299.35
+2026-11-12,Intraday futures,"Bought at the open 25,214, closed at 25,299: +Rs 869",25299.35
+2026-11-12,Intraday short straddle,"Sold the 25,200 straddle at 437.5, bought back at 365.6: +Rs 774",25299.35
