@@ -1,0 +1,2 @@
+id,call_id,posted_at,action,detail,price,trigger,verdict,note,added_by
+19116,19114,2026-11-11T05:57:42Z,stop,breakeven,entry,,,"""Trade is close to our Target , Start booking and go Breakeven"" (11 minutes after signal 19114, the only open signal)",claude
