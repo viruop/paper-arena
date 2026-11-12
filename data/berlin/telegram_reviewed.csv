@@ -204,3 +204,30 @@ id,posted_at,reviewed_at,decision,call_id,note
 77994,2026-11-10T14:07:40Z,2026-11-10T16:17:26Z,other,77988,"video read in chat: explains call 77988 (long from 74,181.87, stop 73,417.75, target 79,957.18; says he has made some entries and plans three in total, no levels for the later ones)"
 77995,2026-11-10T15:50:59Z,2026-11-10T16:17:26Z,update,77985,"exit of call 77985: ""Exited now at SL""; exit and claim added to telegram_updates.csv"
 77996,2026-11-10T15:52:26Z,2026-11-10T16:17:26Z,update,77988,"exit of call 77988: ""Covered at sl""; exit and claim added to telegram_updates.csv"
+77997,2026-11-11T06:20:03Z,2026-11-11T17:46:04Z,other,,says he is only watching Indian markets because of risk; no position
+77998,2026-11-11T06:20:44Z,2026-11-11T17:46:04Z,other,,comment: intraday opportunities rare after big gap-up
+77999,2026-11-11T06:22:34Z,2026-11-11T17:46:04Z,other,,"day chart image, no position"
+78000,2026-11-11T06:24:50Z,2026-11-11T17:46:04Z,other,,"warning of an area where sharp selling can follow a break; forecast, no position"
+78001,2026-11-11T06:25:37Z,2026-11-11T17:46:04Z,other,,chart image with the area of post 78000
+78002,2026-11-11T06:25:56Z,2026-11-11T17:46:04Z,other,,caption of chart 78001 (double red lines)
+78003,2026-11-11T06:26:08Z,2026-11-11T17:46:04Z,other,,"caution about the zone; forecast, no position"
+78004,2026-11-11T06:28:07Z,2026-11-11T17:46:04Z,other,,forecast: market can attempt day lows below the area; no position
+78005,2026-11-11T06:28:27Z,2026-11-11T17:46:04Z,other,,"Sensex straddle value 830, information"
+78006,2026-11-11T06:32:07Z,2026-11-11T17:46:04Z,other,,comment on expiry liquidity
+78007,2026-11-11T07:02:59Z,2026-11-11T17:46:04Z,needs levels,,"""One breakdown. DAY LOWS."" with chart image: likely his Nifty/Sensex intraday short on the break of the 78000 area (he covers intraday shorts in 78014 and his recap 78021 says he shorted the panic-line breakdown); entry, stop and target only on the image, which cannot be read here"
+78008,2026-11-11T07:13:22Z,2026-11-11T17:46:04Z,other,,recap: Nifty attempts day lows
+78009,2026-11-11T07:13:58Z,2026-11-11T17:46:04Z,other,,"recap: sharp sell-off, Nifty fell 100 points"
+78010,2026-11-11T07:14:44Z,2026-11-11T17:46:04Z,other,,question whether Nifty fills the gap; forecast
+78011,2026-11-11T07:15:11Z,2026-11-11T17:46:04Z,other,,forecast odds 60/40
+78012,2026-11-11T07:15:20Z,2026-11-11T17:46:04Z,other,,"forecast odds 60% no, 40% yes"
+78013,2026-11-11T07:15:46Z,2026-11-11T17:46:04Z,other,,forecast comment
+78014,2026-11-11T08:03:29Z,2026-11-11T17:46:04Z,other,,"""Covering intraday shorts here!"": exit of the untagged intraday short of post 78007 (needs levels); if its levels are sent, this is its exit"
+78015,2026-11-11T08:49:30Z,2026-11-11T17:46:04Z,other,,celebration
+78016,2026-11-11T08:56:15Z,2026-11-11T17:46:04Z,other,,comment on options liquidity
+78017,2026-11-11T08:58:36Z,2026-11-11T17:46:04Z,other,,"warning about option slippage, no position"
+78018,2026-11-11T08:58:42Z,2026-11-11T17:46:04Z,other,,continues 78017
+78019,2026-11-11T13:29:40Z,2026-11-11T17:46:04Z,other,,motivational post
+78020,2026-11-11T13:34:03Z,2026-11-11T17:46:04Z,other,,link to his X post
+78021,2026-11-11T14:46:08Z,2026-11-11T17:46:04Z,claim,77949,"recap of recent trades: claims added for calls 77949, 77950, 77971, 77985, 77988; the Sensex/Nifty day trade is the untagged short of post 78007"
+78022,2026-11-11T14:52:45Z,2026-11-11T17:46:04Z,other,,comment on the recap
+78023,2026-11-11T17:32:06Z,2026-11-11T17:46:04Z,call,78023,"BTC re-entry, second entry, same target and stop as call 77988"
