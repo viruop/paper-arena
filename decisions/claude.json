@@ -203,5 +203,22 @@
     "model": "Claude Fable 5.2 (in chat)",
     "searches": 3,
     "made_at": "2026-11-11T19:32+05:30"
+  },
+  {
+    "date": "2026-11-12",
+    "position": 1.0,
+    "summary": "Staying fully in: Nifty edged up 0.2% to 25,299 for a third straight gain as banks and financials offset falls in IT and pharma; October inflation of 6.1%, above the RBI's limit, came out after the close and is the risk for tomorrow.",
+    "reasons": [
+      "Nifty closed at 25,299 (+0.18%), a third straight gain, about 5% above its 200-day average (23,991) and 7% above the plan's exit, the 20-day average (23,634), so the exit was not hit.",
+      "Banks and financials led (Nifty Bank +1.2%; HDFC Life, Shriram Finance and Bajaj Finance up over 3%) and midcaps rose 0.7%, while IT (-0.4%) and pharma (-0.3%) fell.",
+      "Foreign investors bought a net Rs 12,563 crore on 11 Nov and Rs 48,500 crore over five sessions; Brent held near $92.5, but the rupee slipped 33 paise to about 94.04 per dollar.",
+      "Risk: October retail inflation came in at 6.1% after the close, above the RBI's 6% limit for the first time in two years (food 8.5%), which raises the chance of another rate rise; the market reacts to it tomorrow.",
+      "Risk: Nvidia fell after hours on reports that its board may remove its chief executive, and Nifty's RSI(14) is 80 after an 11.8% gain in a month. The rising 20-day average stays the exit."
+    ],
+    "go_to_cash_if": "Nifty closes below its 20-day average (about 23,630, rising)",
+    "go_fully_in_if": "Already fully in; stays in while Nifty holds above its 20-day average",
+    "model": "Claude Fable 5.2 (in chat)",
+    "searches": 3,
+    "made_at": "2026-11-12T19:50+05:30"
   }
 ]
