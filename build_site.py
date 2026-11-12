@@ -316,15 +316,6 @@ padding-top:1.1rem;border-bottom:1px solid var(--board-rule)}
 .scoreboard .n{white-space:nowrap}
 .scoreboard>.meta+.scroll{margin-top:.5rem}
 .scoreboard details.mini summary{color:var(--board-muted)}
-.calc{margin:.9rem 0 .4rem}
-.calc-q{font:600 1.2rem/1.2 "Barlow Condensed","Arial Narrow",system-ui,sans-serif;margin:0 0 .5rem}
-.calc .two{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;max-width:30rem}
-.calc label{display:block;font-size:.9rem;color:var(--board-muted);margin-bottom:.2rem}
-.calc input{display:block;width:100%;min-width:0;font:inherit;min-height:2.9rem;padding:.4rem .6rem;border-radius:.5rem;
-border:1px solid var(--board-rule);background:rgba(255,255,255,.08);color:var(--board-ink);color-scheme:dark}
-.calc input[type=date]{-webkit-appearance:none;appearance:none;text-align:left}
-.calc input:focus-visible{outline:2px solid var(--score);outline-offset:1px}
-.calc .meta{margin:.6rem 0 0}
 details.more{background:var(--surface);border-radius:.6rem;margin-top:.9rem;padding:0 1rem}
 details.more>summary{cursor:pointer;list-style:none;padding:.95rem 0;display:flex;justify-content:space-between;
 align-items:baseline;gap:1rem;font:600 1.3rem/1.2 "Barlow Condensed","Arial Narrow",system-ui,sans-serif}
@@ -784,12 +775,6 @@ def started_values(view):
     return out
 
 
-def to_paise(series):
-    """The same values to the paisa: what a board and the boxes above it both work from, so that the
-    numbers the build writes and the numbers the page's script works out are the same."""
-    return {name: pd.Series([round(float(x), 2) for x in v], index=v.index, dtype=float) for name, v in series.items()}
-
-
 def beats_luck(lk):
     """The luck test's pass (scorecard.agent_luck): enough days, ahead of cash, and under a 1-in-20 chance
     that it is luck. Ahead means by more than a paisa in Rs 1 lakh: an agent sitting in cash differs from
@@ -824,55 +809,32 @@ def confidence(values, nifty=None):
     return (5, "passes, over a year, ahead of Nifty") if ahead else (4, "passes, over a year")
 
 
-def book_calls(pnl, results):
-    """A book's closed calls for the boxes above a board: [[the day he posted it (India time), its profit
-    or loss in rupees], ...], oldest first. pnl: rupees by call id. A call with no saved time gets ""."""
-    if pnl is None or not len(pnl):
-        return []
-    posted = {}
-    if results is not None and len(results):
-        posted = dict(zip(results["id"].astype(str), results["posted_at"]))
-    out = []
-    for cid, rs in pnl.items():
-        when = pd.to_datetime(posted.get(str(cid)), utc=True, errors="coerce")
-        out.append(["" if pd.isna(when) else when.tz_convert("Asia/Kolkata").strftime("%Y-%m-%d"),
-                    0.0 if pd.isna(rs) else round(float(rs), 2)])
-    return sorted(out)
-
-
 def score_groups(res, fres, ares, tg, sigs=()):
     """The scoreboards: {"home": groups, "berlin": groups, <channel page>: groups}. A group is (title, rows);
-    a row is (label, value, since start, note, key, calls). key is the agent's name in the daily values, or
-    None for a book of calls, which has calls (see book_calls) instead."""
-    keyed = lambda rows: [(n, v, c, note, n, None) for n, v, c, note in rows]
+    a row is (label, value, since start, note, key). key is the agent's name in the daily values, or None
+    for a book of calls, which has no daily values."""
+    keyed = lambda rows: [(n, v, c, note, n) for n, v, c, note in rows]
     berlin_names = [n for n, i in berlin.STRATEGIES.items() if i["kind"] == "agent"]
     nifty = (keyed(board_rows(res)) if res["started"] else
-             [(n, None, None, f"Starts {day(pd.Timestamp(pa.START))}", None, None) for n in res["plan"]])
-    tl = [(berlin.STRATEGIES[n]["title"], v, c, note, n, None) for n, v, c, note in board_rows(ares, berlin_names)]
+             [(n, None, None, f"Starts {day(pd.Timestamp(pa.START))}", None) for n in res["plan"]])
+    tl = [(berlin.STRATEGIES[n]["title"], v, c, note, n) for n, v, c, note in board_rows(ares, berlin_names)]
     if tg:
-        results = tg.get("results")
         for book, title, what in (("events", "Forex news-event plan", "event"), ("calls", "His Telegram calls", "call")):
             b = tg["books"][book]
             done = b["wins"] + b["losses"]
             note = (f"{done} {what}{'s' if done != 1 else ''} closed, {b['wins']} won" if done else
                     f"No {what}s closed yet") + (f"; {b['pending']} open" if b["pending"] else "")
-            tl.append((title, b["value"], b["value"] / berlin_calls.CAPITAL - 1, note, None,
-                       book_calls(b.get("per_call"), results)))
+            tl.append((title, b["value"], b["value"] / berlin_calls.CAPITAL - 1, note, None))
         ob = tg["books"].get("options")
         if ob and ob["scored"] + ob["pending"]:
             done = ob["wins"] + ob["losses"]
             note = (f"{done} closed, {ob['wins']} won" if done else "None closed yet") + (
                 f"; {ob['pending']} open" if ob["pending"] else "")
-            tl.append(("His options trades, on the market", ob["value"], ob["value"] / berlin_calls.CAPITAL - 1,
-                       note, None, book_calls(ob.get("per_call"), results)))
+            tl.append(("His options trades, on the market", ob["value"], ob["value"] / berlin_calls.CAPITAL - 1, note, None))
         for info in (i for i in berlin.STRATEGIES.values() if i["kind"] == "series"):
             trades, n, ours, _ = series_numbers(info, tg)
-            done = (results[results["id"].astype(str).isin(trades) & (results["outcome"] != "not filled")]
-                    if results is not None and len(results) else None)
-            each = ((pd.to_numeric(done["r"]) * info["risk_rs"]).groupby(done["id"].astype(str)).sum()
-                    if done is not None and len(done) else None)
             tl.append(("Small-capital series", pa.CAPITAL + ours, ours / pa.CAPITAL,
-                       f"{n} of 10 trades closed, Rs 10,000 risk each", None, book_calls(each, results)))
+                       f"{n} of 10 trades closed, Rs 10,000 risk each", None))
     out = {"home": [("Nifty 50 agents and Claude", nifty),
                     ("Gold and multi-asset", keyed(board_rows(ares, [n for n in asset_arena.AGENTS
                                                                      if n not in berlin.STRATEGIES]))),
@@ -884,193 +846,55 @@ def score_groups(res, fres, ares, tg, sigs=()):
         b = sm["book"]
         done = b["wins"] + b["losses"]
         note = (f"{done} signal{'s' if done != 1 else ''} closed, {b['wins']} won" if done else
-                f"No signals closed yet") + (f"; {b['pending']} open" if b["pending"] else "")
-        row = (("His signals", b["value"], b["value"] / berlin_calls.CAPITAL - 1, note, None,
-                book_calls(b.get("per_call"), sm.get("results"))) if len(sm["calls"]) else
-               ("His signals", None, None, f"Saving posts since {day(pd.Timestamp(ch['since']))}; no signals yet",
-                None, None))
+                "No signals closed yet") + (f"; {b['pending']} open" if b["pending"] else "")
+        row = (("His signals", b["value"], b["value"] / berlin_calls.CAPITAL - 1, note, None) if len(sm["calls"]) else
+               ("His signals", None, None, f"Saving posts since {day(pd.Timestamp(ch['since']))}; no signals yet", None))
         out[slug(ch)] = [("His signals, paper traded", [row])]
     return out
 
 
-CALC_JS = r"""
-(function () {
-  'use strict';
-  var D = window.ARENA, form = document.getElementById('calc');
-  if (!D || !form) { return; }
-  var amount = document.getElementById('calc-amount'), date = document.getElementById('calc-date'), note = document.getElementById('calc-note');
-  function inr(x) {
-    if (x >= 1e7) { return '₹' + (x / 1e7).toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' crore'; }
-    if (x >= 1e5) { return '₹' + (x / 1e5).toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' lakh'; }
-    return '₹' + Math.round(x).toLocaleString('en-IN');
-  }
-  function pct(v) { return (v >= 0 ? '+' : '−') + Math.abs(v * 100).toFixed(2) + '%'; }
-  function words(iso) {
-    var p = iso.split('-'), m = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    return parseInt(p[2], 10) + ' ' + m[parseInt(p[1], 10) - 1] + ' ' + p[0];
-  }
-  function first(s, from) { for (var i = Math.max(from, 0); i < s.length; i++) { if (s[i] != null) { return i; } } return -1; }
-  function last(s, upto) { for (var i = Math.min(upto, s.length - 1); i >= 0; i--) { if (s[i] != null) { return i; } } return -1; }
-  // One agent from the chosen day (an index into D.dates, or -1 for its own start). Its first value is the
-  // close its money went in at. Returns {grow: worth now per rupee put in, nifty: buy-and-hold Nifty over
-  // the same days or null, late: it began after the chosen day}, or null when it has no day since then.
-  function result(name, from) {
-    var s = D.series[name];
-    if (!s) { return null; }
-    var a = first(s, 0), z = last(s, s.length - 1);
-    if (a < 0) { return null; }
-    var own = from <= a, at = own ? a : first(s, from);
-    if (at < 0 || !(s[at] > 0)) { return null; }     // no day since then, or nothing left by then
-    var out = { grow: s[z] / (own ? D.capital : s[at]), late: from >= 0 && from < a, nifty: null };
-    var n = D.series[D.nifty];
-    if (n && name !== D.nifty) {
-      var nb = last(n, at);
-      if (nb >= 0 && last(n, n.length - 1) >= z) { out.nifty = n[last(n, z)] / n[nb] - 1; }
-    }
-    return out;
-  }
-  // One book of calls: every closed call, or only those posted on or after the chosen day.
-  function book(label, picked) {
-    var c = D.books[label];
-    if (!c) { return null; }
-    var sum = 0, k = 0;
-    for (var i = 0; i < c.length; i++) { if (!picked || c[i][0] >= picked) { sum += c[i][1]; k += 1; } }
-    return { grow: 1 + sum / D.capital, k: k, total: c.length };
-  }
-  function show(row, grow, under) {
-    var v = row.querySelector('.v'), p = row.querySelector('.p'), n = row.querySelector('.n');
-    if (under && row.querySelector('.c').textContent) { under = ' · ' + under; }
-    if (grow === null) { v.textContent = '–'; p.textContent = ''; p.className = 'p'; n.textContent = under; return; }
-    var A = parseFloat(amount.value);
-    if (!(A > 0)) { A = D.capital; }
-    v.textContent = inr(A * grow);
-    p.textContent = pct(grow - 1);
-    p.className = 'p' + (grow - 1 > 1e-9 ? ' up' : (grow - 1 < -1e-9 ? ' down' : ''));
-    n.textContent = under;
-  }
-  function run() {
-    var A = parseFloat(amount.value);
-    if (!(A > 0)) { A = D.capital; }
-    var from = -1, picked = date.value, i;
-    if (picked) {
-      from = D.dates.length;
-      for (i = 0; i < D.dates.length; i++) { if (D.dates[i] >= picked) { from = i; break; } }
-    }
-    var agents = document.querySelectorAll('tbody[data-agent]'), books = document.querySelectorAll('tbody[data-book]'), later = 0;
-    for (i = 0; i < agents.length; i++) {
-      var res = result(agents[i].getAttribute('data-agent'), from);
-      if (!res) { show(agents[i], null, 'nothing to count since then'); continue; }
-      if (res.late) { later += 1; }
-      show(agents[i], res.grow, res.nifty === null ? '' : 'Nifty ' + pct(res.nifty));
-    }
-    for (i = 0; i < books.length; i++) {
-      var b = book(books[i].getAttribute('data-book'), picked);
-      if (b) { show(books[i], b.grow, picked ? b.k + ' of ' + b.total + ' closed ' + D.word + (b.total === 1 ? '' : 's') : ''); }
-    }
-    var money = '₹' + Math.round(A).toLocaleString('en-IN'), text;
-    if (!picked) {
-      text = agents.length ? money + ' in each strategy on its own start date. Pick a date to start them all on the same day.'
-                           : money + ' from his first ' + D.word + '. Pick a date to count only the ' + D.word + 's posted from that day.';
-    } else if (!agents.length) {
-      text = money + ', counting only the ' + D.word + 's he posted from ' + words(picked) + '.';
-    } else if (from >= D.dates.length) {
-      text = 'There are no saved days on or after ' + words(picked) + ' yet.';
-    } else {
-      text = money + ' at the close on ' + words(D.dates[from]) + (D.dates[from] !== picked ? ' (the next trading day)' : '') + '.';
-      if (later) { text += ' ' + later + (later === 1 ? ' strategy began after that and counts from its own start.' : ' strategies began after that and count from their own start.'); }
-      if (books.length) { text += ' A book of ' + D.word + 's counts the ' + D.word + 's he posted from ' + words(picked) + '.'; }
-    }
-    note.textContent = text;
-  }
-  form.addEventListener('input', run);
-  form.addEventListener('change', run);
-  form.addEventListener('submit', function (e) { e.preventDefault(); });
-  run();
-  window.arenaCalc = { result: result, book: book, run: run };
-}());
-"""
-
-
-def calc_html(series, groups, word="call"):
-    """The "if you had put in" boxes above a board, and the numbers the page works them out from: each
-    agent's daily values (series, from to_paise) and each book's closed calls. Returns (the boxes,
-    the script), or two empty strings when the board has neither."""
-    rows = [r for _, items in groups for r in items if r[1] is not None]
-    keys = [r[4] for r in rows if r[4] and len(series.get(r[4], ()))]
-    books = {r[0]: r[5] for r in rows if not r[4] and r[5] is not None}
-    names = list(dict.fromkeys(keys + [NIFTY_HOLD])) if keys and len(series.get(NIFTY_HOLD, ())) else keys
-    dates = sorted(set().union(*[set(series[n].index) for n in names])) if names else []
-    days = [d.strftime("%Y-%m-%d") for d in dates]
-    every = days + [c[0] for calls in books.values() for c in calls if c[0]]
-    if not every:
-        return "", ""
-    data = {"capital": pa.CAPITAL, "nifty": NIFTY_HOLD, "word": word, "dates": days, "books": books,
-            "series": {n: [None if pd.isna(x) else float(x) for x in series[n].reindex(dates)] for n in names}}
-    boxes = (f"<form class='calc' id='calc' novalidate><p class='calc-q'>If you had put in</p><div class='two'>"
-             f"<div><label for='calc-amount'>this much, ₹</label><input type='number' id='calc-amount' "
-             f"inputmode='numeric' min='1' step='any' value='{pa.CAPITAL:.0f}' autocomplete='off'></div>"
-             f"<div><label for='calc-date'>from this date</label><input type='date' id='calc-date' "
-             f"min='{min(every)}' max='{max(every)}'></div></div>"
-             f"<p class='meta' id='calc-note' role='status'>{inr(pa.CAPITAL)} in each on its own start date.</p></form>")
-    script = "<script>window.ARENA = " + json.dumps(data).replace("</", "<\\/") + ";" + CALC_JS + "</script>"
-    return boxes, script
-
-
-def board_section(groups, view, intro, heading="Every strategy", checks=None, word="call", home=False):
-    """One scoreboard: the boxes, the rows with each strategy's confidence score, and what the numbers mean.
-    checks: {label: words} to show under a book of calls, which has no confidence score."""
+def board_section(groups, view, intro, heading="Every strategy", checks=None, home=False):
+    """One scoreboard: each strategy's value and change, with its confidence score and what buy-and-hold
+    Nifty made over the same days, and what the score means. checks: {label: words} to show under a book
+    of calls, which has no confidence score."""
     if not any(items for _, items in groups):
         return ""
     began = started_values(view)
-    series = to_paise(began)
-    nifty = series.get(NIFTY_HOLD)
-    boxes, script = calc_html(series, groups, word)
-    rows, scored, booked = [], False, False
+    nifty = began.get(NIFTY_HOLD)
+    rows, scored = [], False
     for title, items in groups:
         if not items:
             continue
         rows.append(f"<tbody><tr class='grp'><td colspan='3'>{title}</td></tr></tbody>")
-        for label, value, since, note, key, calls in items:
-            more_, under, live, grow = "", "", "", None
-            if key and value is not None and len(series.get(key, ())):
-                grow = series[key].iloc[-1] / pa.CAPITAL        # the same sums, in the same order, as the page's script
-            elif not key and value is not None and boxes and calls is not None:
-                grow = 1 + sum(rs for _, rs in calls) / pa.CAPITAL
-            if grow is not None:
-                value, since = pa.CAPITAL * grow, grow - 1
+        for label, value, since, note, key in items:
             val = inr(value) if value is not None else "–"
-            chg = f"<span class='p {tone(since)}'>{pct(since, True, 2)}</span>" if since is not None else "<span class='p'></span>"
-            if key and value is not None and len(series.get(key, ())):
-                score, why = confidence(began[key], began.get(NIFTY_HOLD))
-                more_ = f"Confidence {score} of 5: {esc(why)}"
-                over = nifty_over(nifty, series[key]) if key != NIFTY_HOLD else None
-                under = f" · Nifty {pct(over, True, 2)}" if over is not None else ""
-                live, scored = f' data-agent="{esc(key)}"' if boxes else "", True
-            elif not key and value is not None:
-                more_ = esc(checks[label]) if checks and checks.get(label) else ""
-                live, booked = f' data-book="{esc(label)}"' if boxes and calls is not None else "", True
-            rows.append(f"<tbody class='row'{live}><tr class='main'><td class='name'>{esc(label)}</td>"
-                        f"<td class='r num-big v'>{val}</td><td class='r'>{chg}</td></tr>"
+            chg = f"<span class='{tone(since)}'>{pct(since, True, 2)}</span>" if since is not None else ""
+            more_ = ""
+            if key and value is not None and len(began.get(key, ())):
+                score, why = confidence(began[key], nifty)
+                over = nifty_over(nifty, began[key]) if key != NIFTY_HOLD else None
+                more_ = f"Confidence {score} of 5: {esc(why)}" + (
+                    f"<span class='n'> · Nifty {pct(over, True, 2)}</span>" if over is not None else "")
+                scored = True
+            elif not key and value is not None and checks and checks.get(label):
+                more_ = esc(checks[label])
+            rows.append(f"<tbody class='row'><tr class='main'><td class='name'>{esc(label)}</td>"
+                        f"<td class='r num-big'>{val}</td><td class='r'>{chg}</td></tr>"
                         f"<tr class='more'><td colspan='3'><div><span class='sub'>{esc(note)}</span>"
-                        f"<span class='sub'><span class='c'>{more_}</span><span class='n'>{under}</span></span></div></td></tr></tbody>")
+                        f"<span class='sub'>{more_}</span></div></td></tr></tbody>")
     about = ""
-    if boxes:
-        about = "<p class='meta'>Worked out in proportion to the amount: paper results, before tax. " + (
-            "A small real amount loses more to fixed charges than this shows, and most F&amp;O agents trade "
-            "parts of a lot, which can’t be bought; the whole-lot ones need ₹5 lakh." if home else
-            f"{'The strategies use their daily values. ' if scored else ''}With a date, a book of {word}s counts "
-            f"only the {word}s he posted from that day." if booked else "") + "</p>"
     if scored:
         levels = "; ".join(f"<b>{i}</b>, {esc(text)}" for i, text in enumerate(CONFIDENCE_LEVELS))
-        about += (f"<details class='mini'><summary>What the confidence score means</summary><p class='meta'>How much "
-                  f"evidence there is that a strategy’s result isn’t luck, from 0 to 5, by rules set on 11 Nov 2026: "
-                  f"{levels}. A high return alone never raises it, and it says nothing about the future. With "
-                  f"this many strategies one can pass by luck, so a pass has to keep passing. The luck test itself "
-                  f"is {'' if home else 'on the Home page, '}under “Skill or luck?” in Details.</p></details>")
+        about = (f"<details class='mini'><summary>What the confidence score means</summary><p class='meta'>How much "
+                 f"evidence there is that a strategy’s result isn’t luck, from 0 to 5, by rules set on 11 Nov 2026: "
+                 f"{levels}. A high return alone never raises it, and it says nothing about the future. With "
+                 f"this many strategies one can pass by luck, so a pass has to keep passing. “Nifty” beside a "
+                 f"score is what buy-and-hold Nifty made over the same days. The luck test itself is "
+                 f"{'' if home else 'on the Home page, '}under “Skill or luck?” in Details.</p></details>")
     return (f"<section class='scoreboard' aria-labelledby='sb-h'><h2 id='sb-h'>{heading}</h2>"
-            f"<p class='meta'>{intro}</p>{boxes}<div class='scroll'><table><thead><tr><th>Strategy</th>"
+            f"<p class='meta'>{intro}</p><div class='scroll'><table><thead><tr><th>Strategy</th>"
             f"<th class='r'>Worth now</th><th class='r'>Change</th></tr></thead>{''.join(rows)}"
-            f"</table></div>{about}</section>{script}")
+            f"</table></div>{about}</section>")
 
 
 def overview_html(res, fres, ares, tg, sigs=(), view=None):
@@ -1905,8 +1729,7 @@ def berlin_page(ares, abt, tg, st, nav="", built=None, live=False, groups=None, 
             pass
         board = board_section(groups, view, f"Each started with {inr(pa.CAPITAL)} of virtual money. The two "
                               f"strategies from his videos are agents with daily values; his calls are books "
-                              f"that risk ₹1,000 a call, counted from his first.", heading="Where it stands",
-                              checks=checks)
+                              f"that risk ₹1,000 a call.", heading="Where it stands", checks=checks)
     header = ("<h1>Trade Like Berlin</h1><p class='meta'>A YouTube and Telegram channel, paper traded with "
               "virtual money. His posts are saved every half hour and his calls are scored each weekday night.</p>")
     return shell("Trade Like Berlin · Paper arena",
@@ -1925,8 +1748,7 @@ def signal_page(ch, sm, nav="", built=None, live=False, groups=None, view=None):
         except Exception:
             pass
         board = board_section(groups, view, f"A book of {inr(pa.CAPITAL)} of virtual money that risks ₹1,000 on "
-                              f"each signal, counted from his first.", heading="Where it stands", checks=checks,
-                              word="signal")
+                              f"each signal.", heading="Where it stands", checks=checks)
     header = (f"<h1>{esc(ch['name'])}</h1><p class='meta'>A Telegram signal channel, paper traded with virtual "
               f"money. Its posts are saved every half hour and its signals are scored each night.</p>")
     return shell(f"{ch['name']} · Paper arena",
