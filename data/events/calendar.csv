@@ -11,3 +11,5 @@ rbi-2026-12-04,2026-12-04,10:00,,IN,central_bank,,RBI rate decision (the MPC mee
 fed-2026-12-09,2026-12-10,00:30,,US,central_bank,,US Fed rate decision (meeting 8 to 9 Dec; 2 pm Washington time on 9 Dec),high,scheduled,https://www.federalreserve.gov/newsevents/2026-december.htm,2026-11-05T17:18:00Z,claude
 in-cpi-2026-12-12,2026-12-12,16:00,,IN,data,,India inflation (CPI) for November,high,scheduled,https://indiainflation.com/release-calendar,2026-11-05T17:18:00Z,claude
 nse-holiday-2026-12-25,2026-12-25,,,IN,holiday,NSE,NSE closed for Christmas,,scheduled,https://rhnvrm.github.io/stock-market-circulars/circulars/nse/2025/nse-2025-12-12-64f77fa4407e27e6-trading-holidays-for-the-calendar-year-2026,2026-11-09T17:42:00Z,claude
+us-jobs-2026-12-04,2026-12-04,19:00,,US,data,,US jobs report for November (nonfarm payrolls),high,scheduled,https://www.bls.gov/schedule/2026/12_sched_list.htm,2026-11-11T17:46:00Z,claude
+us-cpi-2026-12-10,2026-12-10,19:00,,US,data,,US inflation (CPI) for November,high,scheduled,https://www.bls.gov/schedule/2026/12_sched_list.htm,2026-11-11T17:46:00Z,claude
