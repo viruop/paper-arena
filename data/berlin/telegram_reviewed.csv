@@ -285,3 +285,8 @@ id,posted_at,reviewed_at,decision,call_id,note
 78007,2026-11-11T07:02:59Z,2026-11-13T05:30:00Z,call,78007,"settled with the user's screenshot of the chart: Nifty short box (entry 25,367.90, stop 25,396.70, target 25,256.30); the post came after the breakdown, so the entry is taken at the post"
 78014,2026-11-11T08:03:29Z,2026-11-13T05:30:00Z,update,78007,"""Covering intraday shorts here!"": exit of call 78007 (tagged on 13 Nov from the user's screenshot)"
 78021,2026-11-11T14:46:08Z,2026-11-13T05:30:00Z,claim,77949,"recap of recent trades: claims for calls 77949, 77950, 77971, 77985, 77988 and, added 13 Nov, 78007 (the Sensex/Nifty day trade)"
+78075,2026-11-13T09:40:22Z,2026-11-13T17:39:00Z,other,78055,"status of call 78055: ""We stand at 50% target and a major reversal zone""; forecast both ways, no change"
+78076,2026-11-13T09:43:18Z,2026-11-13T17:39:00Z,other,78055,"added 30% to the size of call 78055 after the swing-high breakout; no new level, size not tracked"
+78077,2026-11-13T15:05:39Z,2026-11-13T17:39:00Z,claim,78055,"""60% target achieved"" on call 78055; call still open"
+78078,2026-11-13T15:07:08Z,2026-11-13T17:39:00Z,other,78055,"""Position."" screenshot for call 78055; no level"
+78079,2026-11-13T15:11:43Z,2026-11-13T17:39:00Z,claim,78055,"claims 65%+ returns in options on call 78055; leaves booking to followers, he does not exit"
