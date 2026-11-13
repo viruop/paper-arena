@@ -61,7 +61,13 @@ def nifty_block(res):
     if not res["started"]:
         return None
     values = res["values"]
-    labels = {a: pd.Series({d: pa.label(res["positions"][a].loc[d]) for d in values.index}) for a in values.columns}
+    begins = res.get("begins", {})                      # agents added after START, and their first day
+
+    def name_of(agent, day):
+        if agent in begins and (begins[agent] is None or day < begins[agent]):
+            return "Not started yet"
+        return pa.label(res["positions"][agent].loc[day])
+    labels = {a: pd.Series({d: name_of(a, d) for d in values.index}) for a in values.columns}
     return {"values": values, "labels": labels, "trades": [dict(t) for t in res["trades"]], "final": res["latest"]}
 
 
@@ -95,7 +101,7 @@ def asset_results():
 
 def register_new_agents():
     """Give every newer agent seen for the first time its start date (the next weekday)."""
-    names = []
+    names = list(getattr(pa, "NEWER", ()))
     for module, attr in (("fno_arena", "RULES"), ("asset_arena", "AGENTS")):
         try:
             names += list(getattr(__import__(module), attr))
@@ -193,13 +199,14 @@ def summary():
 
 
 # ------------------------------- Claude's snapshots -------------------------------
-def snapshot_path(date):
-    return os.path.join(SNAPSHOT_DIR, f"{date}.txt")
+def snapshot_path(date, suffix=""):
+    return os.path.join(SNAPSHOT_DIR, f"{date}{suffix}.txt")
 
 
-def save_snapshot(date, text, header):
-    """Save what a decision was based on. Never overwrites an existing snapshot."""
-    path = snapshot_path(date)
+def save_snapshot(date, text, header, suffix=""):
+    """Save what a decision was based on. Never overwrites an existing snapshot. suffix "-challenger" is the
+    challenger's."""
+    path = snapshot_path(date, suffix)
     if os.path.exists(path):
         return False
     os.makedirs(SNAPSHOT_DIR, exist_ok=True)

@@ -1,5 +1,5 @@
 """
-claude_agent.py - makes the "Claude" agent's decision automatically each evening.
+claude_agent.py - makes the "Claude" agent's decision automatically each evening, and the challenger's.
 
 GitHub Actions runs this before building the page. It gathers the latest close, the
 indicators, every rule agent's signal and Claude's past decisions, asks Claude through the
@@ -13,6 +13,15 @@ Two ways to use it:
     .claude/skills/claude-agent-decision/SKILL.md, which runs
         python claude_agent.py --snapshot      # what to look at, and whether a decision is due
         python claude_agent.py --record ...    # save the decision Claude made
+
+The challenger (added 13 Nov 2026) is a second Claude agent, "Claude, challenged". After Claude decides,
+it gets the same data and Claude's decision, argues the case against that decision and the case for it,
+and then decides its own position. It is saved in decisions/claude_challenger.json. Claude itself never
+sees the challenger's arguments, so the first agent decides exactly as before; the difference between
+the two agents is what a challenge adds. With the API key both are asked in the same run; in a session,
+the challenger is a separate agent that hasn't seen Claude's reasoning, only its decision:
+        python claude_agent.py --snapshot --agent challenger
+        python claude_agent.py --record --agent challenger --position ... --against ... --for ... --decided-by ...
 
 FOR LEARNING ONLY. Paper trading. No real orders are placed. Not investment advice.
 """
@@ -71,6 +80,34 @@ NEWS_ON = ("Before deciding, use web search (at most {n} searches) for news from
            "flows, crude oil, global markets and RBI policy.")
 NEWS_OFF = "Do not search the web; decide from the data in the message."
 
+# The challenger's instructions: written down on 13 Nov 2026 and, like an agent's rule, not changed afterwards.
+CHALLENGER_RULES = """You are the challenger in a paper-trading arena run for learning. No real money is involved.
+
+Another Claude agent has just decided what share of its virtual money to hold in the Nifty 50 index
+from the next trading day's close: 0 (all cash), 0.5 (half) or 1 (fully in). The message gives the
+same data it saw, your own past decisions, and then its decision tonight with its reasons. Before you
+decide anything, test that decision:
+
+1. The case against it. Argue as a sceptical risk manager whose job is to find what could go wrong:
+   the three strongest reasons its position is wrong now. If it is in Nifty, argue for holding less;
+   if it is in cash, argue for holding more. Tie each point to a number in the data or a dated fact.
+2. The case for it, held to the same standard: its three strongest supports.
+3. Then decide your own position, 0, 0.5 or 1, weighing both cases, and say which single point
+   decided it. You may agree or disagree with the other agent.
+
+The same limits apply to you: no leverage, no shorting, no other assets; idle cash earns about 6% a
+year and every change costs 0.10% of the amount traded. Frequent trading and ignoring the trend usually
+lose money, so change your own position only when the evidence clearly changes, stay consistent with
+what you said you would do, and state in advance what would make you change your mind.
+
+{news}
+
+Prices and indicators in the message come from the data; trust them over news if they disagree.
+Reply with only one JSON object and no other text, in exactly this form:
+{{"position": 0.5, "summary": "one plain sentence", "against": ["point", "point", "point"],
+"for": ["point", "point", "point"], "decided_by": "the point that decided it",
+"go_to_cash_if": "a specific condition", "go_fully_in_if": "a specific condition"}}"""
+
 
 # ---------------------------------- helpers -------------------------------------
 def load_log():
@@ -80,11 +117,23 @@ def load_log():
         return json.load(f)
 
 
-def save_log(log):
-    os.makedirs(os.path.dirname(pa.CLAUDE_FILE), exist_ok=True)
-    with open(pa.CLAUDE_FILE, "w", encoding="utf-8") as f:
+def save_log(log, path=None):
+    path = path or pa.CLAUDE_FILE
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
         json.dump(sorted(log, key=lambda d: d["date"]), f, indent=2, ensure_ascii=False)
         f.write("\n")
+
+
+def load_challenger_log():
+    if not os.path.exists(pa.CHALLENGER_FILE):
+        return []
+    with open(pa.CHALLENGER_FILE, encoding="utf-8") as f:
+        return json.load(f)
+
+
+def save_challenger_log(log):
+    save_log(log, pa.CHALLENGER_FILE)
 
 
 def snapshot(closes, res, log, ctx=None, as_of=None):
@@ -110,13 +159,18 @@ def snapshot(closes, res, log, ctx=None, as_of=None):
             lines.append(f"  {name}: {s.iloc[-1] / s.iloc[-21] - 1:+.1%} / {s.iloc[-1] / s.iloc[-63] - 1:+.1%} / "
                          f"{s.iloc[-1] / s.iloc[-126] - 1:+.1%}")
     lines.append("The arena (each agent started with Rs 1 lakh):")
+    hidden = set(getattr(pa, "NEWER", ()))          # the challenger is never shown to the first agent
     if res["started"]:
-        for name, row in res["board"].iterrows():
+        for name, row in res.get("board_first", res["board"]).iterrows():
+            if name in hidden:
+                continue
             nxt = row["next"] if isinstance(row["next"], str) else "hold"
             lines.append(f"  {name}: holds {row['holding']}, value {pa.rupees(row['value'])} "
                          f"({row['since_start']:+.2%} since start); at next close: {nxt}. {res['why'][name]}")
     else:
         for name, plan in res["plan"].items():
+            if name in hidden:
+                continue
             lines.append(f"  {name}: will hold {plan} at the first close. {res['why'][name]}")
     lines.append("Your decisions so far (newest first):")
     for d in sorted(log, key=lambda d: d["date"], reverse=True)[:8]:
@@ -204,6 +258,118 @@ def make_record(latest, decision, model, now, searches=0):
     }
 
 
+# --------------------------------- the challenger ----------------------------------
+def tonight(log, latest):
+    """Claude's decision for this close, or None."""
+    day = latest.date().isoformat()
+    return next((d for d in log if d["date"] == day), None)
+
+
+def challenger_status(latest, log, chlog, now):
+    """Is a challenger decision due? Only once Claude has decided for this close, once, and before the next
+    session opens."""
+    if any(d["date"] == latest.date().isoformat() for d in chlog):
+        return False, f"The challenger already decided after the close of {latest.date()}."
+    first = tonight(log, latest)
+    if first is None:
+        return False, (f"Claude hasn't decided after the close of {latest.date()} yet. The challenger tests "
+                       "that decision, so it waits for it.")
+    due, why = status(latest, [], now)
+    if not due:
+        return False, why
+    return True, (f"Test Claude's {first['position']:.0%} for the close of {latest.date()}; the challenger's own "
+                  "decision is filled at the next close.")
+
+
+def challenger_text(base, chlog, first):
+    """What the challenger reads: Claude's data (with Claude's past decisions named as Claude's), the
+    challenger's own past decisions, and Claude's decision tonight."""
+    base = base.replace("Your decisions so far (newest first):", "Claude's decisions so far (newest first):")
+    lines = [base, "Your own decisions so far, as the challenger (newest first):"]
+    for d in sorted(chlog, key=lambda d: d["date"], reverse=True)[:8]:
+        c = d.get("challenged") or {}
+        lines.append(f"  {d['date']}: {d['position']:.0%} in Nifty (Claude had {float(c.get('position', 0)):.0%}). "
+                     f"{d.get('summary', '')} Cash if: {d.get('go_to_cash_if', '-')}. "
+                     f"Fully in if: {d.get('go_fully_in_if', '-')}.")
+    if not chlog:
+        lines.append("  None yet.")
+    lines += ["", f"CLAUDE'S DECISION TONIGHT ({first['date']}): {first['position']:.0%} in Nifty 50.",
+              f"Summary: {first.get('summary', '')}"]
+    lines += [f"Reason: {r}" for r in first.get("reasons", [])]
+    lines += [f"Goes to cash if: {first.get('go_to_cash_if', '-')}", f"Goes fully in if: {first.get('go_fully_in_if', '-')}"]
+    return "\n".join(lines)
+
+
+def make_challenger_record(latest, decision, first, model, now, searches=0):
+    record = make_record(latest, decision, model, now, searches)
+    against = [str(r)[:300] for r in decision.get("against", []) if str(r).strip()][:3]
+    support = [str(r)[:300] for r in decision.get("for", []) if str(r).strip()][:3]
+    decided_by = str(decision.get("decided_by", "")).strip()[:300]
+    if not against:
+        raise ValueError("the case against Claude's decision is required (up to three points)")
+    if not support:
+        raise ValueError("the case for Claude's decision is required (up to three points)")
+    if not decided_by:
+        raise ValueError("say which point decided it")
+    return {"date": record["date"], "position": record["position"], "summary": record["summary"],
+            "challenged": {"date": first["date"], "position": float(first["position"])},
+            "against": against, "for": support, "decided_by": decided_by,
+            "go_to_cash_if": record["go_to_cash_if"], "go_fully_in_if": record["go_fully_in_if"],
+            "model": model, "searches": searches, "made_at": record["made_at"]}
+
+
+def first_as_of(first, now):
+    """The time Claude decided, so the challenger reads the market events Claude read."""
+    try:
+        return pd.Timestamp(first["made_at"]).to_pydatetime()
+    except Exception:
+        return now
+
+
+def run_challenger_api(key, closes, res, log, now, clock_given):
+    """After Claude's decision in the same run: ask the challenger. Any failure leaves Claude's decision as
+    saved and the challenger at its last position."""
+    latest = res["latest"]
+    chlog = load_challenger_log()
+    due, why = challenger_status(latest, log, chlog, now)
+    if not due:
+        print(f"Challenger: {why}")
+        return
+    first = tonight(log, latest)
+    base = snapshot(closes, res, [d for d in log if d["date"] != first["date"]], mc.context(),
+                    as_of=first_as_of(first, now))
+    text_in = challenger_text(base, chlog, first)
+    system = CHALLENGER_RULES.format(news=NEWS_ON.format(n=MAX_SEARCHES) if MAX_SEARCHES > 0 else NEWS_OFF)
+    try:
+        data = ask_claude(system, text_in, key)
+    except urllib.error.HTTPError as err:
+        print(f"Challenger: Claude API error {err.code}: {err.read()[:500]!r}. It keeps its last position.")
+        return
+    except Exception as err:  # network problems, timeouts
+        print(f"Challenger: could not reach the Claude API ({err}). It keeps its last position.")
+        return
+    text = "".join(b.get("text", "") for b in data["content"] if b.get("type") == "text")
+    if not clock_given:
+        due, why = challenger_status(latest, log, chlog, dt.datetime.now(IST))
+        if not due:
+            print(f"Challenger: the reply came too late, so nothing is saved: {why}")
+            return
+    try:
+        record = make_challenger_record(latest, parse_decision(text) or {}, first, f"{MODEL} (API)", now,
+                                        data["searches"])
+    except ValueError as err:
+        print(f"Challenger: no valid decision in the reply ({err}; it stopped with {data['stop_reason']}), so it "
+              f"keeps its last position. Reply was:\n{text[:1500]}")
+        return
+    chlog.append(record)
+    save_challenger_log(chlog)
+    logbook.save_snapshot(record["date"], text_in + "\n\nCLAUDE'S REPLY\n" + text,
+                          f"What the challenger ({MODEL}, through the API) saw on {record['made_at']}, and its reply.",
+                          suffix="-challenger")
+    print(f"Challenger decided {record['position']:.0%} in Nifty 50 (Claude: {first['position']:.0%}) after the "
+          f"close of {record['date']}: {record['summary']}")
+
+
 def run_api(now=None):
     """GitHub Actions mode: ask Claude through the Claude API."""
     key = os.environ.get("ANTHROPIC_API_KEY", "").strip()
@@ -248,14 +414,27 @@ def run_api(now=None):
     logbook.save_snapshot(record["date"], user_text + "\n\nCLAUDE'S REPLY\n" + text,
                           f"What Claude ({MODEL}, through the API) saw on {record['made_at']}, and its reply.")
     print(f"Claude decided {record['position']:.0%} in Nifty 50 after the close of {record['date']}: {record['summary']}")
+    run_challenger_api(key, closes, res, log, now, clock_given)
 
 
-def run_snapshot(now=None):
-    """Routine mode, step 1: print what Claude should look at and whether a decision is due."""
+def run_snapshot(now=None, agent="claude"):
+    """Routine mode, step 1: print what Claude (or the challenger) should look at and whether a decision is due."""
     now = now or dt.datetime.now(IST)
     log = load_log()
     closes = pa.load_all()
     res = pa.compute(closes)
+    if agent == "challenger":
+        chlog = load_challenger_log()
+        due, why = challenger_status(res["latest"], log, chlog, now)
+        print(f"DECISION NEEDED: {'yes' if due else 'no'}. {why}\n")
+        print(CHALLENGER_RULES.split("{news}")[0].strip())
+        print("\n" + NEWS_ON.format(n=MAX_SEARCHES) + "\n")
+        first = tonight(log, res["latest"])
+        if first is not None:
+            base = snapshot(closes, res, [d for d in log if d["date"] != first["date"]], mc.context(),
+                            as_of=first_as_of(first, now))
+            print(challenger_text(base, chlog, first))
+        return
     due, why = status(res["latest"], log, now)
     print(f"DECISION NEEDED: {'yes' if due else 'no'}. {why}\n")
     print(RULES.split("{news}")[0].strip())
@@ -263,12 +442,40 @@ def run_snapshot(now=None):
     print(snapshot(closes, res, log, mc.context(), as_of=now))
 
 
+def run_record_challenger(args, closes, res, log, now):
+    latest = res["latest"]
+    chlog = load_challenger_log()
+    due, why = challenger_status(latest, log, chlog, now)
+    if not due:
+        raise SystemExit(f"Not saved: {why}")
+    first = tonight(log, latest)
+    decision = {"position": args.position, "summary": args.summary or "", "against": args.against or [],
+                "for": args.for_ or [], "decided_by": args.decided_by or "", "go_to_cash_if": args.cash_if or "",
+                "go_fully_in_if": args.in_if or ""}
+    try:
+        record = make_challenger_record(latest, decision, first, args.model, now, args.searches)
+    except ValueError as err:
+        raise SystemExit(f"Not saved: {err}")
+    base = snapshot(closes, res, [d for d in log if d["date"] != first["date"]], mc.context(),
+                    as_of=first_as_of(first, now))
+    text = challenger_text(base, chlog, first)
+    chlog.append(record)
+    save_challenger_log(chlog)
+    logbook.save_snapshot(record["date"], text, f"What the challenger ({args.model}) decided from on "
+                                                f"{record['made_at']}. Its news searches aren't included; its "
+                                                "arguments are in claude_challenger.json.", suffix="-challenger")
+    print(f"Saved: the challenger holds {record['position']:.0%} in Nifty 50 after the close of {record['date']} "
+          f"(Claude: {first['position']:.0%}). Now commit decisions/claude_challenger.json and decisions/snapshots.")
+
+
 def run_record(args, now=None):
-    """Routine mode, step 2: validate and save the decision Claude made."""
+    """Routine mode, step 2: validate and save the decision Claude (or the challenger) made."""
     now = now or dt.datetime.now(IST)
     log = load_log()
     closes = pa.load_all()
     res = pa.compute(closes)
+    if getattr(args, "agent", "claude") == "challenger":
+        return run_record_challenger(args, closes, res, log, now)
     latest = res["latest"]
     due, why = status(latest, log, now)
     if not due:
@@ -300,9 +507,14 @@ def main():
     parser.add_argument("--in-if", dest="in_if", help="what would make Claude go fully in")
     parser.add_argument("--model", default="Claude (routine)", help="who made the decision")
     parser.add_argument("--searches", type=int, default=0, help="how many web searches were made before deciding")
+    parser.add_argument("--agent", choices=("claude", "challenger"), default="claude",
+                        help="whose decision: Claude's (the default) or the challenger's")
+    parser.add_argument("--against", action="append", help="challenger: a point against Claude's decision (up to 3)")
+    parser.add_argument("--for", dest="for_", action="append", help="challenger: a point for Claude's decision (up to 3)")
+    parser.add_argument("--decided-by", dest="decided_by", help="challenger: the point that decided it")
     args = parser.parse_args()
     if args.snapshot:
-        run_snapshot()
+        run_snapshot(agent=args.agent)
     elif args.record:
         run_record(args)
     else:

@@ -39,6 +39,13 @@ MANUAL_AGENTS = {
 # Claude's decisions live in decisions/claude.json. claude_agent.py adds one each evening
 # when the ANTHROPIC_API_KEY secret is set; without it, Claude keeps its last position.
 CLAUDE_FILE = "decisions/claude.json"
+# Agents added to this arena after START. Each trades from the start date logs/starts.json gives it (the first
+# trading day after the nightly run first saw it) and is "Not started yet" before that. Added 13 Nov 2026:
+# the challenger, a second Claude agent that tests each evening's Claude decision before deciding for itself
+# (claude_agent.py). Its arguments are never shown to the first Claude agent.
+CHALLENGER = "Claude, challenged"
+CHALLENGER_FILE = "decisions/claude_challenger.json"
+NEWER = (CHALLENGER,)
 SAVE_CHART = "paper_arena.png"
 SAVE_LOG = "paper_arena_log.csv"
 # ==========================================================================
@@ -322,6 +329,23 @@ def load_claude_log():
         return sorted(json.load(f), key=lambda d: d["date"])
 
 
+def load_challenger_log():
+    """The challenger's saved decisions, oldest first (empty until its first one)."""
+    if not os.path.exists(CHALLENGER_FILE):
+        return []
+    with open(CHALLENGER_FILE, encoding="utf-8") as f:
+        return sorted(json.load(f), key=lambda d: d["date"])
+
+
+def start_of(name):
+    """A newer agent's planned first day from logs/starts.json, or None if the nightly run hasn't seen it yet."""
+    try:
+        import starts
+        return starts.start_of(name)
+    except Exception:
+        return None
+
+
 def build_agents(closes):
     nifty, idx = closes["NIFTY 50"], closes.index
     agents = {
@@ -338,6 +362,7 @@ def build_agents(closes):
         manual.setdefault("Claude", {}).update(claude)
     for name, decisions in manual.items():
         agents[name] = sig_manual(decisions, idx).to_frame("NIFTY 50")
+    agents[CHALLENGER] = sig_manual({d["date"]: d["position"] for d in load_challenger_log()}, idx).to_frame("NIFTY 50")
     return agents, manual
 
 
@@ -358,6 +383,7 @@ def compute(closes=None):
                    "sma5": sma(nifty, 5).iloc[-1], "rsi2": rsi(nifty, 2).iloc[-1]},
         "started": False,
         "claude_log": list(reversed(load_claude_log())),   # newest first
+        "challenger_log": list(reversed(load_challenger_log())),
     }
     if res["claude_log"]:
         d = res["claude_log"][0]
@@ -367,17 +393,41 @@ def compute(closes=None):
         if d.get("go_fully_in_if"):
             text += f" Goes fully in if {d['go_fully_in_if'].rstrip('.')}."
         res["why"]["Claude"] = text
+    if res["challenger_log"]:
+        d = res["challenger_log"][0]
+        first = d.get("challenged") or {}
+        kept = first.get("position") is not None and abs(float(first["position"]) - float(d["position"])) < 1e-9
+        res["why"][CHALLENGER] = (f"Latest decision ({d['date']}): {d['position']:.0%} in Nifty 50, "
+                                  f"{'the same as' if kept else 'against'} Claude's {float(first.get('position', 0)):.0%}. "
+                                  f"{d.get('summary', '')}").strip()
+    else:
+        res["why"][CHALLENGER] = ("Tests each evening's Claude decision, the case against it and the case for it, "
+                                  "then decides for itself. No decision yet.")
     started = idx[idx >= pd.Timestamp(START)]
     if len(started) == 0:  # paper trading has not begun yet
         res["plan"] = {name: label(W.iloc[-1]) for name, W in agents.items()}
         return res
 
     s0 = started[0]
-    rows, values, trades, positions = {}, {}, [], {}
+    rows, values, trades, positions, begins = {}, {}, [], {}, {}
     for name, W in agents.items():
-        eq = equity_since(W, R, s0)
+        first = s0
+        if name in NEWER:                                   # starts on its own date, not START
+            planned = start_of(name)
+            began = idx[idx >= planned] if planned is not None else idx[:0]
+            begins[name] = began[0] if len(began) else None
+            if not len(began):
+                values[name] = pd.Series(CAPITAL, index=idx[idx >= s0], dtype=float)
+                positions[name] = W.loc[s0:] * 0.0
+                rows[name] = {"holding": "Not started yet", "value": CAPITAL, "since_start": 0.0, "worst_fall": 0.0,
+                              "trades": 0, "today": None, "next": None, "start": planned}
+                continue
+            first = began[0]
+        eq = equity_since(W, R, first)
+        if first != s0:
+            eq = pd.concat([pd.Series(CAPITAL, index=idx[(idx >= s0) & (idx < first)], dtype=float), eq])
         values[name] = eq
-        P = W.shift(1).fillna(0.0).loc[s0:]                # position after each close
+        P = W.shift(1).fillna(0.0).loc[first:]             # position after each close
         prev = P.shift(1)
         prev.iloc[0] = 0.0                                  # all cash before the start
         changed = (P - prev).abs().sum(axis=1) > 1e-9
@@ -395,10 +445,15 @@ def compute(closes=None):
             "today": action_text(prev.iloc[-1], now, past=True) if changed.iloc[-1] else None,
             "next": action_text(now, plan) if (plan - now).abs().sum() > 1e-9 else None,
         }
+        if name in NEWER:
+            rows[name]["start"] = first
     board = pd.DataFrame(rows).T
     board["value"] = board["value"].astype(float)
-    res.update(started=True, s0=s0, days=len(idx[idx >= s0]),
-               board=board.sort_values("value", ascending=False),
+    first = pd.DataFrame({k: v for k, v in rows.items() if k not in NEWER}).T   # the board as it was before
+    first["value"] = first["value"].astype(float)                             # newer agents: Claude reads this
+    res.update(started=True, s0=s0, days=len(idx[idx >= s0]), begins=begins,
+               board=board.sort_values("value", ascending=False, kind="mergesort"),   # ties keep a fixed order
+               board_first=first.sort_values("value", ascending=False),
                values=pd.DataFrame(values),
                positions=positions,
                trades=sorted(trades, key=lambda t: (t["date"], t["agent"]), reverse=True))

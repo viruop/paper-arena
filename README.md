@@ -11,6 +11,7 @@ For learning only. Not investment advice. Nothing here places an order.
 | `paper_arena.py` | The arena: the agents, plus your own calls in `MANUAL_AGENTS` |
 | `claude_agent.py` | The Claude agent's decision: through a routine or the Claude API (see below) |
 | `decisions/claude.json` | Claude's saved decisions, with its reasons |
+| `decisions/claude_challenger.json` | The challenger's decisions: the case against each Claude decision, the case for it, and its own position |
 | `decisions/snapshots/` | The data behind each Claude decision (added automatically) |
 | `logbook.py` | Adds each new day to the permanent logs |
 | `fno_backtest.py` | Backtests thirteen Nifty futures and options strategies after costs |
@@ -219,6 +220,8 @@ The Telegram scheduled task adds to both every weekday night, using Claude's web
 
 After each weekday close, Claude looks at the latest prices and indicators, breadth and flows, every rule agent's signal, its own past decisions and the day's market news. It then picks 0, half or all in Nifty 50, with its reasons and the levels that would make it change its mind. The decision is saved in `decisions/claude.json` and filled at the next close.
 
+**The challenger** (added 13 Nov 2026) is a second Claude agent, "Claude, challenged", in the same arena. After each Claude decision it gets the same data and Claude's decision, argues the strongest case against that decision (as a sceptical risk manager) and the case for it, then decides its own position, 0, half or all in, and says which point decided it. Its decisions are in `decisions/claude_challenger.json`, with a snapshot of what it read next to Claude's (`<date>-challenger.txt`). Claude never sees the challenger's arguments, so Claude decides exactly as before, and the gap between the two agents is what a challenge adds. The challenger starts on the first trading day after the nightly run first sees it and is "Not started yet" before then. With the API key, the run asks both in turn; in a chat or a routine, the challenger is a separate agent that sees only Claude's decision, never its reasoning (see the `claude-agent-decision` skill).
+
 Choose one of the two options below, not both. If you use neither, message Claude in chat for a "Claude agent update" and paste the updated `claude.json` yourself.
 
 ### Option A: a Claude Code routine (uses a Claude plan, no API key)
@@ -246,8 +249,8 @@ Routine runs count toward your plan's usage, and the Pro plan allows a limited n
 That's all. The next weekday evening run makes the decision. Its log on the **Actions** tab, in the step "Claude agent decides", says what Claude decided, or why it didn't.
 
 - **Model:** Claude Opus 5.5 (`claude-opus-5-5`), set by `MODEL` in `claude_agent.py`. Its decisions are saved with the model `claude-opus-5-5 (API)`. The decisions made in chat were by Claude Opus 5.5 up to 9 Nov 2026 and by Claude Fable 5.2 from 11 Nov 2026; each decision records its model.
-- **Cost:** one Claude call and up to 3 web searches per evening. At current prices (Claude Opus 5.5 at $4 per million input tokens and $20 per million output tokens, and web search at $10 per 1,000 searches) that's roughly $3–8 a month. Usage is on the Console's Usage page.
-- **One decider:** once the key is set, the GitHub run makes every decision. Don't also use Option A, and don't upload `decisions/claude.json` from a chat: an older copy would erase the decisions the run saved.
+- **Cost:** two Claude calls (Claude, then the challenger) and up to 3 web searches each per evening. At current prices (Claude Opus 5.5 at $4 per million input tokens and $20 per million output tokens, and web search at $10 per 1,000 searches) that's roughly $6–16 a month. Usage is on the Console's Usage page.
+- **One decider:** once the key is set, the GitHub run makes every decision. Don't also use Option A, and don't upload `decisions/claude.json` or `decisions/claude_challenger.json` from a chat: an older copy would erase the decisions the run saved.
 - **Guardrails:** Claude only decides between a close and the next market open (a reply that arrives after the open isn't saved), can only choose 0, 0.5 or 1, and never touches real money. If the call fails or the credits run out, Claude keeps its last position.
 - **To stop:** delete the secret.
 

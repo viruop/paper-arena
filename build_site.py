@@ -431,7 +431,9 @@ def arena_chart_html(res):
     if not res["started"] or len(res["values"]) < 2:
         return ("<section aria-labelledby='val-h'><h2 id='val-h'>Value since the start</h2>"
                 "<p class='meta'>The chart appears after the second trading day of paper trading.</p></section>")
-    draw({n: res["values"][n] for n in res["values"].columns}, "arena")
+    begins = res.get("begins", {})          # agents added after the start: drawn from their own first day
+    draw({n: res["values"][n] if n not in begins else res["values"][n].loc[begins[n]:]
+          for n in res["values"].columns if n not in begins or begins[n] is not None}, "arena")
     return ("<section aria-labelledby='val-h'><h2 id='val-h'>Value since the start</h2><figure>"
             + picture("arena", "Line chart of each agent's virtual portfolio value since paper trading began")
             + "</figure></section>")
@@ -469,7 +471,51 @@ def claude_html(res):
             f"<p>{esc(d.get('summary', ''))}</p>{'<ul>' + reasons + '</ul>' if reasons else ''}{conds}</article>")
     return (f"<section aria-labelledby='cl-h'><h2 id='cl-h'>Claude's decisions</h2>{intro}{''.join(items)}"
             f"<p class='meta'>If no new decision appears after a close, the API key isn't set up or the call "
-            f"failed, and Claude keeps its last position.</p></section>")
+            f"failed, and Claude keeps its last position.</p>{challenger_html(res)}</section>")
+
+
+def conditions(d, tag="p"):
+    out = ""
+    if d.get("go_to_cash_if"):
+        out += f"<{tag} class='meta'>Goes to cash if {esc(d['go_to_cash_if'].rstrip('.'))}.</{tag}>"
+    if d.get("go_fully_in_if"):
+        out += f"<{tag} class='meta'>Goes fully in if {esc(d['go_fully_in_if'].rstrip('.'))}.</{tag}>"
+    return out
+
+
+def verdict_words(d):
+    """Whether the challenger kept Claude's position or changed it, in a few words."""
+    c = d.get("challenged") or {}
+    if c.get("position") is None:
+        return ""
+    if abs(float(c["position"]) - float(d["position"])) < 1e-9:
+        return "kept Claude’s position"
+    return f"changed Claude’s {float(c['position']):.0%}"
+
+
+def challenger_html(res):
+    """The challenger's decisions: the case against Claude's decision, the case for it, and what it decided."""
+    log = res.get("challenger_log") or []
+    intro = ("<p class='meta'>The challenger, “" + esc(pa.CHALLENGER) + "”, is a second Claude agent. After each Claude "
+             "decision it gets the same data and Claude’s decision, argues the case against it and the case for it, "
+             "then decides its own position. Claude never sees its arguments, so the difference between the two "
+             "agents is what the challenge adds.</p>")
+    if not log:
+        start = (res.get("begins") or {}).get(pa.CHALLENGER)
+        when = (f"It starts on {day(start)}." if start is not None else
+                "It starts on the first trading day after the nightly run first sees it.")
+        return f"<h3 class='sub-h'>The challenger</h3>{intro}<p class='meta'>No decisions yet. {when}</p>"
+    items = []
+    for d in log[:15]:
+        against = "".join(f"<li>{esc(x)}</li>" for x in d.get("against", []))
+        support = "".join(f"<li>{esc(x)}</li>" for x in d.get("for", []))
+        items.append(
+            f"<article class='decision'><h3>{day(pd.Timestamp(d['date']))}: {float(d['position']):.0%} in Nifty 50"
+            f"<span class='quiet'>, {esc(verdict_words(d))}</span></h3><p>{esc(d.get('summary', ''))}</p>"
+            f"<p class='meta'>The case against Claude’s decision:</p><ul>{against}</ul>"
+            f"<p class='meta'>The case for it:</p><ul>{support}</ul>"
+            f"<p class='meta'>Decided by: {esc(d.get('decided_by', ''))}</p>{conditions(d)}</article>")
+    return f"<h3 class='sub-h'>The challenger</h3>{intro}{''.join(items)}"
 
 
 def calls_html(res):
@@ -997,9 +1043,14 @@ def claude_latest_html(res):
         conds += f"<li>Goes to cash if {esc(d['go_to_cash_if'].rstrip('.'))}.</li>"
     if d.get("go_fully_in_if"):
         conds += f"<li>Goes fully in if {esc(d['go_fully_in_if'].rstrip('.'))}.</li>"
+    ch = next((c for c in (res.get("challenger_log") or []) if c["date"] == d["date"]), None)
+    challenge = ""
+    if ch is not None:
+        challenge = (f"<p class='meta'><b>The challenger</b> {esc(verdict_words(ch))}: {float(ch['position']):.0%} in "
+                     f"Nifty 50. {esc(ch.get('summary', ''))}</p>")
     return (f"<section aria-labelledby='cl-h'><h2 id='cl-h'>Claude’s latest call</h2>"
             f"<article class='decision'><h3>{day(pd.Timestamp(d['date']))}: {float(d['position']):.0%} in Nifty 50"
-            f"</h3><p>{esc(d.get('summary', ''))}</p><ul>{conds}</ul></article></section>")
+            f"</h3><p>{esc(d.get('summary', ''))}</p><ul>{conds}</ul>{challenge}</article></section>")
 
 
 # --------------------------------- market events ----------------------------------
