@@ -44,6 +44,10 @@ try:
     import real_money  # noqa: E402
 except ImportError:          # real_money.py or zerodha.py not uploaded yet
     real_money = None
+try:
+    import risk_engine  # noqa: E402
+except ImportError:          # risk_engine.py not uploaded yet
+    risk_engine = None
 import scorecard  # noqa: E402
 import signal_calls  # noqa: E402
 
@@ -238,6 +242,9 @@ section{margin-top:3rem}
 .board h2{color:var(--board-ink);padding:0 .25rem}
 .board .meta{color:var(--board-muted);padding:0 .25rem}
 .scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table.risk td{white-space:normal}table.risk td.r{white-space:nowrap}
+table.risk .sub2{display:block;font-size:.88rem;color:var(--muted);margin-top:.15rem;white-space:normal}
+table.risk .sub2.down{color:var(--down)}
 table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
 th,td{padding:.6rem .55rem;text-align:left;vertical-align:baseline;white-space:nowrap}
 th{font-weight:500;color:var(--muted);font-size:.9rem;border-bottom:1px solid var(--rule)}
@@ -522,6 +529,8 @@ def logs_html():
              ("data/events", "Market events", True, "the calendar of scheduled events and the log of what happened, "
                                                      "each with its source"),
              ("logs/starts.json", "Start dates", False, "when each newer agent started paper trading"),
+             ("logs/risk_orders.csv", "Risk engine decisions", False, "every paper order the risk engine checked, "
+                                                                       "and why it let it through or refused it"),
              ("data/berlin/telegram_posts.csv", "Telegram archive", False, "every Trade Like Berlin Telegram post, "
                                                                           "saved the night it appeared"),
              ("data/berlin/telegram_calls.csv", "Tagged calls", False, "which posts count as trade calls, and their levels"),
@@ -1672,8 +1681,63 @@ def shell(title, description, nav, header, main, built, live=False):
 """
 
 
+RISK_WORDS = {"costs": "charges too big next to the risk", "reward": "target too small after costs",
+              "market": "can't be traded from India as posted", "size": "account too small for one unit or lot",
+              "session": "outside market hours", "fresh price": "stale price", "price check": "price far from the market",
+              "stop": "no stop, or one on the wrong side", "short": "a delivery short", "target": "target already passed",
+              "trades today": "three trades already that day", "losses today": "two losses already that day",
+              "day loss": "4% already lost that day", "drawdown halt": "the account was halted",
+              "kill switch": "the kill switch was on", "repeat": "a repeat order", "order rate": "too many orders a minute",
+              "money": "not enough cash", "weight": "it would borrow", "position": "nothing to sell"}
+
+
+def risk_html(rk):
+    """The risk engine (risk_engine.py): every paper order checked as if it were real, and why it was refused."""
+    head = "<section aria-labelledby='risk-h'><h2 id='risk-h'>Risk engine</h2>"
+    if rk is None:
+        return head + "<p class='meta'>The risk engine’s log couldn’t be read tonight, or has no rows yet.</p></section>"
+    r, e = rk["rules"], rk["engine"]
+    intro = (f"<p>Before an order could ever reach a broker, plain code checks it against limits written down in "
+             f"advance, which no AI can talk its way past. The order ticket’s: a {inr(r['account'])} account, at most "
+             f"{r['riskPct']:g}% of it at risk on a trade, charges at most {r['maxCostPct']:g}% of that risk, a target "
+             f"worth at least {r['minRR']:g} times the stop after costs, at most {r['maxTrades']} trades and "
+             f"{r['maxLosses']} losses a day. The engine’s own: no new risk after losing {e['dayLossPct']:g}% in a day, "
+             f"a halt once the account is {e['drawdownPct']:g}% below its peak, prices checked for age and typos, no "
+             f"repeats. Each night it decides every order the paper strategies would have sent, each strategy in its "
+             f"own {inr(r['account'])} account, and logs the decision once. Nothing is sent anywhere.</p>")
+    if rk["kill"] is not None:
+        kill = (f"<p class='meta'><b>Kill switch: on</b> since {day(rk['kill'].tz_convert(IST))}, "
+                f"{rk['kill'].tz_convert(IST):%H:%M} (<code>data/real/HALT</code>). Orders that close a position still "
+                f"go through.</p>")
+    else:
+        kill = ("<p class='meta'><b>Kill switch: off.</b> To stop every new order, add a file named "
+                "<code>data/real/HALT</code> with the date and time on its first line; delete it to lift. Orders that "
+                "close a position always go through.</p>")
+    rows = []
+    for x in rk["streams"]:
+        why = ("Refused: " + ", ".join(f"{RISK_WORDS.get(k, k)} ({n})" for k, n in x["reasons"][:2])
+               if x["reasons"] else "Nothing refused")
+        worth = (f"worth {rs(x['value'])}" if x["value"] is not None and x["approved"] else
+                 {"trade": "no trade made", "allocation": "nothing bought"}.get(x.get("style"), "can’t be placed"))
+        halted = f"<span class='sub2 down'>{esc(x['halted'])}</span>" if x["halted"] else ""
+        rows.append(f"<tr><td>{esc(x['name'])}<span class='sub2'>{esc(why)}</span>{halted}</td>"
+                    f"<td class='r'>{x['approved']} of {x['orders']}<span class='sub2'>{worth}</span></td></tr>")
+    table = ("<table class='risk'><thead><tr><th>Strategy</th><th class='r'>Orders let through</th></tr></thead>"
+             "<tbody>" + "".join(rows) + "</tbody></table>")
+    skipped = rk.get("skipped") or {}
+    fno = [a for a, w in skipped.items() if w.startswith("an F&O agent")]
+    other = [f"{esc(a)} ({esc(w)})" for a, w in skipped.items() if not w.startswith("an F&O agent")]
+    if fno:
+        other.append(f"the {len(fno)} F&amp;O agents (lots and margin a {inr(r['account'])} account doesn’t have)")
+    left = f"<p class='meta'>Not checked yet: {'; '.join(other)}.</p>" if other else ""
+    note = ("<p class='meta'>“Worth now” is that strategy’s own account at the latest close, with the engine’s "
+            "quantities, slippage and Zerodha’s charges. The engine is a rehearsal: the same checks go in front of a "
+            "broker only after a strategy passes the luck test (REAL_MONEY.md, go/no-go step 4).</p>")
+    return head + intro + kill + table + left + note + "</section>"
+
+
 def page(res, bt_parts, ctx, fres=None, fbt=None, view=None, ares=None, abt=None, tg=None, st=None, sigs=(),
-         rm=None, nav="", built=None):
+         rm=None, nav="", built=None, rk=None):
     """The home page: every strategy on one board, Claude's call, market events and the details."""
     built = built or dt.datetime.now(IST)
     live = bool(rm and rm.get("started"))                 # real orders have been written down
@@ -1704,6 +1768,7 @@ def page(res, bt_parts, ctx, fres=None, fbt=None, view=None, ares=None, abt=None
 {more("Backtest since 2010", "How the Nifty rules did before paper trading", backtest_html(*bt_parts), solo=True)}
 {more("Your calls", "Add your own Nifty calls", calls_html(res), solo=True)}
 {more("Real money", "Your own orders at Zerodha, once there are any", "" if live else real_section, solo=True)}
+{more("Risk engine", "Every paper order checked against limits written down in advance", risk_html(rk) if risk_engine is not None else "", solo=True)}
 {more("Permanent record", "The logs and saved data behind this page", logs_html(), solo=True)}
 </section>"""
     return shell("Paper arena", "Rule-following agents and Claude trade Nifty with virtual money. For learning only.",
@@ -1818,11 +1883,17 @@ def main():
             rm = real_money.summary()
         except Exception as exc:  # the page still builds; the section says it couldn't be read
             print(f"  ! Real-money ledger skipped: {exc}")
+    rk = None
+    if risk_engine is not None:
+        try:
+            rk = risk_engine.summary()
+        except Exception as exc:  # the page still builds; the section says it couldn't be read
+            print(f"  ! Risk engine skipped: {exc}")
     view = logbook.merged(res, fres, ares)
     built, live = dt.datetime.now(IST), bool(rm and rm.get("started"))
     pages = site_pages(sigs, have_ticket())
     bar = lambda key: nav_html(pages, key)
-    write("index.html", page(res, bt_parts, ctx, fres, fbt, view, ares, abt, tg, st, sigs, rm, bar("home"), built))
+    write("index.html", page(res, bt_parts, ctx, fres, fbt, view, ares, abt, tg, st, sigs, rm, bar("home"), built, rk))
     boards = score_groups(res, fres, ares, tg, sigs)
     write("berlin.html", berlin_page(ares, abt, tg, st, bar("berlin"), built, live, boards["berlin"], view))
     for ch, sm in sigs:

@@ -25,6 +25,7 @@ For learning only. Not investment advice. Nothing here places an order.
 | `real_money.py` | The real-money ledger: checks it, values the account and compares it with the paper agent given the same money |
 | `data/real/orders.csv` | Orders you placed yourself at Zerodha, written down afterwards. Empty until you start |
 | `ticket.py` | The order ticket: a phone page that turns a call into a NIFTYBEES or MCX order with quantity, charges and rule checks |
+| `risk_engine.py` | The risk engine: the checks every order must pass before it could reach a broker, run each night on the paper strategies' orders (paper only) |
 | `channels.py` | The Telegram channels: saves every channel's posts every 30 minutes (to add a channel, add it here) |
 | `voice_notes.py` | Turns the channels' voice notes into English text every 30 minutes, with Whisper, a free open-source speech model |
 | `signal_calls.py` | Reads a signal channel's posts into signals by fixed rules, and paper trades them on one-minute prices |
@@ -168,6 +169,17 @@ Nothing in this repository places an order, and Claude doesn't either. If you tr
 `python real_money.py --check` checks the ledger, and `python zerodha.py` prints what a few typical orders cost. The charges in `zerodha.py` are Zerodha's as read on 11 Nov 2026; check [its list](https://zerodha.com/charges/) before relying on them. `REAL_MONEY.md` lists everything that still stands between paper results and real ones.
 
 The ledger is public, like the rest of the repository: it shows what you bought and sold and for how much, though not who you are. Never put a client id, PAN, bank detail or phone number in it. If you'd rather not publish your trades, leave the file empty; everything else works without it.
+
+## Risk engine (paper only)
+
+`risk_engine.py` holds the checks an order has to pass before it could ever reach a broker, in plain code that no AI can talk its way past. It never places an order. Each night it takes every order the paper strategies would have sent and decides it as if it were real, each strategy in its own ₹5,000 account, and adds the decision to `logs/risk_orders.csv`. A row is written once and never changed. The page shows the result under **Details → Risk engine**.
+
+- **Its limits.** The order ticket's, from `ticket.RULES` (written down on 11 Nov 2026): a ₹5,000 account, at most 2% of it at risk on a trade, charges and slippage at most 25% of that risk, a target worth at least 1.5 times the stop after costs, at most 3 trades and 2 losses a day. And its own, `ENGINE` (13 Nov 2026): no new risk after losing 4% in a day; a halt once the account is 10% below its peak, which only a person can lift; a price at most 10 minutes old for an intraday order (4 days for an end-of-day one) and within 0.5% of the last price; no repeat of the same order inside 15 minutes; at most 5 orders a minute; only markets an Indian resident can trade at Zerodha with saved prices (NIFTYBEES, GOLDBEES, SILVERBEES, and MCX contracts); market hours and NSE holidays from the event calendar. Limits are never loosened to let an order through: a change is a new dated version, and each row says which version decided it.
+- **Exits always go through.** An order that closes or reduces a position is never refused by a limit, a halt or the kill switch, so nothing can trap a position.
+- **The kill switch** is a file. To stop every new order, add a file named `data/real/HALT` on GitHub (Add file → Create new file) with the date and time on its first line, for example `2026-12-15 10:42`. Delete the file to lift it.
+- **What it checks tonight:** his Nifty calls copied onto NIFTYBEES (intraday), every ETF agent's switches (Buy & hold, 200-day trend, Claude, the gold and silver agents and others), his other calls and the signal channel's signals (refused: not tradable from India as posted). The F&O agents and anything holding a sector index or an MCX short aren't mapped onto an order yet; the page names them.
+- **The first result:** all six of his Nifty calls with levels were refused in a ₹5,000 account, because a 0.2% stop is so tight that charges and slippage come to 55% to 160% of the money at risk.
+- **From the command line:** `python risk_engine.py --check NIFTYBEES buy 288.20 --stop 286.00 --target 293.00` decides one order now and prints every check. It agrees with the order ticket's own sums: a test compares the two on 1,500 random orders.
 
 ## Start dates
 

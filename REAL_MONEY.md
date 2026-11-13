@@ -193,6 +193,17 @@ layer has to be built separately and fed by this one, not bolted onto it.
   account, and are closed when the account falls below the margin. The margin is a flat 12% of the lot's
   value (Zerodha asked 11.4% that day); real margins rise in a volatile market and aren't modelled, so a
   real account would be forced out sooner. The fractional agents keep running as the rule test.
+- 13 Nov 2026, 2.3 in part: a risk engine (risk_engine.py) with limits written down in advance: the
+  ticket's (₹5,000 account, 2% risk a trade, costs at most 25% of the risk, reward at least 1.5 times
+  the stop after costs, 3 trades and 2 losses a day) and its own (no new risk after a 4% day loss, a
+  halt at 10% below the peak that a person has to lift, stale and mistyped prices refused, no repeat
+  orders, at most 5 a minute, only Indian instruments with saved prices, market hours and NSE
+  holidays). Exits are never refused. The kill switch is the file data/real/HALT. It runs in paper
+  mode only: each night it decides every order the paper strategies would have sent and logs it once
+  (logs/risk_orders.csv). Its sums match the order ticket's on 1,500 random orders. Still open from
+  2.3: reconciliation against the broker's own statement, a spike filter on the 5-minute bars, and
+  the always-on machine to run it in front of a broker (2.4). First finding: all six of his Nifty
+  calls with levels were refused in a ₹5,000 account, on costs (55% to 160% of the money at risk).
 - 11 Nov 2026, 2.3 in part: the real-money ledger (real_money.py, data/real/orders.csv) compares
   the real account with the paper agent every night, from rows typed in from contract notes. It is
   a check by hand, not a reconciliation against the broker's own statement, and the ticket's loss
