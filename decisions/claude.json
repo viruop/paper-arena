@@ -220,5 +220,21 @@
     "model": "Claude Fable 5.2 (in chat)",
     "searches": 3,
     "made_at": "2026-11-12T19:50+05:30"
+  },
+  {
+    "date": "2026-11-13",
+    "position": 1.0,
+    "summary": "Staying fully in: Nifty slipped 0.6% to 25,144 on profit booking after a 10-session rally, with Brent back near $95 and a December Fed rate rise priced in, but it is still about 6% above its 20-day average, the plan's exit.",
+    "reasons": [
+      "Nifty closed at 25,144 (-0.61%), its first fall in four sessions, still 5.9% above its 20-day average (23,742) and 4.8% above its 200-day (23,991); the plan's exit, a close below the rising 20-day average, was not hit.",
+      "The fall was broad but shallow (Nifty Bank -0.8%, IT -0.7%, pharma -0.5%, midcaps flat) and was reported as profit booking, not a new shock; foreign investors bought a net Rs 7,831 crore on 12 Nov and Rs 41,356 crore over five sessions.",
+      "Risk: rates. US 10-year yields are at 5.13% with a December Fed rate rise fully priced in, and India's October inflation of 6.1%, above the RBI's 6% limit, raises the chance of another RBI rise; Brent rebounded to about $95.",
+      "Risk: Nifty is stretched, with RSI(14) at 75 after a 9.3% gain in a month, so a deeper pullback towards the 20-day average is possible; wholesale inflation comes on Monday 16 Nov. The rising 20-day average stays the exit."
+    ],
+    "go_to_cash_if": "Nifty closes below its 20-day average (about 23,750, rising)",
+    "go_fully_in_if": "Already fully in; stays in while Nifty holds above its 20-day average",
+    "model": "Claude Opus 5.5 (in chat)",
+    "searches": 3,
+    "made_at": "2026-11-13T21:06+05:30"
   }
 ]

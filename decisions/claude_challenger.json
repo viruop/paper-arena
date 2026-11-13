@@ -1,0 +1,27 @@
+[
+  {
+    "date": "2026-11-13",
+    "position": 1.0,
+    "summary": "Fully in like Claude: Nifty fell 0.61% to 25,144 on 6.09% CPI, Brent near $96 and profit taking but is 5.9% above its rising 20-day average, FIIs bought for a 10th straight day and 92% of Nifty stocks are above their 50-day; unlike Claude, I cut to half if FII buying turns or Brent tops $100.",
+    "challenged": {
+      "date": "2026-11-13",
+      "position": 1.0
+    },
+    "against": [
+      "Stretched with a far exit: Nifty is up 13.1% from its 8 Oct low (22,232), about 12% in two weeks, RSI(14) is 75 and it is 5.9% above its 20-day average; a fall to that exit, about 5.6% away, would cut Claude's +8.03% to about +2%, and the 50-day (23,350) is still below the 200-day (23,991).",
+      "Rates are rising at home and abroad: October CPI was 6.09% (food 8.94%), the first breach of the RBI's 6% limit in two years, with a hike expected at the 4 Dec meeting and WPI due 16 Nov; US core CPI beat (0.3% vs 0.2%), a December Fed rise is priced and the US 10-year is near 5%.",
+      "The rally's fuel is reversing and only foreigners are buying: Brent rebounded from $89.16 on 10 Nov to about $96.3 on 13 Nov after Houthi attacks on Saudi energy sites, while DIIs sold Rs 46,835 crore in November to 12 Nov and the SIP stoppage ratio hit 116%, leaving the market on fickle FII money."
+    ],
+    "for": [
+      "The trend is intact: Nifty is above its 20-day (+5.9%), 50-day (+7.7%) and 200-day (+4.8%) averages, the 20-day is rising about 110 points a session, and the bad-news day cost only 0.61%, with the low of 25,054 holding 25,000 and midcaps and smallcaps down just 0.2% and 0.3%.",
+      "Breadth thrust: on 11 Nov, 92% of Nifty 50 stocks were above their 50-day average and 62% above their 200-day, against 14% and 10% a month earlier; such broad recoveries from washed-out levels usually start lasting advances, and overbought readings after them tend to be worked off sideways.",
+      "Foreign money keeps coming through bad news: FIIs bought a net Rs 5,737 crore on 13 Nov (provisional), their 10th straight buying session, after Rs 41,356 crore in the five sessions to 12 Nov, about Rs 81,300 crore in November so far, more than absorbing DII selling."
+    ],
+    "decided_by": "FIIs bought a net Rs 5,737 crore on 13 Nov, their 10th straight buying session, on the day CPI broke the RBI's 6% limit and Brent rose to about $96; the case against needs rates and oil to drive foreign money out, which has not begun, so RSI(14) of 75 points to a pause, not an exit.",
+    "go_to_cash_if": "Nifty closes below its 20-day average (about 23,750 tonight, rising roughly 100 points a session while Nifty holds near 25,100).",
+    "go_fully_in_if": "Already fully in. Cut to half if FIIs net sell 3 sessions running or Brent settles above $100; back to full when FIIs buy 3 sessions or Brent is below $95, with Nifty above its 20-day.",
+    "model": "Claude Opus 5.5 (challenger agent)",
+    "searches": 3,
+    "made_at": "2026-11-13T21:16+05:30"
+  }
+]
