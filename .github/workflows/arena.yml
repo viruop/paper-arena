@@ -59,6 +59,10 @@ jobs:
       - name: Add the newest days to the permanent logs
         run: python logbook.py
 
+      - name: Check the paper orders against the risk engine (paper only, it never places an order)
+        continue-on-error: true   # a problem here never stops the logs or the page
+        run: python risk_engine.py
+
       - name: Save decisions, logs and option prices
         run: |
           if [ -n "$(git status --porcelain decisions logs data)" ]; then
