@@ -231,3 +231,57 @@ id,posted_at,reviewed_at,decision,call_id,note
 78021,2026-11-11T14:46:08Z,2026-11-11T17:46:04Z,claim,77949,"recap of recent trades: claims added for calls 77949, 77950, 77971, 77985, 77988; the Sensex/Nifty day trade is the untagged short of post 78007"
 78022,2026-11-11T14:52:45Z,2026-11-11T17:46:04Z,other,,comment on the recap
 78023,2026-11-11T17:32:06Z,2026-11-11T17:46:04Z,call,78023,"BTC re-entry, second entry, same target and stop as call 77988"
+78024,2026-11-11T17:39:23Z,2026-11-13T05:15:00Z,other,,plans another crude entry and will post it; no position
+78025,2026-11-11T17:42:52Z,2026-11-13T05:15:00Z,other,,"crude chart, no level"
+78026,2026-11-11T17:43:36Z,2026-11-13T05:15:00Z,other,,"crude falling from the Fibonacci golden zone; would join the trend if the fall gets sharp: conditional, no level, no position"
+78027,2026-11-11T17:44:59Z,2026-11-13T05:15:00Z,other,78023,says the Bitcoin position's stop would cost him about Rs 3 lakh; no change to call 78023
+78028,2026-11-11T18:50:28Z,2026-11-13T05:15:00Z,other,78023,"holding Bitcoin longs (call 78023) for 1:8RR+, three entries planned on the setup; no new entry or level"
+78029,2026-11-11T19:04:38Z,2026-11-13T05:15:00Z,other,,link to his X post
+78030,2026-11-11T19:05:02Z,2026-11-13T05:15:00Z,other,,asks for questions in the X comments
+78031,2026-11-12T07:49:36Z,2026-11-13T05:15:00Z,other,,"""EXPIRY TRADE ZONE"" chart for the Sensex expiry (trade on a breakout or breakdown); plan, no position"
+78032,2026-11-12T07:50:27Z,2026-11-13T05:15:00Z,other,,says a breakout or breakdown can give 150-200% in ATM/OTM options; no position
+78033,2026-11-12T07:53:05Z,2026-11-13T05:15:00Z,other,,"Bank Nifty up 0.85%, may fall if it respects the sell zone; forecast"
+78034,2026-11-12T07:56:22Z,2026-11-13T05:15:00Z,other,,"Bank Nifty 15-minute chart: would look to sell below his red line (level only on the image); plan, no position"
+78035,2026-11-12T08:08:51Z,2026-11-13T05:15:00Z,other,,voice note: explains the Sensex expiry zone (breakout or breakdown) and the Bank Nifty chart; no position
+78036,2026-11-12T08:12:38Z,2026-11-13T05:15:00Z,other,,"near the breakout area, stay alert; no position yet"
+78037,2026-11-12T08:17:24Z,2026-11-13T05:15:00Z,other,,reply to a follower: not looking to sell unless his red line breaks; no position
+78039,2026-11-12T08:22:39Z,2026-11-13T05:15:00Z,call,78039,"Sensex expiry-day breakout long, entered at the post; levels only on his chart (option kind)"
+78040,2026-11-12T08:25:57Z,2026-11-13T05:15:00Z,other,78039,chart of call 78039; levels only on the image
+78041,2026-11-12T08:26:31Z,2026-11-13T05:15:00Z,other,78039,"part of call 78039: 1:3RR on the chart, 1:4RR in the option"
+78042,2026-11-12T08:29:43Z,2026-11-13T05:15:00Z,update,78039,"""Stopped out!"": exit and claim for call 78039"
+78043,2026-11-12T08:29:58Z,2026-11-13T05:15:00Z,other,78039,"screenshot, no text"
+78044,2026-11-12T08:30:10Z,2026-11-13T05:15:00Z,other,78039,says call 78039 was traded with an ATM option
+78045,2026-11-12T08:37:57Z,2026-11-13T05:15:00Z,other,78039,plans one more entry on the same setup; no position yet
+78046,2026-11-12T08:40:57Z,2026-11-13T05:15:00Z,other,,"voice note: took one stop, plans one more entry and is done for this expiry if that fails; no position"
+78047,2026-11-12T08:44:27Z,2026-11-13T05:15:00Z,other,,"banks gaining, Sensex may target the 82000 call writers; forecast"
+78048,2026-11-12T08:45:05Z,2026-11-13T05:15:00Z,other,,option-chain data image
+78049,2026-11-12T08:48:05Z,2026-11-13T05:15:00Z,other,,"voice note: open interest at the 82000 strike, two scenarios; forecast, no position"
+78050,2026-11-12T08:50:14Z,2026-11-13T05:15:00Z,other,,points to the voice note
+78051,2026-11-12T09:45:32Z,2026-11-13T05:15:00Z,other,,comment on the 82000 CE before the closing auction
+78052,2026-11-12T09:46:21Z,2026-11-13T05:15:00Z,other,,data comment: 20 lakh contracts covered at the 82000 CE
+78053,2026-11-12T09:46:54Z,2026-11-13T05:15:00Z,other,,says he is not re-entering (it would be a luck trade)
+78054,2026-11-12T09:47:41Z,2026-11-13T05:15:00Z,other,,forecast: Sensex closing auction near 82000
+78055,2026-11-12T16:52:43Z,2026-11-13T05:15:00Z,call,78055,crude oil long entered at the post; stop and target from his video (post 78059)
+78056,2026-11-12T16:54:00Z,2026-11-13T05:15:00Z,other,78055,"screenshot of WTI at 87.693 for call 78055 (price_ref, as shown in his video)"
+78057,2026-11-12T16:54:23Z,2026-11-13T05:15:00Z,other,78055,screenshot of the MCX crude price for call 78055
+78058,2026-11-12T17:47:58Z,2026-11-13T05:15:00Z,other,78055,"holding call 78055, video coming"
+78059,2026-11-12T17:56:21Z,2026-11-13T05:15:00Z,update,78055,"video read in chat: long from 87.600 on WTI, stop 86.563, target 92.065 (RR 4.31); recaps his two earlier crude trades (claim added for call 77985; the numbers for call 77897 are unclear in the machine translation)"
+78060,2026-11-12T17:57:40Z,2026-11-13T05:15:00Z,needs levels,78055,"""Mapping and positioning."" chart of call 78055, with ""Risk to reward ratio 1:5.5"" (post 78062) where his video's box says 4.31: the image may show a different target or entry and can't be read here"
+78061,2026-11-12T17:58:01Z,2026-11-13T05:15:00Z,other,78055,asks followers to watch the video
+78062,2026-11-12T17:58:29Z,2026-11-13T05:15:00Z,other,78055,RR 1:5.5 for the chart in post 78060 (see that post)
+78063,2026-11-12T18:06:45Z,2026-11-13T05:15:00Z,other,,link to his X post
+78064,2026-11-12T18:07:07Z,2026-11-13T05:15:00Z,other,,asks for doubts in the X comments
+78065,2026-11-12T18:08:26Z,2026-11-13T05:15:00Z,other,78055,"""Position."" screenshot of his position for call 78055; no level"
+78066,2026-11-12T18:12:03Z,2026-11-13T05:15:00Z,claim,78055,voice note: open option profit on call 78055; holding for the bigger target
+78067,2026-11-12T18:14:30Z,2026-11-13T05:15:00Z,other,78055,"chart: price at the previous swing high, ""a very crucial area for this trade""; no change"
+78068,2026-11-12T18:14:36Z,2026-11-13T05:15:00Z,other,,link to his X post
+78069,2026-11-12T18:22:34Z,2026-11-13T05:15:00Z,other,78055,points to the video
+78070,2026-11-12T18:23:56Z,2026-11-13T05:15:00Z,other,78055,voice note: watch the 13-minute video for why he holds for the bigger target; no change
+78071,2026-11-13T04:34:41Z,2026-11-13T05:15:00Z,other,78055,"""All eyes on crudeoil!""; no change"
+78072,2026-11-13T04:36:03Z,2026-11-13T05:15:00Z,claim,78055,"claims crude reached 50% of the target overnight (+3.10%), then retraced by MCX's open; call still open"
+78073,2026-11-13T04:36:43Z,2026-11-13T05:15:00Z,other,78055,"image, no text"
+78074,2026-11-13T04:39:15Z,2026-11-13T05:15:00Z,other,,voice note: general advice on only taking trades whose reward can be fully used; no change
+78060,2026-11-12T17:57:40Z,2026-11-13T05:22:00Z,other,78055,"settled with the user's screenshot of the chart: the same position box as his video (entry 87.600, stop 86.563, target 92.065, RR 4.31); the 1:5.5 in post 78062 doesn't come from a different level on the chart"
+78007,2026-11-11T07:02:59Z,2026-11-13T05:30:00Z,call,78007,"settled with the user's screenshot of the chart: Nifty short box (entry 25,367.90, stop 25,396.70, target 25,256.30); the post came after the breakdown, so the entry is taken at the post"
+78014,2026-11-11T08:03:29Z,2026-11-13T05:30:00Z,update,78007,"""Covering intraday shorts here!"": exit of call 78007 (tagged on 13 Nov from the user's screenshot)"
+78021,2026-11-11T14:46:08Z,2026-11-13T05:30:00Z,claim,77949,"recap of recent trades: claims for calls 77949, 77950, 77971, 77985, 77988 and, added 13 Nov, 78007 (the Sensex/Nifty day trade)"
