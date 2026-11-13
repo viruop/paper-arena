@@ -1,3 +1,4 @@
 id,posted_at,reviewed_at,decision,call_id,note
 19048,2026-11-06T11:08:52Z,2026-11-06T17:39:00Z,other,,"Read by Claude: voice note, says gold is choppy, will hedge around NFP and go live at 6 pm; no levels, no open signal"
 19116,2026-11-11T05:57:42Z,2026-11-11T17:46:04Z,update,19114,"Read by Claude: ""Trade is close to our Target, Start booking and go Breakeven"", 11 minutes after GOLD SELL 19114, the only open signal; stop to breakeven (partial booking not modelled)"
+19155,2026-11-13T05:23:07Z,2026-11-13T17:39:00Z,signal,19155,"Read by Claude: gold sell; stop 3919.87 and target 3913.0 in reply post 19156, 48 seconds later; added to claude_calls.csv"

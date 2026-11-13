@@ -1,0 +1,2 @@
+id,posted_at,kind,instrument,side,entry_type,entry,stop,target,rr,horizon,event_at,exit_at,price_ref,scorable,note
+19155,2026-11-13T05:23:07Z,signal,XAUUSD,short,market,,3919.87,3913.0,,scalp,,,,yes,"Read by Claude: posts 19155+19156: ""Sell now"" (reply to his gold chart, posts 19152-19154) then ""3919.87 is Stoploss / Target :-3913.0"" 48 seconds later, before the next-minute fill; gold from the chart thread and the price (COMEX gold futures traded 3918-3922 in that 5-minute bar)"
