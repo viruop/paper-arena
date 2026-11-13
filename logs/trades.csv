@@ -42,3 +42,6 @@ date,agent,trade,nifty_close
 2026-11-12,Futures trend (whole lots),"Bought 1 lot of futures at the open, 25,214",25299.35
 2026-11-12,Intraday futures,"Bought at the open 25,214, closed at 25,299: +Rs 869",25299.35
 2026-11-12,Intraday short straddle,"Sold the 25,200 straddle at 437.5, bought back at 365.6: +Rs 774",25299.35
+2026-11-13,Futures trend (whole lots),"Bought 1 lot of futures at the open, 25,210",25144.30
+2026-11-13,Intraday futures,"Bought at the open 25,210, stopped out at 25,084: -Rs 1,938",25144.30
+2026-11-13,Intraday short straddle,"Sold the 25,200 straddle at 365.2, bought back at 276.6: +Rs 971",25144.30
