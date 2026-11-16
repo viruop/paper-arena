@@ -279,3 +279,30 @@ date,agent,holding,value,since_start,trade,nifty_close
 2026-11-13,Weekly option buying (whole lots),Cash,100023.13,0.000231,,25144.30
 2026-11-13,Weekly short strangle,"Short 25,550 CE + Short 24,500 PE, expiry 17 Nov",93226.36,-0.067736,,25144.30
 2026-11-13,Weekly short strangle (whole lots),Cash,100023.13,0.000231,,25144.30
+2026-11-16,200-day trend,NIFTY 50,101176.06,0.011761,,25291.10
+2026-11-16,3-day rule + US filter (control),NIFTYBEES,110739.03,0.107390,,25291.10
+2026-11-16,Buy & hold,NIFTY 50,111796.37,0.117964,,25291.10
+2026-11-16,Cash only,Cash,100373.62,0.003736,,25291.10
+2026-11-16,Claude,NIFTY 50,108659.01,0.086590,,25291.10
+2026-11-16,"Claude, challenged",NIFTY 50,100000.00,0.000000,Bought NIFTY 50,25291.10
+2026-11-16,Futures trend (long/short),Long futures (3x),82502.52,-0.174975,,25291.10
+2026-11-16,Futures trend (whole lots),Long 1 lot of futures,100855.00,0.008550,,25291.10
+2026-11-16,Gold breakdown short (control),Short gold (Gold Petal),106506.87,0.065069,,25291.10
+2026-11-16,Gold breakout,Cash,100280.08,0.002801,,25291.10
+2026-11-16,Gold/silver reversion,SILVERBEES,87428.79,-0.125712,,25291.10
+2026-11-16,Gold/silver trend,GOLDBEES,93916.68,-0.060833,,25291.10
+2026-11-16,Golden cross,Cash,100373.62,0.003736,,25291.10
+2026-11-16,Intraday futures,Nothing overnight,104941.82,0.049418,"Bought at the open 25,206, closed at 25,291: +Rs 834",25291.10
+2026-11-16,Intraday short straddle,Nothing overnight,99414.67,-0.005853,"Sold the 25,200 straddle at 263.0, bought back at 182.7: +Rs 903",25291.10
+2026-11-16,Low-VIX long straddle,Cash,100324.24,0.003242,,25291.10
+2026-11-16,Momentum rotation,NIFTY PHARMA,110822.73,0.108227,,25291.10
+2026-11-16,Nifty-gold switch,NIFTYBEES,110739.03,0.107390,,25291.10
+2026-11-16,RSI(2) dip-buy,Cash,100373.62,0.003736,,25291.10
+2026-11-16,Weekly ITM option buying,Cash,100069.39,0.000694,,25291.10
+2026-11-16,Weekly OTM option buying,Cash,100069.39,0.000694,,25291.10
+2026-11-16,Weekly iron condor,"Short 25,550 CE + Short 24,500 PE + Long 26,050 CE + Long 24,000 PE, expiry 17 Nov",95795.54,-0.042045,,25291.10
+2026-11-16,Weekly iron condor (whole lots),Cash,100069.39,0.000694,,25291.10
+2026-11-16,Weekly option buying,"Long 25,050 CE, expiry 17 Nov",122188.16,0.221882,,25291.10
+2026-11-16,Weekly option buying (whole lots),Cash,100069.39,0.000694,,25291.10
+2026-11-16,Weekly short strangle,"Short 25,550 CE + Short 24,500 PE, expiry 17 Nov",93446.97,-0.065530,,25291.10
+2026-11-16,Weekly short strangle (whole lots),Cash,100069.39,0.000694,,25291.10

@@ -42,3 +42,7 @@ akash:19142,akash,2026-11-12T11:02:39Z,XAUUSD,buy,open,,,,,0,,,,,,refused,market
 akash:19146,akash,2026-11-12T13:31:22Z,XAUUSD,buy,open,,,,,0,,,,,,refused,market,XAUUSD is an offshore CFD: not allowed from India,,,,,,2026-11-13,2026-11-13T09:16:13Z
 akash:19168,akash,2026-11-13T12:04:23Z,XAUUSD,sell,open,,,,,0,,,,,,refused,market,XAUUSD is an offshore CFD: not allowed from India,,,,,,2026-11-13,2026-11-13T16:00:35Z
 akash:19155,akash,2026-11-13T05:23:07Z,XAUUSD,sell,open,,,,,0,,,,,,refused,market,XAUUSD is an offshore CFD: not allowed from India,,,,,,2026-11-13,2026-11-13T18:03:03Z
+agent-gold-silver-reversion:halt,agent-gold-silver-reversion,2026-11-16T09:59:00Z,,,halt,,,,,0,,,,,,halt,drawdown halt,"halted on 16 Nov 2026: Rs 4,378 is 12.4% below the peak of Rs 5,000",4377.82,,,,4377.82,2026-11-13,2026-11-16T13:49:59Z
+agent-claude-challenged:2026-11-16:buy-NIFTYBEES,agent-claude-challenged,2026-11-16T09:59:00Z,NIFTYBEES,buy,open,CNC,287.61,,,17,4889.37,,1.18,0.0,,approved,,,5000.00,,,,4998.82,2026-11-13,2026-11-16T13:49:59Z
+akash:19193,akash,2026-11-15T04:32:31Z,BTCUSD,sell,open,,,,,0,,,,,,refused,market,BTCUSD is an offshore CFD: not allowed from India,,,,,,2026-11-13,2026-11-16T13:49:59Z
+akash:19208,akash,2026-11-16T09:16:22Z,XAUUSD,buy,open,,,,,0,,,,,,refused,market,XAUUSD is an offshore CFD: not allowed from India,,,,,,2026-11-13,2026-11-16T13:49:59Z
