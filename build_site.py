@@ -45,6 +45,10 @@ try:
 except ImportError:          # real_money.py or zerodha.py not uploaded yet
     real_money = None
 try:
+    import data_health  # noqa: E402
+except Exception:  # the page builds without the data checks
+    data_health = None
+try:
     import risk_engine  # noqa: E402
 except ImportError:          # risk_engine.py not uploaded yet
     risk_engine = None
@@ -96,6 +100,42 @@ def tone(v):
 
 def day(d):
     return f"{d.day} {d:%b %Y}"
+
+
+EVIDENCE = {   # how each set of numbers was made, weakest evidence first (written 16 Nov 2026)
+    "model": ("Backtest, model prices", "a test on past data with option prices worked out by a formula (from India "
+                                        "VIX), not prices anyone traded at"),
+    "history": ("Backtest, real prices", "a test on past data at real closing prices, with costs; the rules were "
+                                         "chosen knowing that past, and fills are assumed at the close"),
+    "paper": ("Paper, simulated fills", "each day decided before the result was known and filled at that day’s "
+                                        "prices with costs added; no order was placed"),
+    "lots": ("Paper, whole lots", "paper trading in real lot sizes, with margin"),
+    "shadow": ("Shadow mode", "orders checked as if real but never sent to a broker"),
+    "broker": ("Broker sandbox", "tested on a broker’s test system: nothing here yet"),
+    "live": ("Live", "real orders placed by a system: nothing here, and only after every step of REAL_MONEY.md’s "
+                     "go/no-go list"),
+}
+GROUP_EVIDENCE = {"Nifty 50 agents and Claude": "paper", "Gold and multi-asset": "paper",
+                  "F&amp;O (3x leverage)": "paper", "His strategies and calls": "paper",
+                  "His signals, paper traded": "paper"}
+
+
+def tag(kind):
+    """A small label saying how a set of numbers was made (EVIDENCE)."""
+    return f"<span class='tag'>{esc(EVIDENCE[kind][0])}</span>"
+
+
+def evidence_html():
+    items = "; ".join(f"<b>{esc(w)}</b>: {esc(d)}" for w, d in EVIDENCE.values())
+    return ("<details class='mini'><summary>What the labels mean</summary><p class='meta'>Each set of numbers is "
+            f"labelled by how it was made, weakest evidence first. {items}. A good result never moves a strategy up "
+            "this list; only the steps in REAL_MONEY.md do.</p></details>")
+
+
+def worst_fall(values):
+    """The largest fall from a peak, as a negative share (0 if it never fell)."""
+    v = pd.to_numeric(values, errors="coerce").dropna()
+    return float((v / v.cummax() - 1).min()) if len(v) else 0.0
 
 
 # --------------------------------- charts ---------------------------------------
@@ -245,6 +285,10 @@ section{margin-top:3rem}
 table.risk td{white-space:normal}table.risk td.r{white-space:nowrap}
 table.risk .sub2{display:block;font-size:.88rem;color:var(--muted);margin-top:.15rem;white-space:normal}
 table.risk .sub2.down{color:var(--down)}
+.tag{display:inline-block;font:500 .74rem/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;letter-spacing:0;padding:0 .5rem;
+margin:.1rem 0 0 .35rem;border:1px solid var(--rule);border-radius:999px;color:var(--muted);vertical-align:middle;white-space:nowrap}
+.scoreboard .tag{border-color:var(--board-rule);color:var(--board-muted)}
+.scoreboard tr.grp td{white-space:normal}
 table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
 th,td{padding:.6rem .55rem;text-align:left;vertical-align:baseline;white-space:nowrap}
 th{font-weight:500;color:var(--muted);font-size:.9rem;border-bottom:1px solid var(--rule)}
@@ -499,7 +543,8 @@ def challenger_html(res):
     intro = ("<p class='meta'>The challenger, “" + esc(pa.CHALLENGER) + "”, is a second Claude agent. After each Claude "
              "decision it gets the same data and Claude’s decision, argues the case against it and the case for it, "
              "then decides its own position. Claude never sees its arguments, so the difference between the two "
-             "agents is what the challenge adds.</p>")
+             "agents is what the challenge adds. It isn’t an independent check: it is the same model and reads "
+             "Claude’s decision first, so when the two agree that is one view, not two.</p>")
     if not log:
         start = (res.get("begins") or {}).get(pa.CHALLENGER)
         when = (f"It starts on {day(start)}." if start is not None else
@@ -538,18 +583,88 @@ def calls_html(res):
 
 
 def drift_html(view):
+    """Saved rows that tonight's replay values differently, each with what it was saved with when that was
+    recorded (logs/provenance.csv, from 16 Nov 2026). The saved log stays the official record."""
     found = logbook.drift(view)
     if not found:
         return ""
     span = (day(found['first']) if found['first'] == found['last']
             else f"{day(found['first'])} to {day(found['last'])}")
-    return (f"<p class='meta'>Note: tonight’s replay differs from the saved log on {found['rows']} "
-            f"{'row' if found['rows'] == 1 else 'rows'}, all on {span} and all "
-            f"{'F&amp;O agents' if found['fno_only'] else 'in ' + esc(', '.join(found['agents']))} "
-            f"(largest {inr(found['largest'])}, {esc(found['agent'])} on {day(found['date'])}). Those rows were saved "
-            f"the night they happened, before NSE’s option prices for the day had arrived, so they used estimated "
-            f"prices; the replay uses the real ones. Saved rows are never rewritten, so the saved log stays the "
-            f"official record and this note stays with it. Rows after {day(found['last'])} match.</p>")
+    try:
+        saved_with = logbook.provenance()
+    except Exception:  # the note still shows without it
+        saved_with = {}
+    rows = []
+    for r in found.get("list", []):
+        p = saved_with.get((r["date"].date().isoformat(), r["arena"]))
+        how = (f"{p['prices']}; data {p['data'] or 'not found'}, code {p['commit']}" if p else
+               "not recorded (saved before 16 Nov 2026)")
+        gap = r["replay"] - r["saved"]
+        rows.append(f"<tr><td>{day(r['date'])}<span class='sub2'>{esc(r['agent'])}</span>"
+                    f"<span class='sub2'>Saved with: {esc(how)}</span></td>"
+                    f"<td class='r'>{rs(r['saved'])}<span class='sub2'>replay {rs(r['replay'])}</span>"
+                    f"<span class='sub2 {tone(gap)}'>{rs(gap, signed=True)}</span></td></tr>")
+    n, k = found["rows"], len(found["agents"])
+    table = (f"<details class='mini'><summary>Every row that differs ({n})</summary><div class='scroll'>"
+             f"<table class='risk'><thead><tr><th>Day and strategy</th><th class='r'>Saved, replay</th></tr></thead>"
+             f"<tbody>{''.join(rows)}</tbody></table></div></details>") if rows else ""
+    return (f"<p class='meta'>Note: tonight’s replay differs from the saved log on {n} "
+            f"{'row' if n == 1 else 'rows'}, {span}, in {k} {'strategy' if k == 1 else 'strategies'} "
+            f"(largest {inr(found['largest'])}, {esc(found['agent'])} on {day(found['date'])}). Saved rows are never "
+            f"rewritten, so the saved log stays the official record and this note stays with it. A difference means "
+            f"something a row was built from changed after the night it was saved: estimated option prices later "
+            f"replaced by NSE’s, a price revised or arriving late at its source, or a change in the code. Since "
+            f"16 Nov 2026 each saved day records its prices, a version of the price files and the code’s commit "
+            f"(logs/provenance.csv), so a new difference can be traced to its cause.</p>{table}")
+
+
+def data_html(dh):
+    """The nightly data checks (data_health.py) and the last runs (logs/runs.csv)."""
+    if not dh:
+        return ""
+    when = dh["checked"].tz_convert(IST)
+    verdict = ("all passed" if not dh["failed"] and not dh["warnings"] else
+               ", ".join(x for x in (f"{dh['failed']} failed" if dh["failed"] else "",
+                                     f"{dh['warnings']} to look at" if dh["warnings"] else "") if x))
+    intro = (f"<p>Every night each saved price file is checked before anything is built on it: fresh (its last day "
+             f"is the last session that has closed), complete (no NSE session missing), clean (dates unique and in "
+             f"order, no zero or negative price, no high below its low, no unexplained jump) and, for Nifty 50, two "
+             f"sources agreeing within 0.05%. Checked {day(when)}, {when:%H:%M}: {verdict}. A failed check doesn’t "
+             f"stop the run: the arenas never add a day they have no price for, and the risk engine refuses an order "
+             f"on a stale price. The version is the first 12 characters of the file’s SHA-256: the same version is "
+             f"the same data.</p>")
+    rows = []
+    for f in dh["files"]:
+        words = f["problems"] + f["warnings"]
+        state = ("down", "Failed: ") if f["problems"] else ("", "To look at: ") if f["warnings"] else ("", "")
+        status = f"<span class='sub2 {state[0]}'>{state[1]}{esc('; '.join(words))}</span>" if words else ""
+        last = day(f["last"]) if f["last"] is not None else "–"
+        rows.append(f"<tr><td>{esc(f['name'])}<span class='sub2'>{f['rows']:,} rows · version "
+                    f"{esc(f['version'] or '–')}</span>{status}</td><td class='r'>{last}</td></tr>")
+    table = ("<div class='scroll'><table class='risk'><thead><tr><th>Saved prices</th><th class='r'>Last day</th>"
+             "</tr></thead><tbody>" + "".join(rows) + "</tbody></table></div>")
+    runs = []
+    for r in dh.get("runs") or []:
+        started = pd.Timestamp(r["started"]).tz_convert(IST) if r.get("started") else None
+        if started is None:
+            continue
+        what = {"schedule": "Scheduled", "push": "After an upload", "workflow_dispatch": "Started by hand"}.get(
+            r.get("trigger"), r.get("trigger") or "")
+        late = (f", {int(r['late_min'])} min after its schedule" if str(r.get("late_min", "")).lstrip("-").isdigit()
+                else "")
+        bad = int(r["failed"]) if str(r.get("failed", "")).isdigit() else 0
+        checks = "checks passed" if not bad else f"{bad} failed"
+        runs.append(f"<tr><td>{day(started)}, {started:%H:%M}<span class='sub2'>{esc(what + late)}</span></td>"
+                    f"<td class='r'>{checks}<span class='sub2'>code {esc(r.get('commit') or '–')}</span></td></tr>")
+    v = dh["versions"]
+    runs_html = (("<h3>The last runs</h3><div class='scroll'><table class='risk'><thead><tr><th>Started</th>"
+                  "<th class='r'>Data checks</th></tr></thead><tbody>" + "".join(runs) + "</tbody></table></div>"
+                  "<p class='meta'>GitHub’s scheduled runs often start late, so each run records when it started "
+                  "against its schedule. A late run is fine for a record kept after the close; it would not be "
+                  "for placing an order (REAL_MONEY.md 2.4).</p>") if runs else "")
+    return (f"<section aria-labelledby='data-h'><h2 id='data-h'>Data checks</h2>{intro}{table}{runs_html}"
+            f"<p class='meta'>Built with Python {esc(v['python'])}, pandas {esc(v['pandas'])} and numpy "
+            f"{esc(v['numpy'])} (pinned in requirements.txt).</p></section>")
 
 
 def logs_html():
@@ -575,6 +690,11 @@ def logs_html():
              ("data/events", "Market events", True, "the calendar of scheduled events and the log of what happened, "
                                                      "each with its source"),
              ("logs/starts.json", "Start dates", False, "when each newer agent started paper trading"),
+             ("logs/provenance.csv", "What each day was built from", False, "for each group and day saved since "
+                                                                            "16 Nov 2026: its prices, their version, "
+                                                                            "and the code’s commit"),
+             ("logs/runs.csv", "Runs", False, "every nightly run: when it started against its schedule, its code "
+                                               "and package versions, and the data checks"),
              ("logs/risk_orders.csv", "Risk engine decisions", False, "every paper order the risk engine checked, "
                                                                        "and why it let it through or refused it"),
              ("data/berlin/telegram_posts.csv", "Telegram archive", False, "every Trade Like Berlin Telegram post, "
@@ -620,7 +740,7 @@ def fno_backtest_html(fbt):
             ret = f"{pct(r['low'], True, 0)} to {pct(r['high'], True, 0)}"
         items.append(f"<li><strong>{esc(r['agent'])}</strong><span class='tl-what'>Return a year {ret} · "
                      f"worst fall {pct(r['worst_fall'], digits=0)}</span></li>")
-    return (f"<h3>Backtest, {day(first)} to {day(last)}</h3><ul class='panel tlist'>{''.join(items)}</ul>"
+    return (f"<h3>Backtest, {day(first)} to {day(last)} {tag('model')}</h3><ul class='panel tlist'>{''.join(items)}</ul>"
             f"<p class='meta'>After costs, with {inr(pa.CAPITAL)} at 3x exposure (option buying: 3% of capital a "
             f"week); the whole-lot rows use ₹5 lakh in today’s lot of 65 and are shown per {inr(pa.CAPITAL)}. Free "
             f"data has no past option prices, so the backtest estimates them from India VIX; the "
@@ -702,7 +822,7 @@ def asset_backtest_html(abt, names=None):
                      f"worst fall {pct(r['dd'], digits=0)}. {esc(r['bench'])}: {pct(r['bench_cagr'], True)}, worst "
                      f"{pct(r['bench_dd'], digits=0)}. Pass bar {verdict}.</span>"
                      f"<span class='meta'>{day(r['start'])} to {day(r['end'])}</span></li>")
-    return (f"<h3>Backtest after costs</h3><ul class='panel tlist'>{''.join(items)}</ul>"
+    return (f"<h3>Backtest after costs {tag('history')}</h3><ul class='panel tlist'>{''.join(items)}</ul>"
             f"<p class='meta'>ETF trades cost 0.05% a buy or sell, Gold Petal futures 0.05% plus a monthly roll, and "
             f"idle cash earns {pa.CASH_RATE:.0%}. Every rule acts at the close the day after its signal. The pass bar "
             f"is the research report's test for each agent, met in both halves of the period at normal and double "
@@ -916,27 +1036,36 @@ def board_section(groups, view, intro, heading="Every strategy", checks=None, ho
         return ""
     began = started_values(view)
     nifty = began.get(NIFTY_HOLD)
+    traded = {}
+    for block in view or ():
+        for t in block["trades"]:
+            traded[t["agent"]] = traded.get(t["agent"], 0) + 1
     rows, scored = [], False
     for title, items in groups:
         if not items:
             continue
-        rows.append(f"<tbody><tr class='grp'><td colspan='3'>{title}</td></tr></tbody>")
+        label_ = f" {tag(GROUP_EVIDENCE[title])}" if title in GROUP_EVIDENCE else ""
+        rows.append(f"<tbody><tr class='grp'><td colspan='3'>{title}{label_}</td></tr></tbody>")
         for label, value, since, note, key in items:
             val = inr(value) if value is not None else "–"
             chg = f"<span class='{tone(since)}'>{pct(since, True, 2)}</span>" if since is not None else ""
-            more_ = ""
+            more_, stats = "", ""
             if key and value is not None and len(began.get(key, ())):
                 score, why = confidence(began[key], nifty)
                 over = nifty_over(nifty, began[key]) if key != NIFTY_HOLD else None
                 more_ = f"Confidence {score} of 5: {esc(why)}" + (
                     f"<span class='n'> · Nifty {pct(over, True, 2)}</span>" if over is not None else "")
+                fall, n = worst_fall(began[key]), traded.get(key, 0)
+                stats = (("Worst fall " + pct(fall) if fall < -1e-9 else "No fall yet")
+                         + f"<span class='n'> · {n} trade{'' if n == 1 else 's'}</span>")
                 scored = True
             elif not key and value is not None and checks and checks.get(label):
                 more_ = esc(checks[label])
+            stats_ = f"<span class='sub'>{stats}</span>" if stats else ""
             rows.append(f"<tbody class='row'><tr class='main'><td class='name'>{esc(label)}</td>"
                         f"<td class='r num-big'>{val}</td><td class='r'>{chg}</td></tr>"
                         f"<tr class='more'><td colspan='3'><div><span class='sub'>{esc(note)}</span>"
-                        f"<span class='sub'>{more_}</span></div></td></tr></tbody>")
+                        f"<span class='sub'>{more_}</span>{stats_}</div></td></tr></tbody>")
     about = ""
     if scored:
         levels = "; ".join(f"<b>{i}</b>, {esc(text)}" for i, text in enumerate(CONFIDENCE_LEVELS))
@@ -945,11 +1074,12 @@ def board_section(groups, view, intro, heading="Every strategy", checks=None, ho
                  f"{levels}. A high return alone never raises it, and it says nothing about the future. With "
                  f"this many strategies one can pass by luck, so a pass has to keep passing. “Nifty” beside a "
                  f"score is what buy-and-hold Nifty made over the same days. The luck test itself is "
-                 f"{'' if home else 'on the Home page, '}under “Skill or luck?” in Details.</p></details>")
+                 f"{'' if home else 'on the Home page, '}under “Skill or luck?” in Details. “Worst fall” is the "
+                 f"largest drop from a high since its money went in, and trades count every buy and sell.</p></details>")
     return (f"<section class='scoreboard' aria-labelledby='sb-h'><h2 id='sb-h'>{heading}</h2>"
             f"<p class='meta'>{intro}</p><div class='scroll'><table><thead><tr><th>Strategy</th>"
             f"<th class='r'>Worth now</th><th class='r'>Change</th></tr></thead>{''.join(rows)}"
-            f"</table></div>{about}</section>")
+            f"</table></div>{about}{evidence_html()}</section>")
 
 
 def overview_html(res, fres, ares, tg, sigs=(), view=None):
@@ -1662,7 +1792,7 @@ def backtest_html(rows, curves, first, last):
             f"<tr><td class='agent'>{esc(name)}</td><td class='r'>{pct(r['ret'])}</td>"
             f"<td class='r'>{pct(r['day'], digits=3)}</td><td class='r'>{pct(r['fall'])}</td>"
             f"<td class='r'>{inr(r['final'])}</td>{split_cells}</tr>")
-    return (f"<section aria-labelledby='bt-h'><h2 id='bt-h'>How these rules did from {first.year} to now</h2>"
+    return (f"<section aria-labelledby='bt-h'><h2 id='bt-h'>How these rules did from {first.year} to now {tag('history')}</h2>"
             f"<p>A backtest from {day(first)} to {day(last)} on the Nifty price index (without dividends), after "
             f"{bt.COST_PER_SIDE:.2%} costs per buy or sell, acting at the close the day after each signal. The last "
             f"two columns split the period, to show whether a rule kept working on later years.</p>"
@@ -1744,7 +1874,7 @@ RISK_WORDS = {"costs": "charges too big next to the risk", "reward": "target too
 
 def risk_html(rk):
     """The risk engine (risk_engine.py): every paper order checked as if it were real, and why it was refused."""
-    head = "<section aria-labelledby='risk-h'><h2 id='risk-h'>Risk engine</h2>"
+    head = f"<section aria-labelledby='risk-h'><h2 id='risk-h'>Risk engine {tag('shadow')}</h2>"
     if rk is None:
         return head + "<p class='meta'>The risk engine’s log couldn’t be read tonight, or has no rows yet.</p></section>"
     r, e = rk["rules"], rk["engine"]
@@ -1788,7 +1918,7 @@ def risk_html(rk):
 
 
 def page(res, bt_parts, ctx, fres=None, fbt=None, view=None, ares=None, abt=None, tg=None, st=None, sigs=(),
-         rm=None, nav="", built=None, rk=None):
+         rm=None, nav="", built=None, rk=None, dh=None):
     """The home page: every strategy on one board, Claude's call, market events and the details."""
     built = built or dt.datetime.now(IST)
     live = bool(rm and rm.get("started"))                 # real orders have been written down
@@ -1801,6 +1931,12 @@ def page(res, bt_parts, ctx, fres=None, fbt=None, view=None, ares=None, abt=None
     else:
         status = (f"Prices up to the close on {day(res['latest'])}. Paper trading starts on "
                   f"{day(pd.Timestamp(pa.START))}.")
+    if dh:
+        bad = dh["failed"] + dh["warnings"]
+        status += (" Data checks: all passed." if not bad else
+                   f" Data checks: {dh['failed']} failed, see Data checks below." if dh["failed"] else
+                   f" Data checks: passed, with {dh['warnings']} note{'' if dh['warnings'] == 1 else 's'} under "
+                   f"Data checks below.")
     header = f"""<h1>Paper arena</h1>
 <p class="lede">Every strategy here trades {inr(pa.CAPITAL)} of virtual money by fixed rules, so you can see which ones actually make money.{real_note}</p>
 <p class="meta">{status}</p>"""
@@ -1820,6 +1956,7 @@ def page(res, bt_parts, ctx, fres=None, fbt=None, view=None, ares=None, abt=None
 {more("Your calls", "Add your own Nifty calls", calls_html(res), solo=True)}
 {more("Real money", "Your own orders at Zerodha, once there are any", "" if live else real_section, solo=True)}
 {more("Risk engine", "Every paper order checked against limits written down in advance", risk_html(rk) if risk_engine is not None else "", solo=True)}
+{more("Data checks", "Every saved price file checked each night, and when each run started", data_html(dh), solo=True)}
 {more("Permanent record", "The logs and saved data behind this page", logs_html(), solo=True)}
 </section>"""
     return shell("Paper arena", "Rule-following agents and Claude trade Nifty with virtual money. For learning only.",
@@ -1940,11 +2077,18 @@ def main():
             rk = risk_engine.summary()
         except Exception as exc:  # the page still builds; the section says it couldn't be read
             print(f"  ! Risk engine skipped: {exc}")
+    dh = None
+    if data_health is not None:
+        try:
+            dh = data_health.summary()
+        except Exception as exc:  # the page still builds; the section is left out
+            print(f"  ! Data checks skipped: {exc}")
     view = logbook.merged(res, fres, ares)
     built, live = dt.datetime.now(IST), bool(rm and rm.get("started"))
     pages = site_pages(sigs, have_ticket())
     bar = lambda key: nav_html(pages, key)
-    write("index.html", page(res, bt_parts, ctx, fres, fbt, view, ares, abt, tg, st, sigs, rm, bar("home"), built, rk))
+    write("index.html", page(res, bt_parts, ctx, fres, fbt, view, ares, abt, tg, st, sigs, rm, bar("home"), built, rk,
+                             dh))
     boards = score_groups(res, fres, ares, tg, sigs)
     write("berlin.html", berlin_page(ares, abt, tg, st, bar("berlin"), built, live, boards["berlin"], view))
     for ch, sm in sigs:

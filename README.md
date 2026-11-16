@@ -13,7 +13,8 @@ For learning only. Not investment advice. Nothing here places an order.
 | `decisions/claude.json` | Claude's saved decisions, with its reasons |
 | `decisions/claude_challenger.json` | The challenger's decisions: the case against each Claude decision, the case for it, and its own position |
 | `decisions/snapshots/` | The data behind each Claude decision (added automatically) |
-| `logbook.py` | Adds each new day to the permanent logs |
+| `logbook.py` | Adds each new day to the permanent logs, with what each day was built from (`logs/provenance.csv`) |
+| `data_health.py` | The nightly data checks: every saved price file checked for freshness, missing days, duplicates and odd moves, with a version for each; also adds one line per run to `logs/runs.csv` |
 | `fno_backtest.py` | Backtests thirteen Nifty futures and options strategies after costs |
 | `fno_arena.py` | Paper-trades the same thirteen strategies |
 | `fno_prices.py` | Downloads NSE's daily option prices for the F&O agents |
@@ -50,7 +51,7 @@ For learning only. Not investment advice. Nothing here places an order.
 | `REAL_MONEY.md` | The gap register: everything that is fine for paper trading but not for real money, and the order to fix it in |
 | `nifty_backtest.py` | The backtest of the same rules from 2010 to today |
 | `build_site.py` | Builds the site into a `site` folder: the home page, a page for Trade Like Berlin, one for each signal channel, and the order ticket |
-| `requirements.txt` | The Python packages GitHub installs |
+| `requirements.txt` | The Python packages GitHub installs, pinned to exact versions |
 | `.github/workflows/arena.yml` | Runs everything each weekday evening and publishes the page |
 | `.github/workflows/telegram.yml` | Saves new posts from every Telegram channel every 30 minutes, reads the signal channel's new signals and transcribes new voice notes |
 
@@ -190,12 +191,16 @@ The original Nifty agents started on 23 Oct 2026. Newer agents get their start d
 
 The free index dataset sometimes skips a day's update. The arena then adds Yahoo Finance's closing prices for the missing days, so the agents keep up.
 
+Every night `data_health.py` checks each saved price file: is its last day the last session that has closed (by the NSE calendar for Indian prices), is any NSE session missing, are dates unique and in order, is any price zero or any high below its low, did any close jump by more than that market usually moves, and do the two Nifty 50 sources agree within 0.05%. Each file gets a version (the first 12 characters of its SHA-256), so a result can be tied to the exact data it used. The page shows the checks under **Data checks**; a failed check also shows as a warning on the GitHub run. It never stops the run: the arenas don't add a day they have no price for, and the risk engine refuses an order on a stale price. Run it yourself with `python data_health.py`.
+
 ## Permanent logs
 
 Every run adds the newest days to two logs and commits them to the repository:
 
 - `logs/daily.csv`: one row per agent per day, with its holding, value, return since start and any trade.
 - `logs/trades.csv`: every trade, with Nifty 50's close that day.
+- `logs/provenance.csv` (from 16 Nov 2026): for each group of agents and each day saved, what its prices were (for the F&O agents, NSE's option file or estimates), a version of those price files and the commit of the code, so every saved value can be traced to its data and code. If a later replay values a saved day differently, the page lists the row with what it was saved with.
+- `logs/runs.csv` (from 16 Nov 2026): one line per run: when it started against its schedule (GitHub's scheduled runs often start late), what started it, the code's commit, the Python, pandas and numpy versions, and how many data checks failed.
 
 Each group of agents is logged once its prices for the day are final: the Nifty agents when the close is in, the F&O agents the same night, and the gold and multi-asset agents once every ETF price is in. Rows for different groups can therefore arrive on different nights. Old rows are never rewritten, so past results can't quietly change. If a later replay of the arena disagrees with the saved rows, for example because the data source corrected an old price, the page shows a warning, and the saved log stays the official record.
 
@@ -253,6 +258,10 @@ That's all. The next weekday evening run makes the decision. Its log on the **Ac
 - **One decider:** once the key is set, the GitHub run makes every decision. Don't also use Option A, and don't upload `decisions/claude.json` or `decisions/claude_challenger.json` from a chat: an older copy would erase the decisions the run saved.
 - **Guardrails:** Claude only decides between a close and the next market open (a reply that arrives after the open isn't saved), can only choose 0, 0.5 or 1, and never touches real money. If the call fails or the credits run out, Claude keeps its last position.
 - **To stop:** delete the secret.
+
+## How each number was made
+
+The page labels each set of numbers by how it was made, weakest evidence first: **Backtest, model prices** (past data with option prices worked out by a formula), **Backtest, real prices** (past data at real closing prices), **Paper, simulated fills** (decided each day before the result was known, filled at that day's prices with costs; no order placed), **Paper, whole lots** (real lot sizes, with margin), **Shadow mode** (orders checked as if real, never sent), **Broker sandbox** and **Live** (nothing yet). A good result never moves a strategy up the list; only the steps in `REAL_MONEY.md` do. The board also shows each strategy's worst fall and number of trades next to its return, so a short lucky run is easier to spot.
 
 ## Research tests
 

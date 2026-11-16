@@ -7,6 +7,10 @@ can't silently change:
   logs/daily.csv          one row per agent per day: holding, value, return since start, trade
   logs/trades.csv         every trade, with Nifty 50's close that day
   logs/starts.json        when each newer agent starts (written once, the first time it's seen)
+  logs/provenance.csv     for each group of agents and day saved (from 16 Nov 2026): what its prices were
+                          (for the F&O agents, NSE's option file or estimates), a version of those price
+                          files (the first 12 characters of their SHA-256), the commit of the code and the
+                          GitHub run, so every saved value can be traced to its data and code
   decisions/snapshots/    the data snapshot behind each Claude decision
   logs/journal.md         your own notes (you edit this one)
 
@@ -21,6 +25,7 @@ FOR LEARNING ONLY. No real orders are placed.
 """
 
 import csv
+import hashlib
 import os
 
 import numpy as np
@@ -35,6 +40,15 @@ TRADES = os.path.join(LOG_DIR, "trades.csv")
 SNAPSHOT_DIR = os.path.join("decisions", "snapshots")
 DAILY_COLS = ["date", "agent", "holding", "value", "since_start", "trade", "nifty_close"]
 TRADE_COLS = ["date", "agent", "trade", "nifty_close"]
+PROVENANCE = os.path.join(LOG_DIR, "provenance.csv")
+PROVENANCE_COLS = ["date", "arena", "prices", "data", "commit", "run_id", "logged_at"]
+NIFTY, FNO, ASSETS = "Nifty 50", "F&O", "Gold and multi-asset"
+# the saved price files behind each group of agents, for the data version in logs/provenance.csv
+PRICE_FILES = {NIFTY: [os.path.join("data", "market", "NIFTY50.csv")] + [
+                   os.path.join("data", "market", "indices", f"{i}.csv")
+                   for i in ("NIFTY_50", "NIFTY_BANK", "NIFTY_IT", "NIFTY_PHARMA", "NIFTY_MIDCAP_50")],
+               ASSETS: [os.path.join("data", "market", f) for f in ("NIFTYBEES.csv", "GOLDBEES.csv", "SILVERBEES.csv",
+                                                                     "GOLD.csv", "SILVER.csv", "SP500.csv")]}
 
 
 def read(path, cols):
@@ -68,15 +82,16 @@ def nifty_block(res):
             return "Not started yet"
         return pa.label(res["positions"][agent].loc[day])
     labels = {a: pd.Series({d: name_of(a, d) for d in values.index}) for a in values.columns}
-    return {"values": values, "labels": labels, "trades": [dict(t) for t in res["trades"]], "final": res["latest"]}
+    return {"values": values, "labels": labels, "trades": [dict(t) for t in res["trades"]], "final": res["latest"],
+            "arena": NIFTY}
 
 
-def extra_block(res):
+def extra_block(res, arena=""):
     """The F&O or the gold and multi-asset agents."""
     if not res or not res.get("started"):
         return None
     return {"values": res["values"], "labels": res["labels"], "trades": [dict(t) for t in res["trades"]],
-            "final": res["final_until"]}
+            "final": res["final_until"], "arena": arena}
 
 
 def fno_results():
@@ -112,7 +127,7 @@ def register_new_agents():
 
 def merged(res, fres=None, ares=None):
     """Every group of agents, each with its own last final day."""
-    blocks = [b for b in (nifty_block(res), extra_block(fres), extra_block(ares)) if b]
+    blocks = [b for b in (nifty_block(res), extra_block(fres, FNO), extra_block(ares, ASSETS)) if b]
     return blocks or None
 
 
@@ -156,24 +171,67 @@ def update(view, closes):
                                    "nifty_close": "" if close is None or np.isnan(close) else f"{close:.2f}"})
     rows.sort(key=lambda r: (r["date"], r["agent"]))
     trade_rows.sort(key=lambda r: (r["date"], r["agent"]))
+    arena_of = {a: block.get("arena", "") for block in view for a in block["values"].columns}
     append(DAILY, DAILY_COLS, rows)
     append(TRADES, TRADE_COLS, trade_rows)
+    append(PROVENANCE, PROVENANCE_COLS,
+           [provenance_row(d, a) for d, a in sorted({(r["date"], arena_of.get(r["agent"], "")) for r in rows})])
     return len(rows), len(trade_rows)
+
+
+def files_version(paths):
+    """The first 12 characters of the SHA-256 of these files together (names and contents); "" if none exist."""
+    digest, found = hashlib.sha256(), False
+    for path in paths:
+        if os.path.exists(path):
+            with open(path, "rb") as f:
+                digest.update(os.path.basename(path).encode() + f.read())
+            found = True
+    return digest.hexdigest()[:12] if found else ""
+
+
+def provenance_row(date, arena, env=None, now=None):
+    """What one group's saved day was built from: its prices, their version, the code and the run."""
+    env = os.environ if env is None else env
+    if arena == FNO:
+        path = os.path.join("data", "fno", f"{date}.csv")
+        prices = ("NSE's option file (estimates only for contracts it lacks)" if os.path.exists(path) else
+                  "estimated option prices: NSE's file wasn't in")
+        files = [path]
+    elif arena == ASSETS:
+        prices, files = "ETF and futures closes", PRICE_FILES[ASSETS]
+    else:
+        prices, files = "index closes (Nifty 50 and the sector indices)", PRICE_FILES[NIFTY]
+    now = now or pd.Timestamp.now(tz="Asia/Kolkata")
+    return {"date": date, "arena": arena, "prices": prices, "data": files_version(files),
+            "commit": env.get("GITHUB_SHA", "")[:7] or "local", "run_id": env.get("GITHUB_RUN_ID", ""),
+            "logged_at": now.strftime("%Y-%m-%dT%H:%M%z")}
+
+
+def provenance():
+    """{(date, arena): row} from logs/provenance.csv; the first row for a day is the one it was saved with."""
+    out = {}
+    for row in read(PROVENANCE, PROVENANCE_COLS).to_dict("records"):
+        out.setdefault((row["date"], row["arena"]), row)
+    return out
 
 
 def drift(view, tolerance=1.0):
     """Saved rows whose value differs from tonight's replay by more than `tolerance` rupees."""
     if not view or not os.path.exists(DAILY):
         return None
-    diffs = []
+    diffs, rows = [], []
     for row in read(DAILY, DAILY_COLS).itertuples(index=False):
         day = pd.Timestamp(row.date)
         for block in view:
             values = block["values"]
             if row.agent in values.columns and day in values.index:
-                gap = abs(float(values.at[day, row.agent]) - float(row.value))
+                now = float(values.at[day, row.agent])
+                gap = abs(now - float(row.value))
                 if gap > tolerance:
                     diffs.append((gap, day, row.agent))
+                    rows.append({"date": day, "agent": row.agent, "arena": block.get("arena", ""),
+                                 "saved": float(row.value), "replay": now})
                 break
     if not diffs:
         return None
@@ -186,7 +244,8 @@ def drift(view, tolerance=1.0):
         fno = set()
     return {"rows": len(diffs), "largest": gap, "date": day, "agent": agent,
             "first": min(d for _, d, _ in diffs), "last": max(d for _, d, _ in diffs), "agents": agents,
-            "fno_only": bool(fno) and set(agents) <= fno}
+            "fno_only": bool(fno) and set(agents) <= fno,
+            "list": sorted(rows, key=lambda r: (r["date"], r["agent"]))}
 
 
 def summary():

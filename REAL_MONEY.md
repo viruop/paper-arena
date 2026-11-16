@@ -55,6 +55,10 @@ layer has to be built separately and fed by this one, not bolted onto it.
 - **What to do:** these belong in the execution layer: limits set in advance, checked before every
   order and every night; a halt that needs a human to lift; a nightly reconciliation that stops
   trading when the broker's numbers and the arena's disagree.
+- **Status, 16 Nov 2026:** the limits, the halt a person has to lift, the kill switch and the refusal of stale
+  prices now exist in paper (shadow) mode (risk_engine.py; see 7 and the table in 10), and the saved prices are
+  checked every night (data_health.py). Still open: reconciliation against the broker's own statement, a spike
+  filter on the 5-minute bars, and running any of it in front of a broker.
 
 ### 2.4 The scheduler can't be trusted with an order
 - GitHub Actions cron routinely starts late, sometimes by hours; the arena runs at 8:47 pm and
@@ -136,6 +140,7 @@ layer has to be built separately and fed by this one, not bolted onto it.
 - Whisper mishears numbers in voice notes ("lefty" for Nifty). Tags taken from voice notes are
   marked; spot-check them.
 - The 22 drifting F&O rows (29 Oct–3 Nov) are explained on the page and are permanent.
+  (16 Nov 2026: the drift went on after 3 Nov; the outside review counted 50 rows to 12 Nov. See 7.)
 - FII/DII flows reach the Claude agent one day late (the source publishes T+1).
 - Package versions aren't pinned (`pandas>=2.1`); a pandas major release could change behaviour
   overnight. Pin them.
@@ -209,6 +214,30 @@ layer has to be built separately and fed by this one, not bolted onto it.
   a check by hand, not a reconciliation against the broker's own statement, and the ticket's loss
   limit and daily stop are reminders, not limits a machine enforces.
 
+- 16 Nov 2026, minor (package versions): pinned exactly, pandas 3.1.1, numpy 2.5.5, matplotlib 3.11.2 and
+  pyarrow 22.0.0 (the versions the nightly run was installing), in requirements.txt and the Telegram
+  workflow. Each run records the Python, pandas and numpy it used in logs/runs.csv.
+- 16 Nov 2026, 3.1 and 2.3 in part: nightly data checks (data_health.py). Every saved price file is checked for
+  freshness against the NSE calendar (each market after its own close), missing NSE sessions, duplicate or
+  unordered dates, zero prices, highs below lows and unusual moves, and Nifty 50 from Yahoo and from the index
+  dataset must agree within 0.05%. Each file gets a version (12 characters of its SHA-256). Shown under "Data
+  checks" on the page and as a warning on the GitHub run. A failed check warns; it doesn't stop the run, since
+  the arenas never add a day without its price and the risk engine refuses a stale one. First findings: Brent
+  fell 10.9% on 2 Nov in the saved series (a futures roll or a real move, to check), and the flows dataset has
+  three sessions missing (latest 19 Oct).
+- 16 Nov 2026, 2.4 in part: each run records when it started against its schedule (logs/runs.csv), and the
+  page shows the last runs, so a late or missed run is visible. GitHub stays unfit for placing an order.
+- 16 Nov 2026, replay drift (Minor): each day saved from now on records what it was built from
+  (logs/provenance.csv): its prices (for the F&O agents, NSE's option file or estimates), a version of those
+  price files and the code's commit. The page lists every saved row tonight's replay values differently, with
+  that record. Its old note gave one cause for every difference (estimated option prices), which nothing
+  recorded; a difference can also come from a price revised or arriving late at its source, or from a change in
+  the code. Rows saved before 16 Nov have no record of what they used.
+- 16 Nov 2026, 3.4 and 3.5 in part: the page labels every board group, backtest and the risk engine by how
+  its numbers were made (backtest with model prices, backtest with real prices, paper, whole lots, shadow
+  mode; broker sandbox and live have nothing), and shows each strategy's worst fall and number of trades next
+  to its return. The challenger's section says it isn't an independent check.
+
 ## 8. Broker: Zerodha (added 6 Nov 2026)
 
 The trading account moved from Upstox to Zerodha. What Zerodha's API means for step 4 of the go/no-go
@@ -277,3 +306,53 @@ what now exists for that, and what the first numbers say. None of it is an execu
   https://zerodha.com/marketintel/bulletin/249809/latest-intraday-leverages-mis-bo-co,
   https://support.zerodha.com/category/trading-and-markets/trading-faqs/general/articles/closing-auction-session,
   https://support.zerodha.com/category/trading-and-markets/trading-faqs/general/articles/short-sell-shares-in-eq-and-f-o-segments
+
+## 10. What each control is, and how far it has been tested (added 16 Nov 2026)
+
+Status, from weakest: **not built**; **built** (code exists, never run against orders); **shadow-tested** (runs
+every night on the orders the paper strategies would have sent; nothing sent); **broker-tested** (run against a
+broker's test system); **live** (in front of real orders). Nothing is broker-tested or live. The tests named
+below were run in Claude's sessions; they aren't in the repository yet.
+
+| Control | Where | Status |
+|---|---|---|
+| Risk a trade (2% of a ₹5,000 account), costs at most 25% of the risk, reward at least 1.5 times the stop after costs, 3 trades and 2 losses a day | risk_engine.py (ticket.RULES) | Shadow-tested since 13 Nov (logs/risk_orders.csv); its sums match the order ticket's on 1,500 random orders |
+| No new risk after a 4% day loss; a halt 10% below the peak that a person lifts | risk_engine.py (ENGINE) | Shadow-tested |
+| Kill switch (the file data/real/HALT) | risk_engine.py | Built and tested in sessions; never switched on |
+| Stale or mistyped prices refused; no repeats; at most 5 orders a minute; market hours and NSE holidays | risk_engine.py | Shadow-tested |
+| Exits never refused | risk_engine.py | Shadow-tested |
+| Saved results never rewritten | logbook.py, logs/ | Live for the record (every night since 23 Oct) |
+| What each saved day was built from | logs/provenance.csv | Built 16 Nov |
+| Data checks before a result is trusted | data_health.py | Built 16 Nov; warns, doesn't block |
+| Run start against schedule | logs/runs.csv | Built 16 Nov |
+| Pinned package versions | requirements.txt | Built 16 Nov |
+| Reconciliation against the broker's statement | none | Not built (the ledger is checked by hand) |
+| Broker-side stops and limits | none | Not built |
+| An always-on machine to run orders | none | Not built (2.4) |
+| Secrets | GitHub secrets only | No broker credentials exist anywhere; an API key would be a GitHub secret, never a file |
+
+## 11. Outside review of 16 Nov 2026: where each point stands
+
+An engineering review of the public repository (G1 to G18) reached the same verdict as this register: a good
+research platform, not ready for real money. Where each point stands:
+
+| Point | Where it stands |
+|---|---|
+| G1 Sample size | Luck test (60 days) and confidence score since 5 and 11 Nov; worst fall and trades on the board since 16 Nov. Rolling and regime figures wait for data: no strategy has 60 days yet. |
+| G2 Model option prices | The F&O backtest is labelled "Backtest, model prices"; the paper agents use NSE's closing prices (the page counts the days with estimates). Bid and ask and the order of a stop and a target inside a day need data that isn't free: open. |
+| G3 Executable F&O | Whole-lot agents with margin since 11 Nov (7); costs by date (5). Partial fills and rejections: open, needed at real size. |
+| G4 Survivorship | Written in research_tests.py and the README; no agent uses it. The Nifty 50 list as it was each year isn't free: open. |
+| G5 Replay against saved | Done 16 Nov (7). |
+| G6 Data quality | Done 16 Nov (7); a second source for Nifty 50 only. |
+| G7 Gold contracts | His gold is scored on COMEX; the risk engine refuses gold and crude orders (no MCX prices). MCX re-scoring: open (2.1). |
+| G8 Claude as allocator | By design; every decision saves its snapshot, model and time. No AI output can skip the risk engine (go/no-go 4). |
+| G9 Challenger independence | Labelled 16 Nov. A challenger that doesn't see Claude's answer, or another model, would be a new agent: open (needs an API key or another model). |
+| G10 Many strategies | The luck test is for one strategy named in advance, with the best-of-N warning (3.4); no agent is ever deleted. |
+| G11 Risk engine is paper only | Labelled "Shadow mode". Failing closed and broker-side limits matter only in front of a broker (go/no-go 4). |
+| G12 Live execution | Not built, by design (go/no-go 4). |
+| G13 Scheduler | Run times recorded 16 Nov (7); still unfit for orders (2.4). |
+| G14 Untrusted inputs | Rules since 5 Nov (2.5); posts, transcripts and deletions saved separately. |
+| G15 Telegram scoring | The ten-check scorecard since 4 Nov: 40 calls, costs, late and reversed, levels coverage, claims, deletions. |
+| G16 This register | Sections 10 and 11. |
+| G17 Public ledger | No real order recorded yet (data/real/orders.csv doesn't exist). Decide before the first one whether it stays public (Minor). |
+| G18 Reproducibility | Pinned 16 Nov; versions per run in logs/runs.csv. Tests in the repository: open. |
