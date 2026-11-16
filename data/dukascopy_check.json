@@ -1,7 +1,6 @@
 {
- "checked_at": "2026-11-16T13:51:21Z",
+ "checked_at": "2026-11-16T14:09:41Z",
  "hour": "2026-11-13T12:00Z",
- "ok": true,
- "minutes": 60,
- "last_bid": 3888.845
+ "ok": false,
+ "error": "Dukascopy XAUUSD 2026-11-13 12h: HTTP Error 503: Service Unavailable"
 }
