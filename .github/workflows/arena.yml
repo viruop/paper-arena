@@ -21,6 +21,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      - name: Note when this run started (GitHub's schedules often start late; logs/runs.csv records by how much)
+        run: echo "RUN_STARTED=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"
+
       - uses: actions/checkout@v6
 
       - name: Start from the newest commit on main
@@ -62,6 +65,12 @@ jobs:
       - name: Check the paper orders against the risk engine (paper only, it never places an order)
         continue-on-error: true   # a problem here never stops the logs or the page
         run: python risk_engine.py
+
+      - name: Check the saved prices and add this run to logs/runs.csv
+        continue-on-error: true   # a failed check shows on the page and as a warning; it never stops the logs or the page
+        env:
+          RUN_SCHEDULE: ${{ github.event.schedule }}
+        run: python data_health.py --log-run
 
       - name: Save decisions, logs and option prices
         run: |
