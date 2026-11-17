@@ -46,3 +46,4 @@ agent-gold-silver-reversion:halt,agent-gold-silver-reversion,2026-11-16T09:59:00
 agent-claude-challenged:2026-11-16:buy-NIFTYBEES,agent-claude-challenged,2026-11-16T09:59:00Z,NIFTYBEES,buy,open,CNC,287.61,,,17,4889.37,,1.18,0.0,,approved,,,5000.00,,,,4998.82,2026-11-13,2026-11-16T13:49:59Z
 akash:19193,akash,2026-11-15T04:32:31Z,BTCUSD,sell,open,,,,,0,,,,,,refused,market,BTCUSD is an offshore CFD: not allowed from India,,,,,,2026-11-13,2026-11-16T13:49:59Z
 akash:19208,akash,2026-11-16T09:16:22Z,XAUUSD,buy,open,,,,,0,,,,,,refused,market,XAUUSD is an offshore CFD: not allowed from India,,,,,,2026-11-13,2026-11-16T13:49:59Z
+akash:19225,akash,2026-11-17T08:47:28Z,XAUUSD,sell,open,,,,,0,,,,,,refused,market,XAUUSD is an offshore CFD: not allowed from India,,,,,,2026-11-13,2026-11-17T15:18:46Z

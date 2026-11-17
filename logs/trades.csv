@@ -48,3 +48,16 @@ date,agent,trade,nifty_close
 2026-11-16,"Claude, challenged",Bought NIFTY 50,25291.10
 2026-11-16,Intraday futures,"Bought at the open 25,206, closed at 25,291: +Rs 834",25291.10
 2026-11-16,Intraday short straddle,"Sold the 25,200 straddle at 263.0, bought back at 182.7: +Rs 903",25291.10
+2026-11-17,Intraday futures,"Bought at the open 25,277, closed at 25,387: +Rs 1,142",25387.40
+2026-11-17,Intraday short straddle,"Sold the 25,300 straddle at 144.4, stopped out at 187.8: -Rs 577",25387.40
+2026-11-17,Weekly ITM option buying,"Bought 24,900 CE at 540.2 (expiry 23 Nov)",25387.40
+2026-11-17,Weekly OTM option buying,"Bought 25,900 CE at 35.9 (expiry 23 Nov)",25387.40
+2026-11-17,Weekly iron condor,"Expired with Nifty at 25,387: +Rs 1,269 on the week",25387.40
+2026-11-17,Weekly iron condor,"Sold 25,900 CE at 35.9, sold 24,850 PE at 30.6, bought 26,450 CE at 5.7, bought 24,350 PE at 7.8 (expiry 23 Nov)",25387.40
+2026-11-17,Weekly iron condor (whole lots),"Sold 25,900 CE at 35.9, sold 24,850 PE at 30.6, bought 26,450 CE at 5.7, bought 24,350 PE at 7.8 (1 lot, expiry 23 Nov)",25387.40
+2026-11-17,Weekly option buying,"Expired with Nifty at 25,387: +Rs 1,732 on the week",25387.40
+2026-11-17,Weekly option buying,"Bought 25,400 CE at 189.2 (expiry 23 Nov)",25387.40
+2026-11-17,Weekly option buying (whole lots),"Bought 25,400 CE at 189.2 (1 lot, expiry 23 Nov)",25387.40
+2026-11-17,Weekly short strangle,"Expired with Nifty at 25,387: +Rs 1,683 on the week",25387.40
+2026-11-17,Weekly short strangle,"Sold 25,900 CE at 35.9, sold 24,850 PE at 30.6 (expiry 23 Nov)",25387.40
+2026-11-17,Weekly short strangle (whole lots),"Sold 25,900 CE at 35.9, sold 24,850 PE at 30.6 (1 lot, expiry 23 Nov)",25387.40
