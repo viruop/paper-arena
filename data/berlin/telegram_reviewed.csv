@@ -290,3 +290,5 @@ id,posted_at,reviewed_at,decision,call_id,note
 78077,2026-11-13T15:05:39Z,2026-11-13T17:39:00Z,claim,78055,"""60% target achieved"" on call 78055; call still open"
 78078,2026-11-13T15:07:08Z,2026-11-13T17:39:00Z,other,78055,"""Position."" screenshot for call 78055; no level"
 78079,2026-11-13T15:11:43Z,2026-11-13T17:39:00Z,claim,78055,"claims 65%+ returns in options on call 78055; leaves booking to followers, he does not exit"
+78080,2026-11-16T11:34:35Z,2026-11-16T17:39:00Z,update,78055,"""I have exited my long positions in crude"": exit of call 78055"
+78081,2026-11-16T11:37:34Z,2026-11-16T17:39:00Z,other,78055,"""This sideways trend killed the gains."" with image after his exit of call 78055; comment, no result figure"
