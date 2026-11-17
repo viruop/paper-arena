@@ -48,5 +48,30 @@
     "model": "Claude Opus 5.5 (challenger agent)",
     "searches": 3,
     "made_at": "2026-11-16T19:08+05:30"
+  },
+  {
+    "date": "2026-11-17",
+    "position": 1.0,
+    "summary": "Fully in, like Claude: Nifty rose 0.38% to 25,387 with Nifty Bank at a record, Brent near $92-94 and FIIs still buying; it is stretched (RSI(14) 77, 5.9% above its 20-day) with an RBI hike due 2-4 Dec, but none of my preset cut triggers has fired.",
+    "challenged": {
+      "date": "2026-11-17",
+      "position": 1.0
+    },
+    "against": [
+      "Stretched: Nifty is 5.9% above its 20-day average with RSI(14) 77 and RSI(2) 83 after +10.9% in a month and +14.2% from the 8 Oct low of 22,232, so the exit sits 5.6% below tonight's close; an ordinary pullback could give back about Rs 6,000 of the Rs 1.09 lakh before the rule fires.",
+      "Policy is tightening: October CPI of 6.09% broke the RBI's 6% ceiling (12 Nov), WPI hit 12.29% with fuel and power at 32.8% (16 Nov), SBI sees CPI near 6.3% in November and a 25-50 bp hike is expected at the 2-4 Dec MPC; Iran's 15 Nov Bahrain strike and Hormuz mines keep an oil spike possible.",
+      "A narrow, foreign-funded rally: DIIs sold Rs 27,711 crore in five sessions against FII buying of Rs 38,207 crore, decliners beat advancers today (2,148 v 2,012), Midcap 50 is -1.9% over 3 months, and the Nasdaq's 2.5% drop on 16 Nov and Nvidia's 4% fall before results could turn FII flows."
+    ],
+    "for": [
+      "The trend is up on every measure: Nifty 25,387 is above its 5-, 20-, 50- and 200-day averages (25,275, 23,974, 23,408, 23,993), and the 20-day exit is 5.6% below and rising about 100 points a session, so no trigger is near.",
+      "The rally is broad and funded: 84% of Nifty stocks were above their 50-day and 62% above their 200-day on 13 Nov, against 22% and 15% a month earlier, and FIIs bought Rs 4,865 crore on 16 Nov, Rs 38,207 crore over five sessions and a record $9.53 bn so far in November.",
+      "It shrugs off bad news: Nifty rose 0.6% after the 15 Nov Bahrain strike and 12.29% WPI, and 0.38% today despite the Nasdaq's 2.5% fall; Brent is near $92-94 (down 14% in a month, IEA sees a 2 mb/d surplus), and SBI trimmed its December RBI call to a 25 bp hike."
+    ],
+    "decided_by": "My preset cut triggers have not fired: Nifty is 5.9% above its rising 20-day average, FIIs are still net buyers (Rs 38,207 crore in five sessions), Brent is about $92-94, not above $100, and 84% of Nifty stocks are above their 50-day; overbought alone is no reason to cut an uptrend.",
+    "go_to_cash_if": "Nifty closes below its 20-day average (about 23,974, rising ~100 pts a session); go half first if FIIs net sell 3 sessions running, Brent settles above $100 or <50% of Nifty stocks top their 50-day.",
+    "go_fully_in_if": "Already fully in. If cut to half, back to full when FIIs buy 3 sessions running, Brent is below $95 and over 60% of Nifty stocks are above their 50-day, with Nifty above its 20-day.",
+    "model": "Claude Opus 5.5 (challenger agent)",
+    "searches": 3,
+    "made_at": "2026-11-17T19:38+05:30"
   }
 ]

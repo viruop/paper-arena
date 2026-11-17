@@ -252,5 +252,21 @@
     "model": "Claude Opus 5.5 (in chat)",
     "searches": 3,
     "made_at": "2026-11-16T18:58+05:30"
+  },
+  {
+    "date": "2026-11-17",
+    "position": 1.0,
+    "summary": "Staying fully in: Nifty rose 0.4% to 25,387 for a second straight gain as banks led (Nifty Bank at another record) and Brent fell to about $92, shrugging off a 2% fall on Wall Street; it is 5.9% above its 20-day average, the plan's exit.",
+    "reasons": [
+      "Nifty closed at 25,387.40 (+0.38%) and Nifty Bank at a record 62,273 (+1.1%), while IT fell 0.9% after the Nasdaq dropped 2.5% on AI valuation worries. Nifty is 5.9% above its 20-day average (23,974) and 5.8% above its 200-day (23,993): the exit is far off.",
+      "Support: foreign investors bought a net Rs 4,865 crore on 16 Nov and Rs 38,207 crore over five sessions, with reports of money moving from global tech stocks into India. Brent fell to about $92 after the US signalled it wants to avoid a long war with Iran.",
+      "Risk: inflation. Wholesale inflation rose to 12.29% in October (fuel and power 32.8%) after consumer inflation of 6.09%, so an RBI rate rise at the 2-4 Dec meeting looks likely; Iran's 15 Nov strike on a US base in Bahrain shows the war risk isn't over.",
+      "Risk: a narrow, stretched rally. Domestic funds sold Rs 27,711 crore in five sessions, more shares fell than rose today, and RSI(14) is 77 after a 10.9% gain in a month; Nvidia's results tonight could move tech. A pullback towards the rising 20-day average stays possible."
+    ],
+    "go_to_cash_if": "Nifty closes below its 20-day average (about 23,970, rising)",
+    "go_fully_in_if": "Already fully in; stays in while Nifty holds above its 20-day average",
+    "model": "Claude Opus 5.5 (in chat)",
+    "searches": 3,
+    "made_at": "2026-11-17T19:34+05:30"
   }
 ]
