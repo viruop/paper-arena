@@ -13,3 +13,5 @@ in-cpi-2026-12-12,2026-12-12,16:00,,IN,data,,India inflation (CPI) for November,
 nse-holiday-2026-12-25,2026-12-25,,,IN,holiday,NSE,NSE closed for Christmas,,scheduled,https://rhnvrm.github.io/stock-market-circulars/circulars/nse/2025/nse-2025-12-12-64f77fa4407e27e6-trading-holidays-for-the-calendar-year-2026,2026-11-09T17:42:00Z,claude
 us-jobs-2026-12-04,2026-12-04,19:00,,US,data,,US jobs report for November (nonfarm payrolls),high,scheduled,https://www.bls.gov/schedule/2026/12_sched_list.htm,2026-11-11T17:46:00Z,claude
 us-cpi-2026-12-10,2026-12-10,19:00,,US,data,,US inflation (CPI) for November,high,scheduled,https://www.bls.gov/schedule/2026/12_sched_list.htm,2026-11-11T17:46:00Z,claude
+fed-minutes-2026-11-18,2026-11-19,00:30,,US,central_bank,,US Fed minutes of the 27-28 Oct meeting (2 pm Washington time on 18 Nov),medium,scheduled,https://www.federalreserve.gov/newsevents/2026-november.htm,2026-11-17T17:40:00Z,claude
+fed-beige-book-2026-11-25,2026-11-26,00:30,,US,central_bank,,US Fed Beige Book (2 pm Washington time on 25 Nov),low,scheduled,https://www.federalreserve.gov/newsevents/2026-november.htm,2026-11-17T17:40:00Z,claude
