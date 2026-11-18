@@ -333,3 +333,30 @@ date,agent,holding,value,since_start,trade,nifty_close
 2026-11-17,Weekly option buying (whole lots),"1 lot: Long 25,400 CE, expiry 23 Nov",100056.20,0.000562,"Bought 25,400 CE at 189.2 (1 lot, expiry 23 Nov)",25387.40
 2026-11-17,Weekly short strangle,"Short 25,900 CE + Short 24,850 PE, expiry 23 Nov",93618.70,-0.063813,"Expired with Nifty at 25,387: +Rs 1,683 on the week; Sold 25,900 CE at 35.9, sold 24,850 PE at 30.6 (expiry 23 Nov)",25387.40
 2026-11-17,Weekly short strangle (whole lots),"1 lot: Short 25,900 CE + Short 24,850 PE, expiry 23 Nov",100055.70,0.000557,"Sold 25,900 CE at 35.9, sold 24,850 PE at 30.6 (1 lot, expiry 23 Nov)",25387.40
+2026-11-18,200-day trend,NIFTY 50,100923.43,0.009234,,25227.95
+2026-11-18,3-day rule + US filter (control),NIFTYBEES,110846.84,0.108468,,25227.95
+2026-11-18,Buy & hold,NIFTY 50,111517.22,0.115172,,25227.95
+2026-11-18,Cash only,Cash,100420.42,0.004204,,25227.95
+2026-11-18,Claude,NIFTY 50,108387.69,0.083877,,25227.95
+2026-11-18,"Claude, challenged",NIFTY 50,99650.93,-0.003491,,25227.95
+2026-11-18,Futures trend (long/short),Long futures (3x),81892.13,-0.181079,,25227.95
+2026-11-18,Futures trend (whole lots),Long 1 lot of futures,99994.75,-0.000053,,25227.95
+2026-11-18,Gold breakdown short (control),Short gold (Gold Petal),108750.63,0.087506,,25227.95
+2026-11-18,Gold breakout,Cash,100326.84,0.003268,,25227.95
+2026-11-18,Gold/silver reversion,SILVERBEES,84783.22,-0.152168,,25227.95
+2026-11-18,Gold/silver trend,GOLDBEES,92030.84,-0.079692,,25227.95
+2026-11-18,Golden cross,Cash,100420.42,0.004204,,25227.95
+2026-11-18,Intraday futures,Nothing overnight,103031.74,0.030317,"Bought at the open 25,323, stopped out at 25,197: -Rs 1,934",25227.95
+2026-11-18,Intraday short straddle,Nothing overnight,99331.25,-0.006688,"Sold the 25,300 straddle at 330.7, bought back at 335.5: -Rs 106",25227.95
+2026-11-18,Low-VIX long straddle,Cash,100347.44,0.003474,,25227.95
+2026-11-18,Momentum rotation,NIFTY PHARMA,111225.42,0.112254,,25227.95
+2026-11-18,Nifty-gold switch,NIFTYBEES,110846.84,0.108468,,25227.95
+2026-11-18,RSI(2) dip-buy,Cash,100420.42,0.004204,,25227.95
+2026-11-18,Weekly ITM option buying,Cash,100092.53,0.000925,,25227.95
+2026-11-18,Weekly OTM option buying,Cash,100092.53,0.000925,,25227.95
+2026-11-18,Weekly iron condor,Cash,95970.83,-0.040292,"Expired with Nifty at 25,228: +Rs 1,291 on the week",25227.95
+2026-11-18,Weekly iron condor (whole lots),Cash,100092.53,0.000925,,25227.95
+2026-11-18,Weekly option buying,Cash,121360.49,0.213605,"Expired with Nifty at 25,228: -Rs 747 on the week",25227.95
+2026-11-18,Weekly option buying (whole lots),Cash,100092.53,0.000925,,25227.95
+2026-11-18,Weekly short strangle,Cash,93652.01,-0.063480,"Expired with Nifty at 25,228: +Rs 1,704 on the week",25227.95
+2026-11-18,Weekly short strangle (whole lots),Cash,100092.53,0.000925,,25227.95
