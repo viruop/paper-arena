@@ -9,3 +9,4 @@ id,call_id,posted_at,action,detail,price,trigger,verdict,note,added_by
 19123,19114,2026-11-11T10:59:21Z,claim,profit,,,,"""Today is US BANK holiday and our community members booked good profits in morning only 
 
 🤑🤑🤑""",parser
+19238,19225,2026-11-18T04:19:36Z,stop,breakeven,entry,,,"""Go Breakeven guys""",parser
