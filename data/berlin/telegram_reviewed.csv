@@ -292,3 +292,31 @@ id,posted_at,reviewed_at,decision,call_id,note
 78079,2026-11-13T15:11:43Z,2026-11-13T17:39:00Z,claim,78055,"claims 65%+ returns in options on call 78055; leaves booking to followers, he does not exit"
 78080,2026-11-16T11:34:35Z,2026-11-16T17:39:00Z,update,78055,"""I have exited my long positions in crude"": exit of call 78055"
 78081,2026-11-16T11:37:34Z,2026-11-16T17:39:00Z,other,78055,"""This sideways trend killed the gains."" with image after his exit of call 78055; comment, no result figure"
+78082,2026-11-17T07:05:06Z,2026-11-17T17:40:00Z,other,,Nifty forecast from open interest: a fall to the day lows if it breaks his red line (level only on the chart image); no position
+78083,2026-11-17T07:07:24Z,2026-11-17T17:40:00Z,other,,"caption of forecast 78082 (""Statement based on OPEN INTEREST"")"
+78084,2026-11-17T07:42:06Z,2026-11-17T17:40:00Z,other,,"""On time, As usual."" on forecast 78082; celebration, not a call"
+78085,2026-11-17T07:43:34Z,2026-11-17T17:40:00Z,other,,image with no text; no position
+78086,2026-11-17T07:48:05Z,2026-11-17T17:40:00Z,other,,"recap of forecast 78082: ""Nifty fell sharp 80 points below the red line"""
+78087,2026-11-17T08:22:00Z,2026-11-17T17:40:00Z,other,,"comment with image (""I'm not good at it""); no position"
+78088,2026-11-17T08:24:26Z,2026-11-17T17:40:00Z,other,,"explains forecast 78082 (OI-based line, covering); no position"
+78089,2026-11-17T08:29:16Z,2026-11-17T17:40:00Z,other,,"comment on forecast 78082 (""It can be luck"")"
+78090,2026-11-17T08:32:17Z,2026-11-17T17:40:00Z,other,,promises a crude oil expiry statement later; no position
+78091,2026-11-17T09:02:11Z,2026-11-17T17:40:00Z,other,,"crude watch alert: ""keep eyes on call side (Upside)"", does not support shorting; ""CrudeOil now at 85.5$""; no position taken or advised (he says in 78099, after the move, that he bought calls after it)"
+78092,2026-11-17T09:34:17Z,2026-11-17T17:40:00Z,other,,comment with image on option value adjustments; no position
+78093,2026-11-17T09:34:24Z,2026-11-17T17:40:00Z,other,,"""Spot 25400""; option pricing commentary"
+78094,2026-11-17T09:35:32Z,2026-11-17T17:40:00Z,other,,Nifty 25450 CE vs 25350 PE pricing gap commentary; no position
+78095,2026-11-17T09:36:15Z,2026-11-17T17:40:00Z,other,,"comment (""Sad to see this!"")"
+78096,2026-11-17T09:38:21Z,2026-11-17T17:40:00Z,other,,commentary on hedge funds and value gaps; no position
+78097,2026-11-17T14:17:13Z,2026-11-17T17:40:00Z,other,,"""Do you remember this?"" reply to crude alert 78091, after crude rose"
+78098,2026-11-17T14:22:40Z,2026-11-17T17:40:00Z,claim,,"""Holding more than 150% returns in calls. Booking some profits now""; crude calls never posted as a call"
+78099,2026-11-17T14:25:03Z,2026-11-17T17:40:00Z,claim,,"says he bought crude calls just after alert 78091 and added later; said after the move, so not a call"
+78100,2026-11-17T14:26:42Z,2026-11-17T17:40:00Z,other,,comment on alert 78091; no position
+78101,2026-11-17T14:27:04Z,2026-11-17T17:40:00Z,other,,"""CONVICTION BASED ON KNOWLEDGE.""; comment"
+78102,2026-11-17T14:29:14Z,2026-11-17T17:40:00Z,claim,,"""Nifty puts and crude calls, over 1Million in profits"" today; neither trade was posted as a call"
+78103,2026-11-17T14:35:34Z,2026-11-17T17:40:00Z,claim,,"""booked 70% profits from crudeoil expiry positions""; untagged trade"
+78104,2026-11-17T14:40:01Z,2026-11-17T17:40:00Z,other,,"comment with image (""I don't know the future""); no position"
+78105,2026-11-17T14:44:22Z,2026-11-17T17:40:00Z,claim,78055,"claim on call 78055: had 1M gains, exited with 1.24L gains; claim added to telegram_updates.csv"
+78106,2026-11-17T14:55:03Z,2026-11-17T17:40:00Z,other,,promotion: Q&A link
+78107,2026-11-17T14:55:07Z,2026-11-17T17:40:00Z,other,,promotion: link to his X post
+78108,2026-11-17T14:56:13Z,2026-11-17T17:40:00Z,other,,promotion: asks for engagement
+78109,2026-11-17T14:59:34Z,2026-11-17T17:40:00Z,other,,promotion: read the comments
