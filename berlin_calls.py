@@ -63,10 +63,25 @@ UPDATES = os.path.join(FOLDER, "telegram_updates.csv")     # his later exits, st
 REVIEWED = os.path.join(FOLDER, "telegram_reviewed.csv")    # Claude's decision on every post it reviewed (add-only)
 DELETED = os.path.join(FOLDER, "telegram_deleted.csv")      # saved posts he later deleted (add-only)
 DELETED_COLS = ["id", "posted_at", "noticed_at", "text"]
-VARIANTS = os.path.join("logs", "berlin_variants.csv")      # each scored call also late and reversed
+VARIANTS = os.path.join("logs", "berlin_variants.csv")      # each scored call also late and reversed, and filtered
 UPDATE_COLS = ["id", "call_id", "posted_at", "action", "detail", "price", "trigger", "verdict", "note", "added_by"]
 VARIANT_COLS = ["id", "variant", "fill_at", "fill", "exit_at", "exit", "outcome", "r", "pnl_rs", "scored_at"]
 LATE_MIN = (15, 30)
+# Three filters on his Nifty level calls, written down on 20 Nov 2026 and, like an agent's rule, never changed
+# (a change is a new filter with a new name). Only calls posted after FILTERS_SET test them: the earlier calls were
+# known when the filters were chosen, so they are a look back. Judged at FILTER_CALLS such calls.
+#   trend20: only calls in the direction of Nifty's trend: its last close before the post above its 20-day average
+#            allows longs, below allows shorts. A call taken is the on-time trade; one left out counts as nothing.
+#   open15:  no entry in the first 15 minutes of the session: a fill due before 9:30 am IST waits for the first
+#            5-minute bar from 9:30, aiming at the on-time trade's target.
+#   retest:  for a call that enters on the break of a level, sell (or buy) only when the price comes back to the
+#            level after the break, at the level; no retest before the call ends means no trade.
+FILTERS = ("trend20", "open15", "retest")
+FILTERS_SET = "2026-11-20"
+FILTER_CALLS = 40
+TREND_DAYS = 20
+OPEN15_UTC = "04:00"                                         # 9:30 am IST
+NIFTY_DAILY = os.path.join("data", "market", "NIFTY50.csv")   # saved daily closes (market_data.py)
 BARS_DIR = os.path.join("data", "market", "intraday")
 POST_COLS = ["id", "posted_at", "seen_at", "edited", "reply_to", "media", "text"]
 RESULT_COLS = ["id", "posted_at", "kind", "instrument", "leg", "side", "fill_at", "fill", "stop", "target",
@@ -392,7 +407,8 @@ def gold_gap(calls, ref_id, bars):
     return 0.0 if after.empty else after["Open"].iloc[0] - num(ref.iloc[0]["entry"])
 
 
-def score_level(call, bars, calls, updates=(), start=None, flip=False, target_level=None, close_by=None):
+def score_level(call, bars, calls, updates=(), start=None, flip=False, target_level=None, close_by=None,
+                no_entry_before=None, retest=False):
     """One level call: a list with one result row, [] if it never filled, None if not finished yet.
     updates: his later posts about this call from telegram_updates.csv; an exit ends it like exit_at does,
     and stop and target moves apply from when he posted them. start: the earliest fill, for the delay test (a follower
@@ -400,6 +416,8 @@ def score_level(call, bars, calls, updates=(), start=None, flip=False, target_le
     left out). target_level: a fixed target (the on-time trade's), so a late follower aims where he did.
     close_by: a UTC time of day ("09:40") by which an intraday trade must be out, for the NIFTYBEES copy
     (berlin_etf.py), which has to close before the broker does it.
+    no_entry_before: a UTC time of day ("04:00"): no fill in a bar that starts earlier that day (the open15 filter).
+    retest: for a break entry, fill only when a later bar comes back to the level, at the level (the retest filter).
     Without these arguments this is the original rule, unchanged."""
     posted, inst, side = utc(call["posted_at"]), call["instrument"], call["side"]
     end = window_end(call, posted)
@@ -417,6 +435,8 @@ def score_level(call, bars, calls, updates=(), start=None, flip=False, target_le
     sign = 1 if side == "long" else -1
     begin = posted if start is None else max(posted, start)
     after = bars[(bars.index >= begin) & (bars.index < end)]
+    if no_entry_before is not None:
+        after = after[after.index.strftime("%H:%M") >= no_entry_before]
     if after.empty:
         return []
     if call["entry_type"] == "break":
@@ -427,6 +447,15 @@ def score_level(call, bars, calls, updates=(), start=None, flip=False, target_le
         fill_at = hit.index[0]
         o = hit["Open"].iloc[0]
         fill = min(o, level) if sign < 0 else max(o, level)
+        if retest:                                        # back to the level after the break, filled at it
+            later = after[after.index > fill_at]
+            back = later[(later["High"] >= level) if sign < 0 else (later["Low"] <= level)]
+            if back.empty:
+                return []
+            fill_at, o = back.index[0], back["Open"].iloc[0]
+            fill = max(o, level) if sign < 0 else min(o, level)
+    elif retest:
+        return []                                         # only a break entry has a level to come back to
     else:
         fill_at, fill = after.index[0], after["Open"].iloc[0]
     stop = num(call["stop"])
@@ -512,6 +541,73 @@ def variant_rows(call, bars, calls, updates=()):
                     "exit_at": row.get("exit_at", ""), "exit": row.get("exit", ""),
                     "outcome": row.get("outcome", "not filled"), "r": row.get("r", 0), "pnl_rs": row.get("pnl_rs", 0),
                     "scored_at": now})
+    return out
+
+
+def nifty_closes(path=None):
+    """Nifty 50's saved daily closes (data/market/NIFTY50.csv), oldest first; empty if missing."""
+    path = path or NIFTY_DAILY
+    if not os.path.exists(path):
+        return pd.Series(dtype=float)
+    df = pd.read_csv(path)
+    s = pd.Series(pd.to_numeric(df["Close"], errors="coerce").values,
+                  index=pd.to_datetime(df.iloc[:, 0], errors="coerce", format="ISO8601"))
+    s = s[s.index.notna()].dropna()
+    return s[~s.index.duplicated(keep="last")].sort_index()
+
+
+def nifty_trend(closes, posted, days=TREND_DAYS):
+    """"up" or "down": Nifty's last close before the post against the average of the last `days` closes;
+    None without enough closes (or exactly on the average)."""
+    known = closes[closes.index + pd.Timedelta(NIFTY_CLOSE_UTC + ":00") <= posted.tz_convert("UTC").tz_localize(None)]
+    if len(known) < days:
+        return None
+    last, avg = float(known.iloc[-1]), float(known.iloc[-days:].mean())
+    return "up" if last > avg else "down" if last < avg else None
+
+
+def filters_for(call):
+    """The filters that apply to a call: his scorable Nifty level calls only; retest needs a break entry."""
+    if call["kind"] != "level" or call["instrument"] != "NIFTY" or call.get("scorable") != "yes":
+        return []
+    return [f for f in FILTERS if f != "retest" or call["entry_type"] == "break"]
+
+
+def filter_rows(call, bars, calls, updates=(), closes=None):
+    """His Nifty call through each filter that applies to it (FILTERS, written down on 20 Nov 2026).
+    Checks only: they never change the call's own result. None if not finished yet (or no trend data)."""
+    names = filters_for(call)
+    if not names:
+        return []
+    base = score_level(call, bars, calls, updates)
+    if base is None:
+        return None
+    if not base:
+        return []
+    now = pd.Timestamp.now(tz="UTC").strftime("%Y-%m-%dT%H:%M:%SZ")
+    def row(name, res, outcome=None):
+        r = res[0] if res else {}
+        return {"id": call["id"], "variant": name, "fill_at": r.get("fill_at", ""), "fill": r.get("fill", ""),
+                "exit_at": r.get("exit_at", ""), "exit": r.get("exit", ""),
+                "outcome": outcome or r.get("outcome", "not filled"), "r": r.get("r", 0) if r else 0,
+                "pnl_rs": r.get("pnl_rs", 0) if r else 0, "scored_at": now}
+    out = []
+    if "trend20" in names:
+        trend = nifty_trend(nifty_closes() if closes is None else closes, utc(call["posted_at"]))
+        if trend is None:
+            return None
+        out.append(row("trend20", base) if (trend == "up") == (call["side"] == "long")
+                   else row("trend20", [], f"left out: against the {TREND_DAYS}-day trend ({trend})"))
+    if "open15" in names:
+        res = score_level(call, bars, calls, updates, no_entry_before=OPEN15_UTC, target_level=num(base[0]["target"]))
+        if res is None:
+            return None
+        out.append(row("open15", res))
+    if "retest" in names:
+        res = score_level(call, bars, calls, updates, retest=True)
+        if res is None:
+            return None
+        out.append(row("retest", res, None if res else "no retest"))
     return out
 
 
@@ -694,22 +790,40 @@ def score_all(bars_for):
 
 
 def score_variants(bars_for):
-    """The late and reversed checks for every scored level call that doesn't have them yet."""
-    calls, res, have = read_calls(), read_results(), set(read_variants()["id"].astype(str))
+    """The late and reversed checks, and the filters on his Nifty calls, for every scored level call that
+    doesn't have them yet. Each (call, check) is written once; a check added later is filled in for older calls."""
+    calls, res, have = read_calls(), read_results(), read_variants()
     if calls.empty or not len(res):
         return 0
+    done = set(zip(have["id"].astype(str), have["variant"].astype(str)))
     traded = set(res.loc[(res["kind"] == "level") & (res["outcome"] != "not filled") & (res["leg"] == "call"), "id"].astype(str))
-    updates, rows = read_updates(), []
+    updates, rows, closes = read_updates(), [], None
+    late = [f"late{m}" for m in LATE_MIN] + ["flip"]
     for _, call in calls.iterrows():
         cid = str(call["id"])
-        if cid not in traded or cid in have:
+        if cid not in traded:
+            continue
+        missing = [v for v in late + filters_for(call) if (cid, v) not in done]
+        if not missing:
             continue
         try:
-            out = variant_rows(call, bars_for(call["instrument"]), calls, updates_for(updates, cid))
+            bars, mine = bars_for(call["instrument"]), updates_for(updates, cid)
+            out = []
+            if set(missing) & set(late):
+                got = variant_rows(call, bars, calls, mine)
+                if got is None:
+                    continue
+                out += got
+            if set(missing) & set(FILTERS):
+                closes = nifty_closes() if closes is None else closes
+                got = filter_rows(call, bars, calls, mine, closes)
+                if got is None:
+                    continue
+                out += got
         except Exception as exc:  # no prices: try again next time
             print(f"  ! checks for call {cid}: {exc}", file=sys.stderr)
             continue
-        rows += out or []
+        rows += [r for r in out if r["variant"] in missing]
     append(VARIANTS, VARIANT_COLS, rows)
     return len(rows)
 
@@ -759,16 +873,19 @@ def main():
     # here, so the two workflows never edit the same file at once.
     calls = read_calls()
     done = set(read_results()["id"].astype(str))
-    have = set(read_variants()["id"].astype(str))
+    have = read_variants()
+    have = set(zip(have["id"].astype(str), have["variant"].astype(str)))
+    late = [f"late{m}" for m in LATE_MIN] + ["flip"]
     wanted = [c for _, c in calls.iterrows() if (c["scorable"] == "yes" or option_on_underlying(c))
-              and (str(c["id"]) not in done or (c["kind"] == "level" and str(c["id"]) not in have))] if len(calls) else []
+              and (str(c["id"]) not in done or (c["kind"] == "level" and
+                   any((str(c["id"]), v) not in have for v in late + filters_for(c))))] if len(calls) else []
     for sym in sorted({symbol(c["instrument"]) for c in wanted}):
         try:
             print(f"{sym}: {update_bars(sym)} five-minute bars saved.")
         except Exception as exc:  # Yahoo unreachable: the saved bars are used
             print(f"{sym}: not updated ({exc})")
     bars_for = lambda inst: read_bars(symbol(inst))
-    print(f"Scored {score_all(bars_for)} calls; {score_variants(bars_for)} late and reversed checks.")
+    print(f"Scored {score_all(bars_for)} calls; {score_variants(bars_for)} late, reversed and filter checks.")
     try:
         import berlin_study
         berlin_study.rates(refresh=True)        # the Fed's NZD/CAD rates for the forex video's check

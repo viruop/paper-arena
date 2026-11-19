@@ -703,8 +703,9 @@ def logs_html():
              ("logs/berlin_calls.csv", "Call results", False, "how each call did when paper traded"),
              ("data/berlin/telegram_updates.csv", "His later posts", False, "his exits, stop moves and claims about "
                                                                             "each call, and whether the record agrees"),
-             ("logs/berlin_variants.csv", "Late and reversed checks", False, "each call taken 15 and 30 minutes late, "
-                                                                            "and reversed"),
+             ("logs/berlin_variants.csv", "Late, reversed and filter checks", False, "each call taken 15 and 30 minutes late, "
+                                                                            "reversed, and his Nifty calls through "
+                                                                            "the three filters of 20 Nov 2026"),
              ("logs/berlin_etf.csv", "NIFTYBEES copy", False, "his Nifty calls copied onto NIFTYBEES at Zerodha’s "
                                                                "charges, on time and late"),
              ("data/berlin/call_corrections.csv", "Corrections", False, "calls we misread, noted without changing "
@@ -1438,6 +1439,58 @@ def zerodha_source():
         return "https://zerodha.com/charges/"
 
 
+FILTER_WORDS = {   # berlin_calls.FILTERS in plain words (written down on 20 Nov 2026)
+    "trend20": ("With the 20-day trend", "longs only when Nifty's last close was above its 20-day average, "
+                                         "shorts only below"),
+    "open15": ("Not in the first 15 minutes", "an entry due before 9:30 am waits for 9:30"),
+    "retest": ("On a retest of his level", "break calls only: in when the price comes back to the level"),
+}
+
+
+def filters_html(tg):
+    """His Nifty calls through the three filters written down on 20 Nov 2026 (berlin_calls.FILTERS): the calls
+    posted since then test them; the earlier ones were known when they were chosen, so they're a look back."""
+    calls, res, var = tg.get("calls"), tg.get("results"), tg.get("variants")
+    if calls is None or not len(calls) or res is None or not len(res) or var is None:
+        return ""
+    mine = {str(c["id"]): c for _, c in calls.iterrows() if berlin_calls.filters_for(c)}
+    on = res[(res["leg"] == "call") & (res["outcome"] != "not filled") & res["id"].astype(str).isin(mine)]
+    if not len(on):
+        return ""
+    set_at = pd.Timestamp(berlin_calls.FILTERS_SET, tz="UTC")
+    p_on = dict(zip(on["id"].astype(str), pd.to_numeric(on["pnl_rs"], errors="coerce").fillna(0)))
+    since = {i for i in p_on if pd.Timestamp(mine[i]["posted_at"]) >= set_at}
+    var = var[var["id"].astype(str).isin(p_on)]
+
+    def cell(ids, name=None):
+        if not ids:
+            return "<td class='r'>–<span class='sub2'>none yet</span></td>"
+        if name is None:
+            total = sum(p_on[i] for i in ids)
+            return f"<td class='r'>{money(total)}<span class='sub2'>{len(ids)} call{'' if len(ids) == 1 else 's'}</span></td>"
+        rows = var[(var["variant"] == name) & var["id"].astype(str).isin(ids)]
+        if not len(rows):
+            return "<td class='r'>–<span class='sub2'>none yet</span></td>"
+        taken = int((rows["fill_at"].astype(str).str.len() > 0).sum())
+        total = float(pd.to_numeric(rows["pnl_rs"], errors="coerce").fillna(0).sum())
+        return f"<td class='r'>{money(total)}<span class='sub2'>{taken} of {len(rows)} taken</span></td>"
+
+    before = set(p_on) - since
+    body = (f"<tr><td>As he posted<span class='sub2'>the calls above, on time</span></td>{cell(since)}{cell(before)}</tr>"
+            + "".join(f"<tr><td>{esc(t)}<span class='sub2'>{esc(w)}</span></td>{cell(since, n)}{cell(before, n)}</tr>"
+                      for n, (t, w) in FILTER_WORDS.items()))
+    need = berlin_calls.FILTER_CALLS
+    return (f"<h3>Three filters on his Nifty calls</h3>"
+            f"<p class='meta'>Would simple rules have made his Nifty calls better? Three were written down on "
+            f"{day(set_at)} and won't change (a change would be a new filter). Each scored call is also taken "
+            f"through them, at the same ₹1,000 risk; a call a filter leaves out counts as nothing. Only calls "
+            f"posted since {day(set_at)} test them: the earlier ones were known when the filters were chosen, so "
+            f"that column is a look back, not evidence. Judged once {need} such calls are scored: "
+            f"{len(since)} so far.</p>"
+            f"<div class='scroll'><table class='risk'><thead><tr><th>Rule</th><th class='r'>Since {set_at.day} "
+            f"{set_at:%b}</th><th class='r'>Look back</th></tr></thead><tbody>{body}</tbody></table></div>")
+
+
 def telegram_html(tg):
     if not tg:
         return "<p class='meta'>The Telegram record couldn’t be read tonight.</p>"
@@ -1476,7 +1529,7 @@ def telegram_html(tg):
             + scorecard_html(sc, "his calls") +
             f"<ul class='panel tlist calls'>{''.join(items)}</ul>"
             + (f"<details class='mini'><summary>Older calls ({len(ordered) - 6})</summary>"
-               f"<ul class='panel tlist calls'>{older}</ul></details>" if older else "") + options +
+               f"<ul class='panel tlist calls'>{older}</ul></details>" if older else "") + options + filters_html(tg) +
             f"<p class='meta'>Market calls fill at the next 5-minute bar after the post, or when his level breaks. "
             f"A missing stop is added and said so (for example 0.2% for Nifty intraday, 1.5% for gold positional, "
             f"1% for Bitcoin intraday). A call is scored once its window ends: the close for Nifty intraday, "
