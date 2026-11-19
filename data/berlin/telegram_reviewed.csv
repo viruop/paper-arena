@@ -383,3 +383,11 @@ id,posted_at,reviewed_at,decision,call_id,note
 78171,2026-11-19T06:10:40Z,2026-11-19T17:40:00Z,other,,voice note (transcript): forecast of possible selling; no position
 78172,2026-11-19T06:12:25Z,2026-11-19T17:40:00Z,other,,voice note (transcript): example of bank selling and Nifty; no position
 78173,2026-11-19T06:35:46Z,2026-11-19T17:40:00Z,other,,"going offline, will trade only if setup triggers; no position"
+78112,2026-11-18T05:26:58Z,2026-11-19T19:15:00Z,call,78112,"settled with his chart (screenshot from the user): Nifty short on a close below an unlabelled dashed line (about 25,215 by the axis), target 25000; chart-only level, so not scored on his levels"
+78114,2026-11-18T09:06:06Z,2026-11-19T19:15:00Z,update,78112,"exit of call 78112 at 25,250"
+78123,2026-11-18T13:46:42Z,2026-11-19T19:15:00Z,call,78123,"settled with his chart (screenshot from the user): WTI short from 84.03, stop 84.91, target 80.07; entry at the post"
+78129,2026-11-18T16:35:24Z,2026-11-19T19:15:00Z,claim,78123,claim on call 78123; its row is now in telegram_updates.csv
+78131,2026-11-18T16:49:23Z,2026-11-19T19:15:00Z,claim,78123,claim on call 78123; its row is now in telegram_updates.csv
+78132,2026-11-18T16:51:29Z,2026-11-19T19:15:00Z,claim,78123,claim on call 78123; its row is now in telegram_updates.csv
+78134,2026-11-18T16:54:45Z,2026-11-19T19:15:00Z,claim,78123,claim on call 78123; its row is now in telegram_updates.csv
+78140,2026-11-18T17:03:51Z,2026-11-19T19:15:00Z,claim,78123,claim on call 78123; its row is now in telegram_updates.csv

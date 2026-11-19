@@ -58,3 +58,9 @@ id,call_id,posted_at,action,detail,price,trigger,verdict,note,added_by
 78105,78055,2026-11-17T14:44:22Z,claim,,,,matches,"""In this position as well, I had 1Million gains.. 6L in FYERS and 4L in Kite. But I took exit with just 1.24L gains"" (reply to his 60% target post 78077). logs/berlin_calls.csv scores call 78055 as his exit at 88.23 from a fill of 87.35, +0.302R (+Rs 302): a profit at his exit, as he says; his rupee sizes are not checked.",claude
 78161,78116,2026-11-19T04:28:47Z,exit,,,,,"""Had decent gains, but nifty again moving towards highs.. Covering the overnight positions here for now, will re enter if price goes in down direction.""",claude
 78161,78116,2026-11-19T04:28:47Z,claim,,,,,"""Had decent gains"". Not checked: the call is not scored yet.",claude
+78114,78112,2026-11-18T09:06:06Z,exit,,,,,"""Exited at 25250 for once, the moment i re enter again I'll update.""",claude
+78129,78123,2026-11-18T16:35:24Z,claim,,,,,"""And BINGO."" with an image, as crude reached the day lows. Not checked: the call is still open.",claude
+78131,78123,2026-11-18T16:49:23Z,claim,,,,,"""Holding 2.20% of the fall, trade has achieved 1:2RR"". Not checked: the call is still open.",claude
+78132,78123,2026-11-18T16:51:29Z,claim,,,,,"""You beauty. Just wonderful!"" with an image. Not checked: the call is still open.",claude
+78134,78123,2026-11-18T16:54:45Z,claim,,,,,"""Holding 240 points in MCX futures, Sitting tight."". Not checked: the call is still open.",claude
+78140,78123,2026-11-18T17:03:51Z,claim,,,,,"""80% target."" with an image. Not checked: the call is still open.",claude
