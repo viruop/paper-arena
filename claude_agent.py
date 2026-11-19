@@ -427,8 +427,9 @@ def run_snapshot(now=None, agent="claude"):
         chlog = load_challenger_log()
         due, why = challenger_status(res["latest"], log, chlog, now)
         print(f"DECISION NEEDED: {'yes' if due else 'no'}. {why}\n")
-        print(CHALLENGER_RULES.split("{news}")[0].strip())
-        print("\n" + NEWS_ON.format(n=MAX_SEARCHES) + "\n")
+        # All of its instructions, reply format included, as the API run gives them (until 20 Nov 2026 this
+        # text stopped before the reply format, so a session had to add it by hand).
+        print(CHALLENGER_RULES.format(news=NEWS_ON.format(n=MAX_SEARCHES)).strip() + "\n")
         first = tonight(log, res["latest"])
         if first is not None:
             base = snapshot(closes, res, [d for d in log if d["date"] != first["date"]], mc.context(),
