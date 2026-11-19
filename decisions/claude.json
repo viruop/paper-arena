@@ -268,5 +268,37 @@
     "model": "Claude Opus 5.5 (in chat)",
     "searches": 3,
     "made_at": "2026-11-17T19:34+05:30"
+  },
+  {
+    "date": "2026-11-18",
+    "position": 1.0,
+    "summary": "Staying fully in: Nifty fell 0.6% to 25,228 on profit booking after an 11% November rally, as the US struck an Iranian missile site near Hormuz, Fed officials talked of more rate rises and SEBI weighed margin-trading limits; it is still 4.7% above its 20-day average, the plan's exit.",
+    "reasons": [
+      "Nifty closed at 25,227.95 (-0.63%), its first fall after two gains, and Nifty Bank at 62,039 (-0.4%). Nifty is 4.7% above its 20-day average (24,095), which has risen above the 200-day (23,993): the exit, a close below the rising 20-day, is still some way off.",
+      "Reasons reported: profit booking after Sensex and Nifty rose up to 11% in November; the US struck an IRGC missile site on Iran's Qeshm Island after Iran's attack on a US base in Bahrain; Fed officials signalled more rate rises; and SEBI said it is weighing limits on margin-trading loans.",
+      "Breadth was weak: 2,485 NSE shares fell and 1,098 rose, metal and consumer durables fell up to 3%, and India VIX rose to 15.6. The SEBI margin plan mostly touches small and midcaps, where two-thirds of margin loans sit, so the Nifty may hold up better than the broad market.",
+      "Support: foreign investors bought a net Rs 4,195 crore on 17 Nov (Rs 35,191 crore in five sessions), 86% of Nifty stocks were above their 50-day average on 16 Nov, and Goldman Sachs has upgraded Indian shares to overweight. Today's FII figures and Brent's price weren't found."
+    ],
+    "go_to_cash_if": "Nifty closes below its 20-day average (about 24,100, rising)",
+    "go_fully_in_if": "Already fully in; stays in while Nifty holds above its 20-day average",
+    "model": "Claude Opus 5.5 (in chat)",
+    "searches": 2,
+    "made_at": "2026-11-18T19:17+05:30"
+  },
+  {
+    "date": "2026-11-19",
+    "position": 1.0,
+    "summary": "Staying fully in: Nifty rose 1.1% to 25,514 after a weak start, led by autos, consumer and bank shares as raw material and copper prices eased and foreign buying went on; it is 5.3% above its 20-day average, the plan's exit.",
+    "reasons": [
+      "Nifty closed at 25,514.30 (+1.14%), recovering Wednesday's fall after a weak opening, and Nifty Bank rose 1.7% to a record 63,063. Nifty is 5.3% above its 20-day average (24,236) and 6.3% above its 200-day (23,994): the exit, a close below the rising 20-day, is far off.",
+      "The gains were broad: autos rose 4.4% and consumer durables 3.6% as raw material and copper prices eased, PSU banks 2.3%, FMCG 2.1% and midcaps 1.1%; only IT fell (-1.1%). Brent was steady at about $92.6.",
+      "Support: foreign investors bought a net Rs 5,867 crore on 18 Nov (Rs 28,494 crore over five sessions) while domestic funds sold Rs 3,160 crore, and 84% of Nifty stocks were above their 50-day average on 17 Nov.",
+      "Risks: Nifty is stretched (RSI(14) 76, about 15% above the 8 Oct low), an RBI rate rise is expected at the 2-4 Dec meeting after 6.09% inflation, and the US-Iran conflict around Hormuz could lift oil again."
+    ],
+    "go_to_cash_if": "Nifty closes below its 20-day average (about 24,240, rising)",
+    "go_fully_in_if": "Already fully in; stays in while Nifty holds above its 20-day average",
+    "model": "Claude Opus 5.5 (in chat)",
+    "searches": 2,
+    "made_at": "2026-11-19T21:19+05:30"
   }
 ]
