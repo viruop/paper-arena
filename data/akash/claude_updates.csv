@@ -1,3 +1,8 @@
 id,call_id,posted_at,action,detail,price,trigger,verdict,note,added_by
 19116,19114,2026-11-11T05:57:42Z,stop,breakeven,entry,,,"""Trade is close to our Target , Start booking and go Breakeven"" (11 minutes after signal 19114, the only open signal)",claude
 19195,19193,2026-11-15T05:53:40Z,exit,,,,,"Read by Claude: ""Delete kardo limit order guys"": cancels the BTC sell limit at 65165 before it filled (BTC high until then about 65119)",claude
+19237,19236,2026-11-18T04:19:02Z,stop_when,breakeven,entry,3789.5,,"""3789.5 break hote hi Breakeven chale jaana""",claude
+19238,19236,2026-11-18T04:19:36Z,stop,breakeven,entry,,,"""Go Breakeven guys""",claude
+19241,19236,2026-11-18T04:27:42Z,claim,tp,,,,"""Target hit""",claude
+19255,19251,2026-11-18T11:51:32Z,exit,,,,,"Read by Claude: ""Delete this limit order , Price bina activate kiye nikal gaya hai"": cancels the gold sell limit at 3770.2 before it filled",claude
+19267,19264,2026-11-19T06:41:44Z,stop,breakeven,entry,,,"""2 pips away from our First Target , Let's go Breakeven guys""",claude
