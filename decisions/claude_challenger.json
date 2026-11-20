@@ -123,5 +123,30 @@
     "model": "Claude Opus 5.5 (challenger agent)",
     "searches": 3,
     "made_at": "2026-11-19T21:22+05:30"
+  },
+  {
+    "date": "2026-11-20",
+    "position": 1.0,
+    "summary": "Fully in, like Claude: Nifty rose 1.12% to a nine-month high of 25,801, 5.8% above its 20-day average, on record FII buying, Brent at $88 and a seven-month-high rupee; it is overbought (RSI(14) 78) and an RBI hike looms on 2-4 Dec, but none of my preset cut triggers has fired.",
+    "challenged": {
+      "date": "2026-11-20",
+      "position": 1.0
+    },
+    "against": [
+      "Stretched: Nifty 25,801 is 5.8% above its 20-day average (24,396), RSI(14) 78, RSI(2) 91, up 14.2% in a month and 16% from the 8 Oct low of 22,232; the plan's exit is about 1,400 points (5.4%) below, so a normal pullback would give back much of November's gain before any rule reacts.",
+      "Fragile day: 20 Nov opened sharply lower on a global AI selloff (Nikkei -5%), more Nifty stocks fell than rose, India VIX rose 7% to 17.3 and DIIs sold Rs 10,092 crore over 5 sessions; the rally rests on FII money (+28,075 crore) that can reverse as fast as it came if the AI rout deepens.",
+      "RBI is expected to hike on 2-4 Dec (Reuters poll, 20 Nov) with CPI 6.1% and WPI 12.29%; Nifty Bank, the leader (+19.1% in a month, record close), is most exposed, and Hormuz mines and US strikes could send Brent back above $95 from $88; the 24 Nov holiday adds gap risk."
+    ],
+    "for": [
+      "Trend intact on every horizon: 25,801 is above the 5-day (25,444), 20-day (24,396), 50-day (23,513) and 200-day (23,996); the 20-day is rising about 150 points a session, and 67% of Nifty stocks are above their 200-day and 82% above their 50-day, against 19% and 22% a month ago.",
+      "Flows and macro improved on the day: record FII buying of $12.2 billion in November (+7,411 crore on 19 Nov), Brent fell 4% to about $88 from $95-96, the rupee is at a seven-month high near 92.7, and India posted a fourth straight weekly gain as money rotates out of global AI stocks.",
+      "None of my preset cut triggers has fired: FIIs are still net buyers, Brent is $88 not above $100, 82% of Nifty stocks are above their 50-day and the RBI has not hiked 50bp; cutting on a +1.1% day with the trend intact would be the overtrading the research warns against, for a 6% cash yield."
+    ],
+    "decided_by": "None of my preset cut triggers has fired: FIIs are still net buyers, Brent is $88 not above $100, 82% of Nifty stocks are above their 50-day and the RBI has not hiked 50bp; cutting on a +1.1% day with the trend intact would be the overtrading the research warns against, for a 6% cash yield.",
+    "go_to_cash_if": "Nifty closes below its 20-day avg (~24,400, rising ~150 pts a session). Half first if FIIs net sell 3 sessions running, Brent >$100, <50% of Nifty stocks above 50-day or RBI hikes 50bp.",
+    "go_fully_in_if": "Already fully in. If cut to half, back to full when FIIs buy 3 sessions running, Brent is below $95 and over 60% of Nifty stocks are above their 50-day, with Nifty above its 20-day.",
+    "model": "Claude Fable 5.1 (challenger agent)",
+    "searches": 3,
+    "made_at": "2026-11-20T18:08+05:30"
   }
 ]

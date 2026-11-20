@@ -300,5 +300,22 @@
     "model": "Claude Opus 5.5 (in chat)",
     "searches": 2,
     "made_at": "2026-11-19T21:19+05:30"
+  },
+  {
+    "date": "2026-11-20",
+    "position": 1.0,
+    "summary": "Staying fully in: Nifty rose 1.1% to a nine-month high of 25,801 and Nifty Bank closed at a record after opening sharply lower on a global AI selloff, lifted by private banks, IT and hospitals, record foreign buying this month and Brent near $88; it is 5.8% above its 20-day average, the plan's exit.",
+    "reasons": [
+      "Nifty closed at 25,801, 5.8% above its rising 20-day average (24,396) and 7.5% above its 200-day; the plan's exit is far below.",
+      "Foreign investors have put a record $12.2 billion into Indian shares in November; the rupee is at a seven-month high near 92.7 and Brent fell 4% to about $88.",
+      "The day showed stress too: the market opened sharply lower after Wall Street and Asia sold off AI shares (Nikkei -5%), India VIX rose 7% to 17.3, and more stocks fell than rose, so the rally is narrow.",
+      "The Fed minutes point to more rate rises and gold has crashed; neither changes the plan, which exits only on a close below the 20-day average.",
+      "Changing position on a strong up day with the trend intact would be the kind of trading the research warns against; the next session is Monday, with Tuesday a holiday."
+    ],
+    "go_to_cash_if": "Nifty closes below its 20-day average (about 24,400, rising).",
+    "go_fully_in_if": "Already fully in; stays in while Nifty holds above its 20-day average.",
+    "model": "Claude Fable 5.1 (in chat)",
+    "searches": 3,
+    "made_at": "2026-11-20T18:04+05:30"
   }
 ]
