@@ -68,3 +68,5 @@ date,agent,trade,nifty_close
 2026-11-18,Weekly short strangle,"Expired with Nifty at 25,228: +Rs 1,704 on the week",25227.95
 2026-11-19,Intraday futures,"Bought at the open 25,187, closed at 25,514: +Rs 3,916",25514.30
 2026-11-19,Intraday short straddle,"Sold the 25,200 straddle at 313.9, stopped out at 408.0: -Rs 1,242",25514.30
+2026-11-20,Intraday futures,"Bought at the open 25,368, closed at 25,801: +Rs 5,110",25800.60
+2026-11-20,Intraday short straddle,"Sold the 25,350 straddle at 256.1, stopped out at 332.9: -Rs 1,009",25800.60

@@ -52,3 +52,5 @@ akash:19264,akash,2026-11-19T05:50:27Z,XAUUSD,sell,open,,,,,0,,,,,,refused,marke
 akash:19236,akash,2026-11-18T04:16:18Z,XAUUSD,buy,open,,,,,0,,,,,,refused,market,XAUUSD is an offshore CFD: not allowed from India,,,,,,2026-11-13,2026-11-19T19:35:39Z
 berlin-other:78112,berlin-other,2026-11-18T05:26:58Z,NIFTY,sell,open,OPT,,,,0,,,,,,refused,market,options aren't in the engine yet: there are no intraday option prices to size or check an order,,,,,,2026-11-13,2026-11-19T19:52:31Z
 berlin-other:78123,berlin-other,2026-11-18T13:46:42Z,CRUDE,sell,open,,,,,0,,,,,,refused,market,"his crude levels are on a US exchange's price; the Indian route is MCX, and they aren't mapped onto an MCX contract yet (REAL_MONEY.md 2.1)",,,,,,2026-11-13,2026-11-19T19:52:31Z
+agent-gold-silver-trend:halt,agent-gold-silver-trend,2026-11-20T09:59:00Z,,,halt,,,,,0,,,,,,halt,drawdown halt,"halted on 20 Nov 2026: Rs 4,372 is 13.3% below the peak of Rs 5,041",4372.18,,,,4372.18,2026-11-13,2026-11-20T15:00:48Z
+akash:19305,akash,2026-11-20T10:21:35Z,XAUUSD,sell,open,,,,,0,,,,,,refused,market,XAUUSD is an offshore CFD: not allowed from India,,,,,,2026-11-13,2026-11-20T15:00:48Z
