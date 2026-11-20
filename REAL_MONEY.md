@@ -237,6 +237,19 @@ layer has to be built separately and fed by this one, not bolted onto it.
   its numbers were made (backtest with model prices, backtest with real prices, paper, whole lots, shadow
   mode; broker sandbox and live have nothing), and shows each strategy's worst fall and number of trades next
   to its return. The challenger's section says it isn't an independent check.
+- 20 Nov 2026, G18 (tests in the repository, section 11): the checks that had only been run in Claude's sessions
+  are now in tests/ (13 files), and GitHub runs them whenever code is uploaded (.github/workflows/tests.yml), each
+  on a fresh copy of the repository so they never change a real file. They cover the risk engine (every limit,
+  its sums against the order ticket's on 1,500 random orders, the add-only log), the order ticket in a browser,
+  Zerodha's charges against its calculator, the NIFTYBEES copy, the real-money ledger (the public-file check
+  included), Berlin's record and filters, the signal channel, the event files, the FII/DII flows, the data
+  checks and provenance, the Claude agent's decision window and that Claude never reads the challenger, and the
+  built pages at phone width. They read the growing logs as they stood at a fixed time, or frozen copies in
+  tests/data/, and still passed with the clock moved to January and June 2027, so a new night's rows or a later
+  date can't break them. Copies of the code broken on purpose (a risk limit, a charge, a filter time, a data-check
+  threshold, the confidence levels, the challenger's isolation, the public-file check) each failed them. A failed
+  test shows on the Actions tab; it doesn't stop the nightly run. Not covered: the agents' rules themselves,
+  saving posts from Telegram's live site, voice-note transcription and the workflows.
 
 ## 8. Broker: Zerodha (added 6 Nov 2026)
 
@@ -312,7 +325,8 @@ what now exists for that, and what the first numbers say. None of it is an execu
 Status, from weakest: **not built**; **built** (code exists, never run against orders); **shadow-tested** (runs
 every night on the orders the paper strategies would have sent; nothing sent); **broker-tested** (run against a
 broker's test system); **live** (in front of real orders). Nothing is broker-tested or live. The tests named
-below were run in Claude's sessions; they aren't in the repository yet.
+below were run in Claude's sessions; they aren't in the repository yet. Since 20 Nov 2026 they are, in tests/,
+and GitHub runs them whenever code is uploaded (7).
 
 | Control | Where | Status |
 |---|---|---|
@@ -326,6 +340,7 @@ below were run in Claude's sessions; they aren't in the repository yet.
 | Data checks before a result is trusted | data_health.py | Built 16 Nov; warns, doesn't block |
 | Run start against schedule | logs/runs.csv | Built 16 Nov |
 | Pinned package versions | requirements.txt | Built 16 Nov |
+| Code tests | tests/, .github/workflows/tests.yml | Built 20 Nov: 13 test files on every code upload; copies of the code broken on purpose fail them |
 | Reconciliation against the broker's statement | none | Not built (the ledger is checked by hand) |
 | Broker-side stops and limits | none | Not built |
 | An always-on machine to run orders | none | Not built (2.4) |
@@ -355,4 +370,4 @@ research platform, not ready for real money. Where each point stands:
 | G15 Telegram scoring | The ten-check scorecard since 4 Nov: 40 calls, costs, late and reversed, levels coverage, claims, deletions. |
 | G16 This register | Sections 10 and 11. |
 | G17 Public ledger | No real order recorded yet (data/real/orders.csv doesn't exist). Decide before the first one whether it stays public (Minor). |
-| G18 Reproducibility | Pinned 16 Nov; versions per run in logs/runs.csv. Tests in the repository: open. |
+| G18 Reproducibility | Pinned 16 Nov; versions per run in logs/runs.csv. Tests in the repository: done 20 Nov (7). |

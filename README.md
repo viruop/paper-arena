@@ -52,8 +52,10 @@ For learning only. Not investment advice. Nothing here places an order.
 | `nifty_backtest.py` | The backtest of the same rules from 2010 to today |
 | `build_site.py` | Builds the site into a `site` folder: the home page, a page for Trade Like Berlin, one for each signal channel, and the order ticket |
 | `requirements.txt` | The Python packages GitHub installs, pinned to exact versions |
+| `tests/` | Code tests: each runs part of the code on made-up or frozen data and checks what comes out. `python tests/run_tests.py` runs them all |
 | `.github/workflows/arena.yml` | Runs everything each weekday evening and publishes the page |
 | `.github/workflows/telegram.yml` | Saves new posts from every Telegram channel every 30 minutes, reads the signal channel's new signals and transcribes new voice notes |
+| `.github/workflows/tests.yml` | Runs the code tests whenever a code file is uploaded |
 
 ## Set it up once (about 10 minutes)
 
@@ -264,6 +266,15 @@ That's all. The next weekday evening run makes the decision. Its log on the **Ac
 ## How each number was made
 
 The page labels each set of numbers by how it was made, weakest evidence first: **Backtest, model prices** (past data with option prices worked out by a formula), **Backtest, real prices** (past data at real closing prices), **Paper, simulated fills** (decided each day before the result was known, filled at that day's prices with costs; no order placed), **Paper, whole lots** (real lot sizes, with margin), **Shadow mode** (orders checked as if real, never sent), **Broker sandbox** and **Live** (nothing yet). A good result never moves a strategy up the list; only the steps in `REAL_MONEY.md` do. The board also shows each strategy's worst fall and number of trades next to its return, so a short lucky run is easier to spot.
+
+## Tests
+
+The `tests/` folder checks the code itself (the research tests below check ideas). Each test runs part of the code on made-up prices and posts, or on the real records cut off at a fixed date, and compares what comes out with sums worked out separately. Together they cover the risk engine and the order ticket (whose sums must agree), Zerodha's charges, the NIFTYBEES copy, Berlin's record and its filters, the signal channel, market events, the real-money ledger, the FII/DII flows, the nightly data checks, the Claude agent's decision window (and that Claude never reads the challenger), and the built pages at phone width.
+
+- **When they run:** on GitHub, whenever you upload a code file (`.github/workflows/tests.yml`), in a few minutes. They only read the repository, and a failed test doesn't stop the nightly run or the page.
+- **If one fails:** "Tests" shows a red cross on the **Actions** tab and GitHub notifies you. The run's log names the test and the check that failed. Ask Claude to look at it before the next code change.
+- **On your own computer:** `pip install -r requirements.txt playwright==1.63.0`, then `python -m playwright install chromium`, then `python tests/run_tests.py` (about two minutes; the Zerodha test also needs Node). `python tests/run_tests.py risk` runs only the files with "risk" in their name.
+- **Not covered yet:** the agents' rules themselves, saving posts from Telegram's live site, voice-note transcription, and the workflows.
 
 ## Research tests
 
