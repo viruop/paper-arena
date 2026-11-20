@@ -97,6 +97,17 @@ layer has to be built separately and fed by this one, not bolted onto it.
 - **What to do:** for real trading use the exact contract, never a continuous series; for scoring,
   note calls that span a roll.
 
+- 20 Nov 2026: a download made between 6 pm and midnight New York (4:30 to 10:30 am IST, where late-starting
+  GitHub runs and morning uploads land) saved the open evening session of CME gold and silver and ICE Brent
+  as the finished day's bar: Yahoo stamps a live bar with its last trade, which until midnight carries the
+  old date, and the finished bar was dropped as a duplicate. Seen on 19 Nov 2026 (gold saved at 3,557.9 and
+  rewritten by every run that morning down to 3,525.6; the real close was 3,685.5). market_data.yahoo now
+  leaves out any bar stamped after the day's cutoff (tests/test_market_data.py). The next download revises
+  the wrong rows (the last 10 days are always re-read), and no logged value used them: the gold and
+  multi-asset agents trade on the previous US close. Rows saved mid-session before 20 Nov 2026 can't be
+  told apart afterwards; the replay note in logs/provenance.csv shows where a logged day's prices differ
+  from the saved ones.
+
 ### 3.3 Fills are the best case
 - Berlin calls fill at the open of the next 5-minute bar; Nifty calls on the index; ETF and index
   trades at the exact close. Real fills: a spread, slippage on the move the call itself may cause
@@ -358,7 +369,7 @@ research platform, not ready for real money. Where each point stands:
 | G3 Executable F&O | Whole-lot agents with margin since 11 Nov (7); costs by date (5). Partial fills and rejections: open, needed at real size. |
 | G4 Survivorship | Written in research_tests.py and the README; no agent uses it. The Nifty 50 list as it was each year isn't free: open. |
 | G5 Replay against saved | Done 16 Nov (7). |
-| G6 Data quality | Done 16 Nov (7); a second source for Nifty 50 only. |
+| G6 Data quality | Done 16 Nov (7); a second source for Nifty 50 only. Live futures session saved as a finished day: fixed 20 Nov (3.2). |
 | G7 Gold contracts | His gold is scored on COMEX; the risk engine refuses gold and crude orders (no MCX prices). MCX re-scoring: open (2.1). |
 | G8 Claude as allocator | By design; every decision saves its snapshot, model and time. No AI output can skip the risk engine (go/no-go 4). |
 | G9 Challenger independence | Labelled 16 Nov. A challenger that doesn't see Claude's answer, or another model, would be a new agent: open (needs an API key or another model). |

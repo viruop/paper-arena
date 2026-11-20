@@ -60,11 +60,17 @@ COLUMNS = ["Open", "High", "Low", "Close"]
 
 
 # ------------------------------------ Yahoo --------------------------------------
-def yahoo(symbol, period="max", tz="Asia/Kolkata", cutoff="16:00", timeout=20):
+def yahoo(symbol, period="max", tz="Asia/Kolkata", cutoff="16:00", timeout=20, now=None):
     """Daily bars from Yahoo's chart endpoint, without any session that hasn't closed yet.
 
     period is "max" (everything since HISTORY_FROM), "3mo" or "1mo". The span is always sent as
-    explicit dates: with range=max Yahoo returns monthly bars even when daily ones are asked for."""
+    explicit dates: with range=max Yahoo returns monthly bars even when daily ones are asked for.
+
+    A finished session's bar is stamped at its start (midnight for futures, the open for shares and
+    indices). Two kinds of bar are still trading and are left out: today's, before the day's cutoff;
+    and one stamped by a trade after the cutoff, which is the next session. CME gold, silver and ICE
+    Brent open in the New York evening, so until midnight their live bar carries the old date, and
+    until 20 Nov 2026 a download made then replaced the finished day's bar with it."""
     end = int(pd.Timestamp.now(tz="UTC").timestamp()) + 86400
     start = (int(pd.Timestamp(HISTORY_FROM, tz="UTC").timestamp()) if period == "max"
              else end - 86400 * DAYS_BACK.get(period, 100))
@@ -87,14 +93,16 @@ def yahoo(symbol, period="max", tz="Asia/Kolkata", cutoff="16:00", timeout=20):
     stamps = result.get("timestamp") or []
     quote = result["indicators"]["quote"][0]
     zone = meta.get("exchangeTimezoneName") or tz
-    days = pd.to_datetime(stamps, unit="s", utc=True).tz_convert(zone).tz_localize(None).normalize()
-    df = pd.DataFrame({c: pd.to_numeric(pd.Series(quote.get(c.lower(), [np.nan] * len(days))), errors="coerce").values
-                       for c in COLUMNS}, index=days)
+    when = pd.to_datetime(stamps, unit="s", utc=True).tz_convert(zone).tz_localize(None)
+    df = pd.DataFrame({c: pd.to_numeric(pd.Series(quote.get(c.lower(), [np.nan] * len(when))), errors="coerce").values
+                       for c in COLUMNS}, index=when.normalize())
+    now = pd.Timestamp.now(tz=zone) if now is None else pd.Timestamp(now).tz_convert(zone)
+    today = now.tz_localize(None).normalize()
+    trading = ((df.index >= today) & (now.strftime("%H:%M") < cutoff)                 # today's session, still open
+               | (df.index >= today - pd.Timedelta(days=1)) & (when.strftime("%H:%M") >= cutoff))  # the next one
+    df = df[~trading]
     df = df[df["Close"] > 0]
     df = df[~df.index.duplicated(keep="last")].sort_index()
-    now = pd.Timestamp.now(tz=zone)
-    if len(df) and df.index[-1] >= now.tz_localize(None).normalize() and now.strftime("%H:%M") < cutoff:
-        df = df.iloc[:-1]                       # today's session is still trading
     df.index.name = "Date"
     df = df.loc[HISTORY_FROM:]
     if not looks_daily(df):
