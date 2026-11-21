@@ -6,3 +6,4 @@ id,posted_at,kind,instrument,leg,side,fill_at,fill,stop,target,exit_at,exit,outc
 19075,2026-11-09T11:57:01Z,signal,XAUUSD,target 1,short,2026-11-09T11:58:00Z,4108.337,4113.204,4105.13,2026-11-09T12:20:00Z,4113.204,stop,-1.0,500.0,-500.0,2026-11-19T19:20:31Z
 19075,2026-11-09T11:57:01Z,signal,XAUUSD,target 2,short,2026-11-09T11:58:00Z,4108.337,4113.204,4100.9,2026-11-09T12:20:00Z,4113.204,stop,-1.0,500.0,-500.0,2026-11-19T19:20:31Z
 19225,2026-11-17T08:47:28Z,signal,XAUUSD,call,short,,,,,,,not filled,0,0,0,2026-11-19T23:14:13Z
+19251,2026-11-18T11:08:27Z,signal,XAUUSD,call,short,,,,,,,not filled,0,0,0,2026-11-21T08:05:21Z
