@@ -10,3 +10,7 @@ id,posted_at,reviewed_at,decision,call_id,note
 19241,2026-11-18T04:27:42Z,2026-11-19T17:40:00Z,claim,19236,"Read by Claude: ""Target hit"", about scalp 19236 (target 3791.6); the code tied it to 19225"
 19255,2026-11-18T11:51:32Z,2026-11-19T17:40:00Z,update,19251,"Read by Claude: ""Delete this limit order, Price bina activate kiye nikal gaya hai"" (reply to 19251): cancels the unfilled gold sell limit at 3770.2. The code marked it other"
 19267,2026-11-19T06:41:44Z,2026-11-19T17:40:00Z,update,19264,"Read by Claude: ""2 pips away from our First Target, Let's go Breakeven guys"", 51 minutes after GOLD SELL 19264, the only open signal; stop to breakeven"
+19294,2026-11-20T06:13:03Z,2026-11-20T17:40:00Z,other,,"Read by Claude: ""Gold sell now"" with no stop or target in text; levels, if any, only in the image 19295 (not readable here), so no signal can be scored"
+19296,2026-11-20T06:42:16Z,2026-11-20T17:40:00Z,other,,"Read by Claude: ""let's go Breakeven"", about the gold sell 19294, which has no levels and no signal row; no open signal to tie it to"
+19300,2026-11-20T09:09:01Z,2026-11-20T17:40:00Z,other,,"Read by Claude: recap of a VIP gold sell, posted in the same second as ""target 2 done booked almost 1L"" (19301), so it could not be followed; not a signal"
+19304,2026-11-20T09:25:58Z,2026-11-20T17:40:00Z,other,,Read by Claude: voice note (transcript): promotion of the paid community after the gold fall; no levels
