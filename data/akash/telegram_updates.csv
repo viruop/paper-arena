@@ -13,3 +13,4 @@ id,call_id,posted_at,action,detail,price,trigger,verdict,note,added_by
 19240,19225,2026-11-18T04:23:32Z,stop,breakeven,entry,,,"""We are close to our Target, BREAKEVEN karna maat bhulna guys""",parser
 19241,19225,2026-11-18T04:27:42Z,claim,tp,,,,"""Target hit 🤑🤑""",parser
 19318,19317,2026-11-21T08:52:49Z,claim,activated,,,,"""Activated""",parser
+19321,19317,2026-11-21T12:52:34Z,claim,sl,,,,"""Sl Hit""",parser
