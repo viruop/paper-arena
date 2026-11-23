@@ -14,3 +14,4 @@ id,call_id,posted_at,action,detail,price,trigger,verdict,note,added_by
 19241,19225,2026-11-18T04:27:42Z,claim,tp,,,,"""Target hit 🤑🤑""",parser
 19318,19317,2026-11-21T08:52:49Z,claim,activated,,,,"""Activated""",parser
 19321,19317,2026-11-21T12:52:34Z,claim,sl,,,,"""Sl Hit""",parser
+19341,19339,2026-11-23T09:39:18Z,claim,tp1,,,,"""Target 1 is hit guys , Go Breakeven and book partials 🤑🤑🤑🤑""",parser
