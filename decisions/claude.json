@@ -317,5 +317,22 @@
     "model": "Claude Fable 5.1 (in chat)",
     "searches": 3,
     "made_at": "2026-11-20T18:04+05:30"
+  },
+  {
+    "date": "2026-11-23",
+    "position": 1.0,
+    "summary": "Staying fully in: Nifty fell 1.75% to 25,350 after opening higher, as banks, financials and metals led profit booking after a four-week rally (Nifty Bank -3.2%, Tata Steel about -8%) amid a global tech selloff, on an expiry day moved up by Tuesday's holiday; it is still 3.4% above its 20-day average",
+    "reasons": [
+      "Nifty closed at 25,350, 3.4% above its rising 20-day average (24,526) and 5.6% above its 200-day; the plan exits only on a close below the 20-day, about 820 points lower.",
+      "The fall reversed a higher open (Nifty opened at 25,929) and was led by banks, financials and metals: Nifty Bank fell 3.2% from Friday's record, Tata Steel about 8%, with Axis, HDFC Bank and ICICI lower; IT stocks rose.",
+      "Reports blame profit booking after four straight weekly gains, a global tech and AI selloff, US rate uncertainty and the November expiry, brought forward to Monday because NSE is shut on Tuesday.",
+      "Flows still back the trend: FIIs bought Rs 10,308 crore on 20 Nov and a record of about $13 billion in November, and 86% of Nifty stocks were above their 50-day average on 20 Nov.",
+      "RSI(2) at 32 after one 1.75% fall is a pullback, not a break; selling it would be the reactive trading the research warns against. The next session is Wednesday; US GDP and PCE inflation come out that evening."
+    ],
+    "go_to_cash_if": "Nifty closes below its 20-day average (about 24,500, rising)",
+    "go_fully_in_if": "Already fully in; stays in while Nifty holds above its 20-day average",
+    "model": "Claude Opus 5.5 (in chat)",
+    "searches": 3,
+    "made_at": "2026-11-23T21:01+05:30"
   }
 ]

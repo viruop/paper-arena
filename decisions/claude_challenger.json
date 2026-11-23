@@ -148,5 +148,30 @@
     "model": "Claude Fable 5.1 (challenger agent)",
     "searches": 3,
     "made_at": "2026-11-20T18:08+05:30"
+  },
+  {
+    "date": "2026-11-23",
+    "position": 1.0,
+    "summary": "Fully in, like Claude: Nifty fell 1.75% to 25,350 after opening at 25,929, led by banks and metals on expiry day, but it is 3.4% above its 20-day average, breadth and FII buying are strong and no preset cut trigger has fired; the fast-rising 20-day may be tested by early December.",
+    "challenged": {
+      "date": "2026-11-23",
+      "position": 1.0
+    },
+    "against": [
+      "Bearish reversal at the high: Nifty opened at 25,929, above Friday's nine-month-high close of 25,801, then closed 1.75% lower at 25,350, below its 5-day average (25,456), as leaders broke (Nifty Bank -3.2% from a record, Tata Steel about -8%); RSI(14) fell from 78 to 66.",
+      "The 820-point cushion shrinks fast: the 20-day (24,526) still holds late-October closes near 22,700-23,000 (1-month gain 11.4%), so a flat Nifty lifts it to about 25,000 by 30 Nov and 25,300 by the 2-4 Dec RBI meeting; a small dip or RBI-day gap trips it, likely below today's price.",
+      "Event cluster: October CPI of 6.1% is above the RBI's 6% limit, so a hike is likely on 2-4 Dec; Fed minutes showed almost all officials expect more hikes; US PCE comes 25 Nov and India GDP 30 Nov; 3 tankers hit mines in Hormuz on 17 Nov; DIIs sold Rs 12,698 crore in 5 sessions."
+    ],
+    "for": [
+      "Trend intact: Nifty 25,350 is 3.4% above its rising 20-day average (24,526), 5.6% above its 200-day (23,996) and 7.6% above its 50-day (23,551), up 11.4% in a month; RSI(2) at 32 after one 1.75% fall marks a pullback, not a break.",
+      "Breadth thrust: on 20 Nov 86% of Nifty stocks were above their 50-day and 73% above their 200-day, against 16% and 15% a month earlier; thrusts that broad have tended to precede further gains, and IT rose today, a sign of rotation, not a rush out.",
+      "No preset cut trigger has fired: FIIs bought Rs 32,647 crore in 5 sessions (a record of about $13bn in November), not 3 days of selling; Brent was near $88 on 20 Nov, not above $100; breadth is 86%, not under 50%; the RBI has not hiked 50bp."
+    ],
+    "decided_by": "No preset cut trigger has fired: FIIs bought Rs 32,647 crore in 5 sessions (a record of about $13bn in November), not 3 days of selling; Brent was near $88 on 20 Nov, not above $100; breadth is 86%, not under 50%; the RBI has not hiked 50bp.",
+    "go_to_cash_if": "Nifty closes below its 20-day avg (24,526, rising about 120 pts a session, near 25,000 by 30 Nov). Half first if FIIs sell 3 days running, Brent tops $100, breadth under 50% or RBI hikes 50bp.",
+    "go_fully_in_if": "Already fully in. If cut to half, back to full when FIIs buy 3 sessions running, Brent is below $95 and over 60% of Nifty stocks are above their 50-day, with Nifty above its 20-day.",
+    "model": "Claude Opus 5.5 (challenger agent)",
+    "searches": 3,
+    "made_at": "2026-11-23T21:07+05:30"
   }
 ]
