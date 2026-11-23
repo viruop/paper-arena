@@ -70,3 +70,21 @@ date,agent,trade,nifty_close
 2026-11-19,Intraday short straddle,"Sold the 25,200 straddle at 313.9, stopped out at 408.0: -Rs 1,242",25514.30
 2026-11-20,Intraday futures,"Bought at the open 25,368, closed at 25,801: +Rs 5,110",25800.60
 2026-11-20,Intraday short straddle,"Sold the 25,350 straddle at 256.1, stopped out at 332.9: -Rs 1,009",25800.60
+2026-11-23,Intraday futures,"Bought at the open 25,929, stopped out at 25,800: -Rs 2,090",25349.65
+2026-11-23,Intraday short straddle,"Sold the 25,950 straddle at 188.0, stopped out at 244.4: -Rs 713",25349.65
+2026-11-23,Weekly ITM option buying,"Expired with Nifty at 25,350: -Rs 430 on the week",25349.65
+2026-11-23,Weekly ITM option buying,"Bought 24,850 CE at 591.8 (expiry 1 Dec)",25349.65
+2026-11-23,Weekly OTM option buying,"Expired with Nifty at 25,350: -Rs 2,954 on the week",25349.65
+2026-11-23,Weekly OTM option buying,"Bought 25,850 CE at 90.2 (expiry 1 Dec)",25349.65
+2026-11-23,Weekly iron condor,"Expired with Nifty at 25,350: +Rs 670 on the week",25349.65
+2026-11-23,Weekly iron condor,"Sold 25,900 CE at 80.2, sold 24,800 PE at 61.0, bought 26,400 CE at 22.3, bought 24,300 PE at 16.1 (expiry 1 Dec)",25349.65
+2026-11-23,Weekly iron condor (whole lots),"Expired with Nifty at 25,350: +Rs 3,792 on the week",25349.65
+2026-11-23,Weekly iron condor (whole lots),"Sold 25,900 CE at 80.2, sold 24,800 PE at 61.0, bought 26,400 CE at 22.3, bought 24,300 PE at 16.1 (1 lot, expiry 1 Dec)",25349.65
+2026-11-23,Weekly option buying,"Expired with Nifty at 25,350: -Rs 3,625 on the week",25349.65
+2026-11-23,Weekly option buying,"Bought 25,350 CE at 263.6 (expiry 1 Dec)",25349.65
+2026-11-23,Weekly option buying (whole lots),"Expired with Nifty at 25,350: -Rs 11,912 on the week",25349.65
+2026-11-23,Weekly option buying (whole lots),"Bought 25,350 CE at 263.6 (1 lot, expiry 1 Dec)",25349.65
+2026-11-23,Weekly short strangle,"Expired with Nifty at 25,350: +Rs 812 on the week",25349.65
+2026-11-23,Weekly short strangle,"Sold 25,900 CE at 80.2, sold 24,800 PE at 61.0 (expiry 1 Dec)",25349.65
+2026-11-23,Weekly short strangle (whole lots),"Expired with Nifty at 25,350: +Rs 4,724 on the week",25349.65
+2026-11-23,Weekly short strangle (whole lots),"Sold 25,900 CE at 80.2, sold 24,800 PE at 61.0 (1 lot, expiry 1 Dec)",25349.65
