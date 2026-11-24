@@ -57,3 +57,5 @@ akash:19305,akash,2026-11-20T10:21:35Z,XAUUSD,sell,open,,,,,0,,,,,,refused,marke
 akash:19317,akash,2026-11-21T08:38:26Z,BTCUSD,sell,open,,,,,0,,,,,,refused,market,BTCUSD is an offshore CFD: not allowed from India,,,,,,2026-11-13,2026-11-23T16:33:15Z
 akash:19339,akash,2026-11-23T09:30:18Z,XAUUSD,sell,open,,,,,0,,,,,,refused,market,XAUUSD is an offshore CFD: not allowed from India,,,,,,2026-11-13,2026-11-23T16:33:15Z
 akash:19343,akash,2026-11-23T10:41:34Z,XAUUSD,buy,open,,,,,0,,,,,,refused,market,XAUUSD is an offshore CFD: not allowed from India,,,,,,2026-11-13,2026-11-23T16:33:15Z
+berlin-other:78188,berlin-other,2026-11-23T16:40:00Z,CRUDE,sell,open,,,,,0,,,,,,refused,market,"his crude levels are on a US exchange's price; the Indian route is MCX, and they aren't mapped onto an MCX contract yet (REAL_MONEY.md 2.1)",,,,,,2026-11-13,2026-11-24T09:21:58Z
+berlin-other:78193,berlin-other,2026-11-23T17:17:44Z,CRUDE,sell,open,,,,,0,,,,,,refused,market,"his crude levels are on a US exchange's price; the Indian route is MCX, and they aren't mapped onto an MCX contract yet (REAL_MONEY.md 2.1)",,,,,,2026-11-13,2026-11-24T09:21:58Z
