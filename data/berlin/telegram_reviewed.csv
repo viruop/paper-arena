@@ -411,3 +411,10 @@ id,posted_at,reviewed_at,decision,call_id,note
 78192,2026-11-23T16:43:06Z,2026-11-23T17:40:00Z,needs levels,,"""My position has been made in MCX OPTIONS and FUTURES"": confirms he entered the crude short in 78188; waits with it"
 78193,2026-11-23T17:17:44Z,2026-11-23T17:40:00Z,needs levels,,"""The first entry caught stop"" (sl claim on 78188's first entry) and he will re-enter at the entry area per plan (second entry); both wait for 78188's levels"
 78194,2026-11-23T17:22:29Z,2026-11-23T17:40:00Z,other,,conviction comment on the crude short; no new level
+78187,2026-11-23T16:39:34Z,2026-11-24T08:55:14Z,other,78188,chart (read from the user's screenshot): WTI 15-minute chart with the broken trend line; no levels on it; context for call 78188
+78188,2026-11-23T16:40:00Z,2026-11-24T08:55:14Z,call,78188,"crude short, the first of two entries; stop and target from his ""Position"" chart 78189 (user's screenshot)"
+78189,2026-11-23T16:40:15Z,2026-11-24T08:55:14Z,other,78188,"""Position"" chart (read from the user's screenshot): entry line 80.41, stop 80.93, target 77.55; the levels of call 78188"
+78192,2026-11-23T16:43:06Z,2026-11-24T08:55:14Z,other,78188,"""My position has been made in MCX OPTIONS and FUTURES"": confirms the entry of call 78188"
+78193,2026-11-23T17:17:44Z,2026-11-24T08:55:14Z,call,78193,second entry of the 78188 plan at the entry area (short when the price comes back to 80.30); also ends the first entry: exit and sl claim on 78188 in telegram_updates.csv
+78195,2026-11-23T17:35:55Z,2026-11-24T08:55:14Z,other,,"screenshot of a follower's comment asking him for a voice note about the position, captioned ""Wait"" (read from the user's screenshot); the voice note 78196 followed ten minutes later; no levels"
+78196,2026-11-23T17:45:52Z,2026-11-24T08:55:14Z,other,,"voice note (transcript): explains the crude short 78188: crude opened 1% lower after the weekend, failed at the highs and broke a major trend line; two entries planned because of liquidity hunts, the first already stopped (as in 78193), ""let's see how the other one is doing""; no new level or exit"

@@ -64,3 +64,5 @@ id,call_id,posted_at,action,detail,price,trigger,verdict,note,added_by
 78132,78123,2026-11-18T16:51:29Z,claim,,,,,"""You beauty. Just wonderful!"" with an image. Not checked: the call is still open.",claude
 78134,78123,2026-11-18T16:54:45Z,claim,,,,,"""Holding 240 points in MCX futures, Sitting tight."". Not checked: the call is still open.",claude
 78140,78123,2026-11-18T17:03:51Z,claim,,,,,"""80% target."" with an image. Not checked: the call is still open.",claude
+78193,78188,2026-11-23T17:17:44Z,exit,,,,,"""The first entry caught stop."" Ends the first entry.",claude
+78193,78188,2026-11-23T17:17:44Z,claim,sl,,,,"""The first entry caught stop."" Not checked here: the call is scored on the next run, and the page checks it then.",claude
