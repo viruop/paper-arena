@@ -399,3 +399,15 @@ id,posted_at,reviewed_at,decision,call_id,note
 78180,2026-11-20T02:02:44Z,2026-11-20T17:40:00Z,other,,"forecast: crude at 84$, not interested in new shorts, look for buying on a bullish hourly close; vague plan, no position; says nothing about his open crude short 78123"
 78181,2026-11-20T02:04:04Z,2026-11-20T17:40:00Z,other,,comment: MCX crude around 7800
 78182,2026-11-20T02:14:16Z,2026-11-20T17:40:00Z,other,,"voice note (transcript): look for upside in crude, Indian markets depend on FII buying; forecast, no position, no exit of crude short 78123"
+78183,2026-11-23T15:43:01Z,2026-11-23T17:40:00Z,other,,image or file with no text: the November trade report he points to in 78184; no position
+78184,2026-11-23T16:02:04Z,2026-11-23T17:40:00Z,other,,recap: asks followers to study his November trades report; no position
+78185,2026-11-23T16:38:30Z,2026-11-23T17:40:00Z,other,,link to his X post
+78186,2026-11-23T16:38:44Z,2026-11-23T17:40:00Z,other,,"""New position update."" introduces the crude short in 78188"
+78187,2026-11-23T16:39:34Z,2026-11-23T17:40:00Z,needs levels,,"chart image ""CrudeOil 15Min timeframe"" for the crude short in 78188; its levels can't be read here"
+78188,2026-11-23T16:40:00Z,2026-11-23T17:40:00Z,needs levels,,"crude short: ""entering crude-oil shorts at trend-line retest"", entry around 80.30, area of interest 77.55, RR 1:6, two entries; the stop is only on his chart (78187/78189), so not added until its levels are sent (1:6 implies about 80.76)"
+78189,2026-11-23T16:40:15Z,2026-11-23T17:40:00Z,needs levels,,"""Position"" image for the crude short in 78188; levels can't be read here"
+78190,2026-11-23T16:40:32Z,2026-11-23T17:40:00Z,other,,link to his X post (repeat)
+78191,2026-11-23T16:40:45Z,2026-11-23T17:40:00Z,other,,invites doubts in the comments
+78192,2026-11-23T16:43:06Z,2026-11-23T17:40:00Z,needs levels,,"""My position has been made in MCX OPTIONS and FUTURES"": confirms he entered the crude short in 78188; waits with it"
+78193,2026-11-23T17:17:44Z,2026-11-23T17:40:00Z,needs levels,,"""The first entry caught stop"" (sl claim on 78188's first entry) and he will re-enter at the entry area per plan (second entry); both wait for 78188's levels"
+78194,2026-11-23T17:22:29Z,2026-11-23T17:40:00Z,other,,conviction comment on the crude short; no new level
