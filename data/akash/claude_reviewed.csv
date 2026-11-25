@@ -14,3 +14,13 @@ id,posted_at,reviewed_at,decision,call_id,note
 19296,2026-11-20T06:42:16Z,2026-11-20T17:40:00Z,other,,"Read by Claude: ""let's go Breakeven"", about the gold sell 19294, which has no levels and no signal row; no open signal to tie it to"
 19300,2026-11-20T09:09:01Z,2026-11-20T17:40:00Z,other,,"Read by Claude: recap of a VIP gold sell, posted in the same second as ""target 2 done booked almost 1L"" (19301), so it could not be followed; not a signal"
 19304,2026-11-20T09:25:58Z,2026-11-20T17:40:00Z,other,,Read by Claude: voice note (transcript): promotion of the paid community after the gold fall; no levels
+19375,2026-11-24T12:48:04Z,2026-11-24T17:41:10Z,signal,19375,"Read by Claude: ""GOLD SELL NOW / Stops :- 3646.819"" with no target in text (target, if any, only in image 19376); signal with the stop only, closed at his ""Complete TP hit"" (19382)"
+19379,2026-11-24T13:02:13Z,2026-11-24T17:41:10Z,claim,19375,"Read by Claude: ""Target 1 is done"" 14 minutes after GOLD SELL 19375; belongs to it, not to the unfilled USDJPY limit 19372"
+19380,2026-11-24T13:04:46Z,2026-11-24T17:41:10Z,claim,19375,"Read by Claude: ""60thousand+ Profit running"" about the gold sell 19375"
+19381,2026-11-24T13:07:02Z,2026-11-24T17:41:10Z,update,19375,"Read by Claude: ""Trade is close to our TP 2, dont forget to go breakeven"": stop to breakeven on gold sell 19375, not 19372"
+19382,2026-11-24T13:08:00Z,2026-11-24T17:41:10Z,update,19375,"Read by Claude: ""Complete TP hit"": closes the gold sell 19375 (exit and tp claim)"
+19383,2026-11-24T13:08:20Z,2026-11-24T17:41:10Z,claim,19375,"Read by Claude: ""Booked 90thousand+ Profit"" right after the gold sell 19375 hit TP"
+19388,2026-11-24T14:59:51Z,2026-11-24T17:41:10Z,other,,"Read by Claude: voice note (transcript): about a trade ""shared live"" with ""almost 75,000"" profit and promotion of tomorrow's live; not tied to a posted signal"
+19389,2026-11-24T15:27:14Z,2026-11-24T17:41:10Z,update,19372,"Read by Claude: ""Delete this Limit order guys"" (reply to 19372): cancels the USDJPY sell limit at 159.434"
+19390,2026-11-24T15:30:03Z,2026-11-24T17:41:10Z,signal,19390,"Read by Claude: ""GOLD BUY NOW / Stops:- 3583.390"" with ""Target :- 3599.054"" (19391) 41 seconds later, before the next-minute fill"
+19392,2026-11-24T15:40:00Z,2026-11-24T17:41:10Z,claim,19390,"Read by Claude: ""SL hit"" (reply to 19391), about the gold buy 19390"

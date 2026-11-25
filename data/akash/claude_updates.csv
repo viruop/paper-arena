@@ -6,3 +6,9 @@ id,call_id,posted_at,action,detail,price,trigger,verdict,note,added_by
 19241,19236,2026-11-18T04:27:42Z,claim,tp,,,,"""Target hit""",claude
 19255,19251,2026-11-18T11:51:32Z,exit,,,,,"Read by Claude: ""Delete this limit order , Price bina activate kiye nikal gaya hai"": cancels the gold sell limit at 3770.2 before it filled",claude
 19267,19264,2026-11-19T06:41:44Z,stop,breakeven,entry,,,"""2 pips away from our First Target , Let's go Breakeven guys""",claude
+19379,19375,2026-11-24T13:02:13Z,claim,tp1,,,,"""Target 1 is done guys""",claude
+19381,19375,2026-11-24T13:07:02Z,stop,breakeven,entry,,,"""Trade is close to our TP 2 , dont forget to go breakeven and book some partials guys""",claude
+19382,19375,2026-11-24T13:08:00Z,exit,,,,,"Read by Claude: ""Complete TP hit"": the trade is closed; its target is not in the text, so his exit ends it",claude
+19382,19375,2026-11-24T13:08:00Z,claim,tp,,,,"""Complete TP hit""",claude
+19389,19372,2026-11-24T15:27:14Z,exit,,,,,"Read by Claude: ""Delete this Limit order guys"" (reply to 19372): cancels the USDJPY sell limit",claude
+19392,19390,2026-11-24T15:40:00Z,claim,sl,,,,"""SL hit"" (reply to the target post 19391)",claude
