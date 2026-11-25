@@ -418,3 +418,31 @@ id,posted_at,reviewed_at,decision,call_id,note
 78193,2026-11-23T17:17:44Z,2026-11-24T08:55:14Z,call,78193,second entry of the 78188 plan at the entry area (short when the price comes back to 80.30); also ends the first entry: exit and sl claim on 78188 in telegram_updates.csv
 78195,2026-11-23T17:35:55Z,2026-11-24T08:55:14Z,other,,"screenshot of a follower's comment asking him for a voice note about the position, captioned ""Wait"" (read from the user's screenshot); the voice note 78196 followed ten minutes later; no levels"
 78196,2026-11-23T17:45:52Z,2026-11-24T08:55:14Z,other,,"voice note (transcript): explains the crude short 78188: crude opened 1% lower after the weekend, failed at the highs and broke a major trend line; two entries planned because of liquidity hunts, the first already stopped (as in 78193), ""let's see how the other one is doing""; no new level or exit"
+78197,2026-11-24T11:42:17Z,2026-11-24T17:41:10Z,claim,78193,"""2nd entry in crude was triggered. Trade is open"": reports the 80.30 entry of call 78193 filled; claim activated"
+78198,2026-11-24T11:45:13Z,2026-11-24T17:41:10Z,claim,78188,"""in mcx my option positions were squared off / But futures were open as the sl in mcx futures was not hit"": says the first entry's MCX futures stayed open; claim on 78188, which is already scored as stopped"
+78199,2026-11-24T12:06:55Z,2026-11-24T17:41:10Z,other,78193,"""Position sl placed exactly at same area"": stop of 78193 unchanged (80.93); no new level"
+78200,2026-11-24T12:08:08Z,2026-11-24T17:41:10Z,other,,commentary on the crude short; no level
+78201,2026-11-24T12:08:54Z,2026-11-24T17:41:10Z,other,,"forecast, no position"
+78202,2026-11-24T12:09:34Z,2026-11-24T17:41:10Z,other,,projection of 150% option returns if the plan works; not a result
+78203,2026-11-24T12:10:28Z,2026-11-24T17:41:10Z,other,,announces the video 78204
+78204,2026-11-24T12:59:19Z,2026-11-24T17:41:10Z,other,78193,"video explaining trade 78193 (announced in 78203), not viewable here; his posts before and after give no new level (stop ""same area"", 78199; SL hit, 78205)"
+78205,2026-11-24T14:06:38Z,2026-11-24T17:41:10Z,update,78193,"""Crude hits the 2nd entry SL"": exit and sl claim on 78193; option losses ""7200 PE lost 28Points / 7500 PE lost 45Points"""
+78206,2026-11-24T14:15:29Z,2026-11-24T17:41:10Z,other,,"chart image (structure box, per voice note 78208); no levels in text"
+78207,2026-11-24T14:23:00Z,2026-11-24T17:41:10Z,other,,voice note (transcript): if the structure breaks the short view is cut; no level
+78208,2026-11-24T14:24:01Z,2026-11-24T17:41:10Z,other,,voice note (transcript): explains the red box structure on chart 78206; no level
+78209,2026-11-24T14:27:48Z,2026-11-24T17:41:10Z,other,,voice note (transcript): the trend is not invalid until the major highs break; may re-enter; no level
+78210,2026-11-24T14:38:21Z,2026-11-24T17:41:10Z,other,,"image ""Talking about this in the above audio""; no level"
+78211,2026-11-24T15:43:00Z,2026-11-24T17:41:10Z,other,,"chart image ""As told, sometimes it's just luck"": comment after crude fell; no position"
+78212,2026-11-24T15:44:17Z,2026-11-24T17:41:10Z,other,,"voice note (transcript): crude down 1.7% from the high after his stop; ""let's see when to make the re-entry""; no position"
+78213,2026-11-24T15:58:32Z,2026-11-24T17:41:10Z,call,78213,"crude short re-entered in MCX options, ""SL around same area"" with no number; option call, not scored on levels"
+78214,2026-11-24T15:59:24Z,2026-11-24T17:41:10Z,other,78213,"voice note (transcript): ""I am re-entering in purely options... will update as soon as I enter the future""; caption of call 78213"
+78215,2026-11-24T16:05:26Z,2026-11-24T17:41:10Z,needs levels,,"""Futures position, re-entered. RR : 1:6"": crude futures short re-entry with entry, stop (red line) and target only on the chart image; need the screenshot"
+78216,2026-11-24T16:06:46Z,2026-11-24T17:41:10Z,other,,voice note (transcript): explains the futures re-entry 78215; exit if a 15-minute candle closes above the red line on the chart; no number
+78217,2026-11-24T16:08:00Z,2026-11-24T17:41:10Z,other,,voice note (transcript): commentary on taking small risks; no level
+78218,2026-11-24T16:08:54Z,2026-11-24T17:41:10Z,other,,forecast: target within 12-14 hours if crude goes to day lows; no new level
+78219,2026-11-24T16:13:38Z,2026-11-24T17:41:10Z,other,,voice note (transcript): trading psychology; no level
+78220,2026-11-24T16:14:43Z,2026-11-24T17:41:10Z,other,,"""I had some positions in forex as well"": positions never posted as calls"
+78221,2026-11-24T16:15:12Z,2026-11-24T17:41:10Z,other,,"image of his forex positions (announced in 78220), never posted as calls; not readable here"
+78222,2026-11-24T16:15:19Z,2026-11-24T17:41:10Z,other,,"image of his forex positions (announced in 78220), never posted as calls; not readable here"
+78223,2026-11-24T16:16:53Z,2026-11-24T17:41:10Z,other,,"voice note (transcript): added lots when in favour, exited at the stop; discipline talk; no level"
+78224,2026-11-24T16:19:53Z,2026-11-24T17:41:10Z,other,,"""Position SL remains strict, 15m candle closing above the marked red line"": stop rule of the re-entry 78215 (and 78213); the line is only on his chart, no number"

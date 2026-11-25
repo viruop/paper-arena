@@ -66,3 +66,7 @@ id,call_id,posted_at,action,detail,price,trigger,verdict,note,added_by
 78140,78123,2026-11-18T17:03:51Z,claim,,,,,"""80% target."" with an image. Not checked: the call is still open.",claude
 78193,78188,2026-11-23T17:17:44Z,exit,,,,,"""The first entry caught stop."" Ends the first entry.",claude
 78193,78188,2026-11-23T17:17:44Z,claim,sl,,,,"""The first entry caught stop."" Not checked here: the call is scored on the next run, and the page checks it then.",claude
+78197,78193,2026-11-24T11:42:17Z,claim,activated,,,,"""2nd entry in crude was triggered. Trade is open, Holding positions.."" Not checked: the call is still being scored.",claude
+78198,78188,2026-11-24T11:45:13Z,claim,,,,doesn't match,"""Yesterday, in mcx my option positions were squared off / But futures were open as the sl in mcx futures was not hit."" logs/berlin_calls.csv has 78188 stopped at 80.94 on NYMEX WTI at 17:05 UTC on 23 Nov, and his own post 78193 then said ""The first entry caught stop""; MCX futures may differ, but the record and his earlier post say stopped.",claude
+78205,78193,2026-11-24T14:06:38Z,exit,,,,,"""Just now : Crude hits the 2nd entry SL."" Ends the second entry.",claude
+78205,78193,2026-11-24T14:06:38Z,claim,sl,,,,"""Crude hits the 2nd entry SL."" Not checked here: the call is scored on the next run, and the page checks it then.",claude
