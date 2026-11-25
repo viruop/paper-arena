@@ -173,5 +173,30 @@
     "model": "Claude Opus 5.5 (challenger agent)",
     "searches": 3,
     "made_at": "2026-11-23T21:07+05:30"
+  },
+  {
+    "date": "2026-11-25",
+    "position": 1.0,
+    "summary": "Fully in, like Claude: Nifty rose 1.85% to a nine-month closing high of 25,819 on FII buying, 4.6% above its 20-day average; the US selloff on hot inflation, a chip rout and proposed tariffs of up to 25% on India is a real risk, but none of my preset cut triggers has fired.",
+    "challenged": {
+      "date": "2026-11-25",
+      "position": 1.0
+    },
+    "against": [
+      "Stretched into an event cluster: Nifty is up 13.5% in a month and 16% from the 8 Oct low, RSI(14) 71, 4.6% above its 20-day and about 2% below the 2 Jan high of 26,329, with India GDP due 30 Nov and an RBI rate rise expected 4 Dec after 6.1% CPI.",
+      "New global shock: on 25 Nov the US proposed tariffs of up to 25% on India and 13 other economies, and US stocks sank on hot PCE inflation and a chip rout (Nasdaq 100 futures down about 3%, Kospi down 6.2%), adding to Fed hike bets that could turn FII flows.",
+      "Lopsided flows: FIIs bought Rs 33,455 crore in five sessions while DIIs sold Rs 11,939 crore, so the rally rests on foreign money that can reverse fast; the 50-day (23,598) is still below the 200-day (23,999) and Midcap 50 is down 3.9% over 3 months."
+    ],
+    "for": [
+      "Trend intact: Nifty closed at 25,819, a nine-month closing high, 4.6% above its rising 20-day average (24,679) and 7.6% above its 200-day; the exit is about 1,140 points lower and none of my half-cut triggers (FII selling, Brent, breadth, RBI) has fired.",
+      "Breadth and flows: 82% of Nifty stocks are above their 50-day and 69% above their 200-day (14% and 15% a month ago), and FIIs bought Rs 5,673 crore on 23 Nov; on 25 Nov reports credited FII buying again as Indian stocks neared wiping out 2026 losses.",
+      "Relative strength: on 25 Nov Nifty rose 1.85% while Kospi fell 6.2% and Nikkei 2.8%, with the US tariff plan already reported on 24 Nov, Brent down 3.6% to about $88 and the rupee at a seven-month high, a sign money leaving the AI trade is coming to India."
+    ],
+    "decided_by": "Trend intact: Nifty closed at 25,819, a nine-month closing high, 4.6% above its rising 20-day average (24,679) and 7.6% above its 200-day; the exit is about 1,140 points lower and none of my half-cut triggers (FII selling, Brent, breadth, RBI) has fired.",
+    "go_to_cash_if": "Nifty closes below its 20-day average (24,679, rising about 130 points a session). Half first if FIIs net sell 3 sessions running, Brent tops $100, breadth falls below 50% or RBI hikes 50bp.",
+    "go_fully_in_if": "Already fully in. If cut to half, back to full when FIIs buy 3 sessions running, Brent is below $95 and over 60% of Nifty stocks are above their 50-day, with Nifty above its 20-day.",
+    "model": "Claude Opus 5.5 (challenger agent)",
+    "searches": 3,
+    "made_at": "2026-11-25T20:21+05:30"
   }
 ]

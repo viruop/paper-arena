@@ -334,5 +334,22 @@
     "model": "Claude Opus 5.5 (in chat)",
     "searches": 3,
     "made_at": "2026-11-23T21:01+05:30"
+  },
+  {
+    "date": "2026-11-25",
+    "position": 1.0,
+    "summary": "Staying fully in: Nifty rose 1.85% to 25,819, above Friday's nine-month-high close and erasing Monday's fall, led by FMCG (HUL +5.5%), pharma and private banks as Brent fell 3.6% to about $88 and the rupee hit a seven-month high; it is 4.6% above its 20-day average, the plan's exit.",
+    "reasons": [
+      "Nifty closed at 25,819, 4.6% above its rising 20-day average (24,679) and 7.6% above its 200-day; the plan exits only on a close below the 20-day, about 1,140 points lower.",
+      "The rally ran across the big sectors: FMCG +3.8% (HUL +5.5%, Tata Consumer +4%), pharma +2.4%, private banks +2.2% and Nifty Bank +1.8%; only metals (-2.1%) and media fell, and India VIX eased to 17.6.",
+      "Brent fell 3.6% to about $88 and the rupee reached a seven-month high, which reports tie to foreign inflows; FIIs bought Rs 5,673 crore on 23 Nov and Rs 33,455 crore over five sessions.",
+      "Risk tonight: Asia sold off on fresh US tariff threats and a fading AI trade (Kospi -6.2%, Nikkei -2.8%) and Nasdaq futures were down about 2.5% in the evening, with US PCE inflation due at 7 pm and US markets shut Thursday.",
+      "That could hit Thursday's open, but the plan doesn't trade on overnight news; India GDP comes on 30 Nov and the RBI decision on 4 Dec, where a rate rise is expected."
+    ],
+    "go_to_cash_if": "Nifty closes below its 20-day average (about 24,700, rising)",
+    "go_fully_in_if": "Already fully in; stays in while Nifty holds above its 20-day average",
+    "model": "Claude Opus 5.5 (in chat)",
+    "searches": 3,
+    "made_at": "2026-11-25T20:15+05:30"
   }
 ]
