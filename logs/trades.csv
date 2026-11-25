@@ -88,3 +88,6 @@ date,agent,trade,nifty_close
 2026-11-23,Weekly short strangle,"Sold 25,900 CE at 80.2, sold 24,800 PE at 61.0 (expiry 1 Dec)",25349.65
 2026-11-23,Weekly short strangle (whole lots),"Expired with Nifty at 25,350: +Rs 4,724 on the week",25349.65
 2026-11-23,Weekly short strangle (whole lots),"Sold 25,900 CE at 80.2, sold 24,800 PE at 61.0 (1 lot, expiry 1 Dec)",25349.65
+2026-11-25,Gold breakdown short (control),Bought back the gold short,25819.25
+2026-11-25,Intraday futures,"Bought at the open 25,658, closed at 25,819: +Rs 1,860",25819.25
+2026-11-25,Intraday short straddle,"Sold the 25,650 straddle at 482.1, bought back at 462.6: +Rs 159",25819.25
