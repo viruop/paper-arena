@@ -24,3 +24,5 @@ id,call_id,posted_at,action,detail,price,trigger,verdict,note,added_by
 19380,19372,2026-11-24T13:04:46Z,claim,profit,,,,"""60thousand+ Profit running guys 🤑🤑🤑🤑""",parser
 19381,19372,2026-11-24T13:07:02Z,stop,breakeven,entry,,,"""Trade is close to our TP 2 , dont forget to go breakeven and  book some partials guys 🤑🤑""",parser
 19382,19372,2026-11-24T13:08:00Z,claim,tp,,,,"""Complete TP hit 🤑🤑🤑🤑""",parser
+19444,19442,2026-11-26T10:02:37Z,claim,tp1,,,,"""Target 1is hit guys🤑🤑""",parser
+19445,19442,2026-11-26T10:10:50Z,claim,tp,,,,"""Complete TP done guys🤑🤑""",parser
