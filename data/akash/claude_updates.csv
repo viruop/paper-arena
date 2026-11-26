@@ -12,3 +12,6 @@ id,call_id,posted_at,action,detail,price,trigger,verdict,note,added_by
 19382,19375,2026-11-24T13:08:00Z,claim,tp,,,,"""Complete TP hit""",claude
 19389,19372,2026-11-24T15:27:14Z,exit,,,,,"Read by Claude: ""Delete this Limit order guys"" (reply to 19372): cancels the USDJPY sell limit",claude
 19392,19390,2026-11-24T15:40:00Z,claim,sl,,,,"""SL hit"" (reply to the target post 19391)",claude
+19415,19412,2026-11-25T10:04:03Z,claim,tp1,,,,"Read by Claude: ""TP 1 is hit""; TP1 was 25638.42 in 19414, posted after the fill and not used in the signal",claude
+19416,19412,2026-11-25T10:04:55Z,stop,,entry,,,"Read by Claude: ""Will hold this trade till TP2, no partials booking only going BREAKEVEN""",claude
+19418,19412,2026-11-25T10:12:17Z,claim,be,,,,"Read by Claude: ""BE hit after TP 1""",claude
