@@ -351,5 +351,22 @@
     "model": "Claude Opus 5.5 (in chat)",
     "searches": 3,
     "made_at": "2026-11-25T20:15+05:30"
+  },
+  {
+    "date": "2026-11-26",
+    "position": 1.0,
+    "summary": "Staying fully in: Nifty rose 0.25% to 25,885, a second straight nine-month closing high, as IT jumped 3.7% (HCL Tech +6.4%, TCS +4.9%) and realty rose, though late selling as crude rose again trimmed the gains; the US tariff proposal on India is a risk, but Nifty is 4.2% above its 20-day average.",
+    "reasons": [
+      "Nifty closed at 25,885, 4.2% above its rising 20-day average (24,839) and 7.9% above its 200-day; the plan exits only on a close below the 20-day, about 1,050 points lower.",
+      "Gains were led by IT (+3.7%, HCL Tech +6.4%, TCS +4.9%), realty (+3.3%) and metals; Nifty Bank slipped 0.3% and FMCG gave back 0.9%. Nifty touched 25,974 before late selling.",
+      "The US trade office proposed on 25 Nov tariffs of up to 25% on India (replacing the current 10%, or 17% with a trade deal) and 13 other economies, effective only after a comment period; Nifty still rose the next day.",
+      "Foreign buying continues: FIIs bought Rs 4,479 crore on 25 Nov and Rs 33,739 crore over five sessions, and domestic funds also bought on the day; Brent rose for a second day to about $90.",
+      "US core PCE inflation came in a touch hot (3.3%) and a December Fed rate rise is expected; with India GDP on Monday and the RBI on 4 Dec, the plan holds and does not trade on events."
+    ],
+    "go_to_cash_if": "Nifty closes below its 20-day average (about 24,850, rising)",
+    "go_fully_in_if": "Already fully in; stays in while Nifty holds above its 20-day average",
+    "model": "Claude Opus 5.5 (in chat)",
+    "searches": 3,
+    "made_at": "2026-11-26T18:59+05:30"
   }
 ]

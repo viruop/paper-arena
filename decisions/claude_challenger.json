@@ -198,5 +198,30 @@
     "model": "Claude Opus 5.5 (challenger agent)",
     "searches": 3,
     "made_at": "2026-11-25T20:21+05:30"
+  },
+  {
+    "date": "2026-11-26",
+    "position": 1.0,
+    "summary": "Fully in, like Claude: Nifty rose 0.25% to a second straight nine-month closing high of 25,885, 4.2% above its 20-day average, backed by FII buying and broad breadth; GDP on 30 Nov, the RBI on 4 Dec, US tariffs and rising crude are risks, but no preset trigger has fired.",
+    "challenged": {
+      "date": "2026-11-26",
+      "position": 1.0
+    },
+    "against": [
+      "Stretched: Nifty is up 14.0% in a month and 16.4% from the 8 Oct low of 22,232, RSI(14) is 72, it is 1.7% below the 2026 high of 26,329, and DIIs net sold Rs 8,118 crore in 5 sessions; a slide to the 20-day exit at 24,839 would cost about 4% before the plan reacts.",
+      "Events bunch up: India GDP on Mon 30 Nov, then the RBI on 4 Dec after its October hike to 5.50% with CPI at 6.09% above the band and SBI Research calling for 50bp; a December Fed hike is priced after core PCE of 3.3%, and the US proposed tariffs of up to 25% on India on 25 Nov.",
+      "Crude is turning up again: Brent climbed 2.3% on 24 Nov and 3.5% on 25 Nov to about $90 and rose again today on Hormuz fears, with Iran refusing talks (24 Nov), ships struck in Hormuz (23 Nov) and the US blockade on; India imports most of its oil, so $100 would hit the rupee and CPI."
+    ],
+    "for": [
+      "The trend is intact: Nifty closed at 25,885, a second straight nine-month closing high, 4.2% above its rising 20-day average (24,839) and 7.9% above its 200-day (24,000); my exit needs a close below the 20-day, about 1,045 points lower.",
+      "Flows and breadth are strong: FIIs bought Rs 4,479 crore on 25 Nov and Rs 33,739 crore in 5 sessions, and on 23 Nov 82% of Nifty stocks were above their 50-day and 69% above their 200-day, against 14% and 15% a month ago, a broad thrust, not a narrow squeeze.",
+      "None of my preset cut triggers has fired: FIIs have not net sold 3 sessions running, Brent in the low $90s is below $100, breadth at 82% (23 Nov) is far above 50%, and the RBI has not hiked 50bp; Nifty also rose today despite the US tariff proposal and hot US core PCE."
+    ],
+    "decided_by": "None of my preset cut triggers has fired: FIIs have not net sold 3 sessions running, Brent in the low $90s is below $100, breadth at 82% (23 Nov) is far above 50%, and the RBI has not hiked 50bp; Nifty also rose today despite the US tariff proposal and hot US core PCE.",
+    "go_to_cash_if": "Nifty closes below its 20-day average (24,839, rising about 150 points a session). Half first if FIIs net sell 3 sessions running, Brent tops $100, breadth drops below 50% or RBI hikes 50bp.",
+    "go_fully_in_if": "Already fully in. If cut to half, back to full when FIIs buy 3 sessions running, Brent is below $95 and over 60% of Nifty stocks are above their 50-day, with Nifty above its 20-day.",
+    "model": "Claude Opus 5.5 (challenger agent)",
+    "searches": 3,
+    "made_at": "2026-11-26T19:05+05:30"
   }
 ]
