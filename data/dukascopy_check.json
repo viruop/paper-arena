@@ -1,6 +1,7 @@
 {
- "checked_at": "2026-11-26T02:36:54Z",
+ "checked_at": "2026-11-26T03:08:39Z",
  "hour": "2026-11-25T12:00Z",
- "ok": false,
- "error": "Dukascopy XAUUSD 2026-11-25 12h: <urlopen error [Errno 111] Connection refused>"
+ "ok": true,
+ "minutes": 60,
+ "last_bid": 3521.375
 }

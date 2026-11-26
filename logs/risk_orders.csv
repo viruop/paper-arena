@@ -63,3 +63,5 @@ akash:19372,akash,2026-11-24T10:51:15Z,USDJPY,sell,open,,,,,0,,,,,,refused,marke
 berlin-other:78213,berlin-other,2026-11-24T15:58:32Z,CRUDE,sell,open,OPT,,,,0,,,,,,refused,market,options aren't in the engine yet: there are no intraday option prices to size or check an order,,,,,,2026-11-13,2026-11-25T05:29:29Z
 akash:19375,akash,2026-11-24T12:48:04Z,XAUUSD,sell,open,,,,,0,,,,,,refused,market,XAUUSD is an offshore CFD: not allowed from India,,,,,,2026-11-13,2026-11-25T05:29:29Z
 akash:19390,akash,2026-11-24T15:30:03Z,XAUUSD,buy,open,,,,,0,,,,,,refused,market,XAUUSD is an offshore CFD: not allowed from India,,,,,,2026-11-13,2026-11-25T05:29:29Z
+berlin-other:78215,berlin-other,2026-11-24T16:05:26Z,CRUDE,sell,open,,,,,0,,,,,,refused,market,"his crude levels are on a US exchange's price; the Indian route is MCX, and they aren't mapped onto an MCX contract yet (REAL_MONEY.md 2.1)",,,,,,2026-11-13,2026-11-26T03:38:53Z
+akash:19412,akash,2026-11-25T09:55:11Z,NAS100,buy,open,,,,,0,,,,,,refused,market,NAS100 is an offshore CFD: not allowed from India,,,,,,2026-11-13,2026-11-26T03:38:53Z
