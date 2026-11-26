@@ -451,3 +451,4 @@ id,posted_at,reviewed_at,decision,call_id,note
 78227,2026-11-25T08:10:50Z,2026-11-25T17:39:49Z,other,,"no view on Sensex or Nifty; no position"
 78228,2026-11-25T08:12:16Z,2026-11-25T17:39:49Z,other,,"commentary: focusing only on crude oil; no position"
 78229,2026-11-25T13:20:38Z,2026-11-25T17:39:49Z,other,,"link to an X post, not readable here; no level in the text"
+78215,2026-11-24T16:05:26Z,2026-11-26T02:40:06Z,call,78215,"settled from the chart screenshot the user sent: crude futures short re-entry, stop 80.79, target 77.49 (about 1:6, as he wrote)"
