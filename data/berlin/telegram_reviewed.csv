@@ -446,3 +446,8 @@ id,posted_at,reviewed_at,decision,call_id,note
 78222,2026-11-24T16:15:19Z,2026-11-24T17:41:10Z,other,,"image of his forex positions (announced in 78220), never posted as calls; not readable here"
 78223,2026-11-24T16:16:53Z,2026-11-24T17:41:10Z,other,,"voice note (transcript): added lots when in favour, exited at the stop; discipline talk; no level"
 78224,2026-11-24T16:19:53Z,2026-11-24T17:41:10Z,other,,"""Position SL remains strict, 15m candle closing above the marked red line"": stop rule of the re-entry 78215 (and 78213); the line is only on his chart, no number"
+78225,2026-11-25T08:06:42Z,2026-11-25T17:39:49Z,update,78213,"""Sad to see crude moving in the expected direction after taking another stop yesterday. The option which I exited yesterday at 212₹"": the options re-entry 78213 was stopped out yesterday, reported now (exit and sl claim); also covers the futures re-entry 78215, which still waits for its chart levels"
+78226,2026-11-25T08:09:03Z,2026-11-25T17:39:49Z,other,,"""No open positions in crude right now"": confirms 78213 is closed (exit recorded at 78225)"
+78227,2026-11-25T08:10:50Z,2026-11-25T17:39:49Z,other,,"no view on Sensex or Nifty; no position"
+78228,2026-11-25T08:12:16Z,2026-11-25T17:39:49Z,other,,"commentary: focusing only on crude oil; no position"
+78229,2026-11-25T13:20:38Z,2026-11-25T17:39:49Z,other,,"link to an X post, not readable here; no level in the text"
