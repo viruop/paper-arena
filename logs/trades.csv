@@ -91,3 +91,5 @@ date,agent,trade,nifty_close
 2026-11-25,Gold breakdown short (control),Bought back the gold short,25819.25
 2026-11-25,Intraday futures,"Bought at the open 25,658, closed at 25,819: +Rs 1,860",25819.25
 2026-11-25,Intraday short straddle,"Sold the 25,650 straddle at 482.1, bought back at 462.6: +Rs 159",25819.25
+2026-11-26,Intraday futures,"Bought at the open 25,873, stopped out at 25,744: -Rs 2,052",25884.50
+2026-11-26,Intraday short straddle,"Sold the 25,850 straddle at 423.1, bought back at 358.6: +Rs 665",25884.50
