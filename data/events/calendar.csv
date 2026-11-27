@@ -17,3 +17,4 @@ fed-minutes-2026-11-18,2026-11-19,00:30,,US,central_bank,,US Fed minutes of the 
 fed-beige-book-2026-11-25,2026-11-26,00:30,,US,central_bank,,US Fed Beige Book (2 pm Washington time on 25 Nov),low,scheduled,https://www.federalreserve.gov/newsevents/2026-november.htm,2026-11-17T17:40:00Z,claude
 us-pce-2026-11-25,2026-11-25,19:00,,US,data,,US personal income and spending with PCE inflation for October (8:30 am New York time),high,scheduled,https://www.financecalendar.com/event/us-personal-income-and-outlays-pce-november-2026/,2026-11-20T17:40:00Z,claude
 us-gdp-2026-11-25,2026-11-25,19:00,,US,data,,"US GDP for July to September, second estimate (8:30 am New York time)",medium,scheduled,https://www.financecalendar.com/?p=1310,2026-11-20T17:40:00Z,claude
+opec-plus-2026-11-29,2026-11-29,,,GLOBAL,oil,,OPEC+ ministers' meetings on 2027 output policy,medium,scheduled,https://www.cnbc.com/2026/11/26/oil-wti-brent-hormuz-iran-saudi-arabia.html,2026-11-26T17:39:15Z,claude
