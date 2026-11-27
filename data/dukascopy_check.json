@@ -1,6 +1,7 @@
 {
- "checked_at": "2026-11-27T14:50:51Z",
+ "checked_at": "2026-11-27T23:30:39Z",
  "hour": "2026-11-26T12:00Z",
- "ok": false,
- "error": "Dukascopy XAUUSD 2026-11-26 13h: <urlopen error [Errno 104] Connection reset by peer>"
+ "ok": true,
+ "minutes": 60,
+ "last_bid": 3568.665
 }
