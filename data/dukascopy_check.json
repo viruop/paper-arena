@@ -1,6 +1,6 @@
 {
- "checked_at": "2026-11-26T15:39:14Z",
+ "checked_at": "2026-11-26T23:53:52Z",
  "hour": "2026-11-25T12:00Z",
  "ok": false,
- "error": "Dukascopy XAUUSD 2026-11-25 13h: HTTP Error 503: Service Unavailable"
+ "error": "Dukascopy XAUUSD 2026-11-25 12h: <urlopen error timed out>"
 }
