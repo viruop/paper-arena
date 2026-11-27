@@ -368,5 +368,22 @@
     "model": "Claude Opus 5.5 (in chat)",
     "searches": 3,
     "made_at": "2026-11-26T18:59+05:30"
+  },
+  {
+    "date": "2026-11-27",
+    "position": 1.0,
+    "summary": "Staying fully in: Nifty fell 1.07% to 25,607 as IT, autos and financials sold off after a fourth failed try at 26,000 and Brent climbed to about $96.5 on attacks on Saudi and Hormuz oil, but midcaps held up and Nifty is still 2.5% above its 20-day average, the plan's exit.",
+    "reasons": [
+      "Nifty closed at 25,607, 2.5% above its rising 20-day average (24,972) and 6.7% above its 200-day; the plan exits only on a close below the 20-day, about 635 points lower, a line rising about 130 points a session.",
+      "The fall was in heavyweights: IT -1.9% (HCL Tech -2.8%, Infosys -2.6%, TCS -2.5%), autos -1.5%, financial services -1.3% and Nifty Bank -0.8%, while metals rose 1.4% and the Midcap 50 was flat, so breadth held up.",
+      "Brent rose for a fourth day to about $96.5, the month's high, after the Houthis hit Saudi Arabia's Ras Tanura refinery and Iran said tankers struck mines near Hormuz; dearer oil is the main risk to India's inflation and rupee.",
+      "Foreign investors are still buying: FIIs bought Rs 5,843 crore on 26 Nov and Rs 33,715 crore over five sessions, and US index futures rose sharply on Friday after a 10% weekly fall in the Nasdaq.",
+      "OPEC+ meets on Sunday, India GDP comes on Monday and the RBI decides on 4 Dec. A 1% fall with the trend intact is not a reason to sell under the plan."
+    ],
+    "go_to_cash_if": "Nifty closes below its 20-day average (about 25,000, rising)",
+    "go_fully_in_if": "Already fully in; stays in while Nifty holds above its 20-day average",
+    "model": "Claude Opus 5.5 (in chat)",
+    "searches": 2,
+    "made_at": "2026-11-27T18:40+05:30"
   }
 ]
