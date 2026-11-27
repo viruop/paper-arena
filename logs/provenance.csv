@@ -23,3 +23,6 @@ date,arena,prices,data,commit,run_id,logged_at
 2026-11-26,F&O,NSE's option file (estimates only for contracts it lacks),473f9873a1c2,a83e051,45846814768,2026-11-26T21:08+0530
 2026-11-26,Gold and multi-asset,ETF and futures closes,acb4a60d5039,a83e051,45846814768,2026-11-26T21:08+0530
 2026-11-26,Nifty 50,index closes (Nifty 50 and the sector indices),ef9d11f83271,a83e051,45846814768,2026-11-26T21:08+0530
+2026-11-27,F&O,NSE's option file (estimates only for contracts it lacks),09213052eabd,76add7a,46016107797,2026-11-27T20:46+0530
+2026-11-27,Gold and multi-asset,ETF and futures closes,a00ee1a5d15c,76add7a,46016107797,2026-11-27T20:46+0530
+2026-11-27,Nifty 50,index closes (Nifty 50 and the sector indices),4be05d0a821f,76add7a,46016107797,2026-11-27T20:46+0530

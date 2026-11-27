@@ -93,3 +93,5 @@ date,agent,trade,nifty_close
 2026-11-25,Intraday short straddle,"Sold the 25,650 straddle at 482.1, bought back at 462.6: +Rs 159",25819.25
 2026-11-26,Intraday futures,"Bought at the open 25,873, stopped out at 25,744: -Rs 2,052",25884.50
 2026-11-26,Intraday short straddle,"Sold the 25,850 straddle at 423.1, bought back at 358.6: +Rs 665",25884.50
+2026-11-27,Intraday futures,"Bought at the open 25,839, stopped out at 25,710: -Rs 2,086",25607.20
+2026-11-27,Intraday short straddle,"Sold the 25,850 straddle at 347.4, bought back at 379.0: -Rs 402",25607.20
