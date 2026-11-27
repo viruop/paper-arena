@@ -223,5 +223,30 @@
     "model": "Claude Opus 5.5 (challenger agent)",
     "searches": 3,
     "made_at": "2026-11-26T19:05+05:30"
+  },
+  {
+    "date": "2026-11-27",
+    "position": 1.0,
+    "summary": "Fully in, like Claude: Nifty fell 1.07% to 25,607 on IT and financials selling with Brent near $96.5, but it is still 2.5% above its rising 20-day average with FII buying and broad breadth; oil, GDP on 30 Nov and a possible 50bp RBI hike on 4 Dec are risks, not yet triggers.",
+    "challenged": {
+      "date": "2026-11-27",
+      "position": 1.0
+    },
+    "against": [
+      "Oil is the main threat: Brent rose a fourth day to about $96.5, the month's high, after the Houthis hit Saudi Arabia's Ras Tanura refinery and Iran said tankers struck mines near Hormuz (25 Nov, Brent +3.5%); that is $3.5 from my $100 half trigger, with OPEC+ meeting on 29 Nov.",
+      "Rate risk is days away: the RBI decides on 4 Dec and SBI Research (2 Nov) kept its call for a 50bp hike, my half trigger; US core PCE beat at 3.3% and US GDP was revised up to 4.3% on 25 Nov, so US rates may stay high, and India's GDP lands on 30 Nov.",
+      "Momentum is stalling: a fourth failed try at 26,000 and a 1.07% drop from the 25,885 high, RSI(14) down to 65 from 78 on 20 Nov, the 50-day (23,698) still below the 200-day (23,999), and the 20-day exit rising about 130 points a session, so a flat Nifty meets it near 4 Dec."
+    ],
+    "for": [
+      "The trend rule still says in: Nifty 25,607 is 2.5% (635 points) above its rising 20-day average 24,972, 6.7% above its 200-day and 15% above the 8 Oct low, and none of my half triggers (FIIs selling 3 sessions, Brent above $100, breadth below 50%, a 50bp RBI hike) has fired.",
+      "Foreign money keeps coming: FIIs bought Rs 5,843 crore on 26 Nov and Rs 33,715 crore over the last 5 sessions, with DIIs adding Rs 5,631 crore on 26 Nov; my half trigger needs 3 straight sessions of FII net selling, at least 2 sessions away.",
+      "The rally is broad: on 25 Nov 73% of Nifty stocks were above their 200-day and 86% above their 50-day, up from 19% and 22% a month ago, and Friday's fall was led by IT heavyweights (IT -1.9%) while metals rose 1.4% and the Midcap 50 was flat."
+    ],
+    "decided_by": "The trend rule still says in: Nifty 25,607 is 2.5% (635 points) above its rising 20-day average 24,972, 6.7% above its 200-day and 15% above the 8 Oct low, and none of my half triggers (FIIs selling 3 sessions, Brent above $100, breadth below 50%, a 50bp RBI hike) has fired.",
+    "go_to_cash_if": "Nifty closes below its 20-day average (24,972, rising about 130 points a session). Half first if FIIs net sell 3 sessions running, Brent tops $100, breadth falls below 50% or RBI hikes 50bp.",
+    "go_fully_in_if": "Already fully in. If cut to half, back to full when FIIs buy 3 sessions running, Brent is below $95 and over 60% of Nifty stocks are above their 50-day, with Nifty above its 20-day.",
+    "model": "Claude Opus 5.5 (challenger agent)",
+    "searches": 3,
+    "made_at": "2026-11-27T18:45+05:30"
   }
 ]
